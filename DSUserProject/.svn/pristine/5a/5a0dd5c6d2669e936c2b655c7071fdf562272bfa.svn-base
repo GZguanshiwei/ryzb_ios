@@ -1,0 +1,98 @@
+//
+//  RCDRCIMDataSource.m
+//  JMBaseProject
+//
+//  Created by liuny on 2018/7/7.
+//  Copyright © 2018年 liuny. All rights reserved.
+//
+
+#import "RCDRCIMDataSource.h"
+
+@implementation RCDRCIMDataSource
+
++ (RCDRCIMDataSource *)shareInstance {
+    static RCDRCIMDataSource *instance = nil;
+    static dispatch_once_t predicate;
+    dispatch_once(&predicate, ^{
+        instance = [[[self class] alloc] init];
+        
+    });
+    return instance;
+}
+
+#pragma mark - RCIMGroupInfoDataSource
+- (void)getGroupInfoWithGroupId:(NSString *)groupId completion:(void (^)(RCGroup *))completion {
+    //群聊 封面图和群名称
+    if ([groupId length] == 0)
+        return;
+    /*
+    //开发者调自己的服务器接口根据groupId异步请求数据
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:groupId key:@"groupId"];
+    [[JMRequestManager sharedManager] POST:kUrlGroupMemberTop20 parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error == nil){
+            NSDictionary *dataDic = response.responseObject[@"data"];
+            NSString *name = [dataDic getJsonValue:@"name"];
+            NSString *headUrl = [dataDic getJsonValue:@"image"];
+            RCGroup *group = [[RCGroup alloc] init];
+            group.groupId = groupId;
+            group.groupName = name;
+            group.portraitUri = [JMCommonMethod pinImagePath:headUrl];
+            
+            completion(group);
+        }
+    }];
+     */
+}
+
+#pragma mark - RCIMUserInfoDataSource
+- (void)getUserInfoWithUserId:(NSString *)userId completion:(void (^)(RCUserInfo *))completion{
+    //私聊用户头像和昵称
+    RCUserInfo *user = [RCUserInfo new];
+    if (userId == nil || [userId length] == 0) {
+        user.userId = userId;
+        user.portraitUri = @"";
+        user.name = @"";
+        completion(user);
+        return;
+    }
+    /*
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:userId key:@"faId"];
+    [[JMRequestManager sharedManager] POST:kUrlUserInfo parameters:params completion:^(JMBaseResponse *response) {
+        if(!response.error){
+            NSDictionary *dataDic = response.responseObject[@"data"];
+            NSString *nickName = [dataDic getJsonValue:@"nick"];
+            NSString *headUrl = [dataDic getJsonValue:@"avatar"];
+            RCUserInfo *user = [RCUserInfo new];
+            user.userId = userId;
+            user.name = nickName;
+            user.portraitUri = [JMCommonMethod pinImagePath:headUrl];
+            
+            completion(user);
+        }
+    }];
+     */
+}
+
+#pragma mark - RCIMGroupMemberDataSource
+-(void)getAllMembersOfGroup:(NSString *)groupId result:(void (^)(NSArray<NSString *> *))resultBlock{
+    //群组  群成员
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:groupId key:@"groupId"];
+    /*
+    [[JMRequestManager sharedManager] POST:kUrlGroupDetail parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error == nil){
+            NSDictionary *dataDic = response.responseObject[@"data"];
+            NSMutableArray *ret = [[NSMutableArray alloc] init];
+            NSArray *usersArray = dataDic[@"users"];
+            for(NSDictionary *userDic in usersArray){
+                NSString *userId = [userDic getJsonValue:@"userId"];
+                [ret addObject:userId];
+            }
+            resultBlock(ret);
+        }
+    }];
+     */
+}
+@end

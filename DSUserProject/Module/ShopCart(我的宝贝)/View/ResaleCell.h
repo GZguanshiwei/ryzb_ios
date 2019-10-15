@@ -1,0 +1,29 @@
+//
+//  ResaleCell.h
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/19.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+#import "GoodModel.h"
+
+NS_ASSUME_NONNULL_BEGIN
+
+@protocol ResaleCellDelegate <NSObject>
+
+-(void)didBuy:(NSInteger)index;
+-(void)didShare:(NSInteger)index;
+-(void)didMoreOperation:(NSInteger)index;
+-(void)didCustomerService:(NSInteger)index;
+
+@end
+
+@interface ResaleCell : UITableViewCell
+@property (weak, nonatomic) id<ResaleCellDelegate>delegate;
+@property (assign, nonatomic) NSInteger index;
+@property (strong, nonatomic) GoodModel *cellData;
+@end
+
+NS_ASSUME_NONNULL_END

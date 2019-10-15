@@ -1,0 +1,57 @@
+//
+//  MakeOrderViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/20.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "MakeOrderViewController.h"
+#import "PayViewController.h"
+
+@interface MakeOrderViewController ()
+//地址
+@property (weak, nonatomic) IBOutlet UILabel *nameLabel;
+@property (weak, nonatomic) IBOutlet UILabel *phoneLabel;
+@property (weak, nonatomic) IBOutlet UILabel *addressLabel;
+@property (weak, nonatomic) IBOutlet UIView *hasAddressView;
+@property (weak, nonatomic) IBOutlet UIView *noAddressView;
+
+//商品信息
+@property (weak, nonatomic) IBOutlet UIImageView *goodCoverImageView;
+@property (weak, nonatomic) IBOutlet UILabel *goodTitleLabel;
+@property (weak, nonatomic) IBOutlet UILabel *goodPriceLabel;
+@property (weak, nonatomic) IBOutlet UIView *goodTipView;
+
+@property (weak, nonatomic) IBOutlet UILabel *totalPayLabel;
+@end
+
+@implementation MakeOrderViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.goodCoverImageView.layer.cornerRadius = 4.0;
+    self.goodCoverImageView.layer.masksToBounds = YES;
+    
+    self.goodTipView.layer.cornerRadius = 2.0;
+    self.goodTipView.layer.borderColor = [UIColor colorWithHexString:@"#FF701C"].CGColor;
+    self.goodTipView.layer.borderWidth = 0.8;
+}
+
+-(void)initData{
+    self.title = @"确认订单";
+}
+
+#pragma mark - Actions
+- (IBAction)payAction:(id)sender {
+    PayViewController *payVC = [[PayViewController alloc] initWithStoryboardName:@"Pay"];
+    [self.navigationController pushViewController:payVC animated:YES];
+}
+
+- (IBAction)addressAction:(id)sender {
+}
+@end

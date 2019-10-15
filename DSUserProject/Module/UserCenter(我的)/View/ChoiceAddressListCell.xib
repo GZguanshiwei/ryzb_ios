@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="14490.70" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+    <device id="retina6_1" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14490.49"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <tableViewCell contentMode="scaleToFill" selectionStyle="none" indentationWidth="10" reuseIdentifier="ChoiceAddressListCellID" rowHeight="113" id="KGk-i7-Jjw" customClass="ChoiceAddressListCell">
+            <rect key="frame" x="0.0" y="0.0" width="377" height="113"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="KGk-i7-Jjw" id="H2p-sc-9uM">
+                <rect key="frame" x="0.0" y="0.0" width="377" height="112.5"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="收货人：利达" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="2R3-3D-RvF">
+                        <rect key="frame" x="18" y="19" width="86" height="17"/>
+                        <fontDescription key="fontDescription" type="boldSystem" pointSize="14"/>
+                        <color key="textColor" red="0.13333333333333333" green="0.13333333333333333" blue="0.13333333333333333" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="186240132021" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="sEH-Q5-ex4">
+                        <rect key="frame" x="209.5" y="19" width="104.5" height="17"/>
+                        <fontDescription key="fontDescription" type="boldSystem" pointSize="14"/>
+                        <color key="textColor" red="0.13333333333333333" green="0.13333333333333333" blue="0.13333333333333333" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="广东省广州市黄埔区" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="W4y-dS-A1j">
+                        <rect key="frame" x="18" y="48" width="119.5" height="16"/>
+                        <fontDescription key="fontDescription" type="system" pointSize="13"/>
+                        <color key="textColor" red="0.13333333333333333" green="0.13333333333333333" blue="0.13333333333333333" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="广东省广州市黄埔区天猫路234号国际城11层10室" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="bLS-4e-Wjw">
+                        <rect key="frame" x="18" y="76" width="289" height="16"/>
+                        <fontDescription key="fontDescription" type="system" pointSize="13"/>
+                        <color key="textColor" red="0.1333333333" green="0.1333333333" blue="0.1333333333" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="BOS-HX-moQ">
+                        <rect key="frame" x="340" y="45.5" width="17" height="22"/>
+                        <state key="normal" image="qrdd_pop02_radio_nor"/>
+                        <state key="selected" image="qrdd_pop02_radio_sel"/>
+                    </button>
+                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="wGf-6B-ttP">
+                        <rect key="frame" x="0.0" y="111.5" width="377" height="1"/>
+                        <color key="backgroundColor" red="0.93333333330000001" green="0.93333333330000001" blue="0.93333333330000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="1" id="d4S-kh-jSR"/>
+                        </constraints>
+                    </view>
+                </subviews>
+                <constraints>
+                    <constraint firstAttribute="bottom" secondItem="bLS-4e-Wjw" secondAttribute="bottom" constant="20.5" id="43l-ew-ueR"/>
+                    <constraint firstItem="wGf-6B-ttP" firstAttribute="leading" secondItem="H2p-sc-9uM" secondAttribute="leading" id="58b-Op-jS7"/>
+                    <constraint firstItem="BOS-HX-moQ" firstAttribute="centerY" secondItem="H2p-sc-9uM" secondAttribute="centerY" id="KFu-fS-4bS"/>
+                    <constraint firstAttribute="trailing" secondItem="sEH-Q5-ex4" secondAttribute="trailing" constant="63" id="N1J-6f-xrN"/>
+                    <constraint firstAttribute="trailing" secondItem="BOS-HX-moQ" secondAttribute="trailing" constant="20" id="NLu-RG-OUI"/>
+                    <constraint firstItem="W4y-dS-A1j" firstAttribute="leading" secondItem="2R3-3D-RvF" secondAttribute="leading" id="O4C-FJ-Wrc"/>
+                    <constraint firstItem="bLS-4e-Wjw" firstAttribute="leading" secondItem="W4y-dS-A1j" secondAttribute="leading" id="R01-On-b6P"/>
+                    <constraint firstItem="bLS-4e-Wjw" firstAttribute="top" secondItem="W4y-dS-A1j" secondAttribute="bottom" constant="12" id="SZO-52-sjf"/>
+                    <constraint firstItem="sEH-Q5-ex4" firstAttribute="centerY" secondItem="2R3-3D-RvF" secondAttribute="centerY" id="Zsu-v5-XIh"/>
+                    <constraint firstAttribute="bottom" secondItem="wGf-6B-ttP" secondAttribute="bottom" id="eH0-iD-QR1"/>
+                    <constraint firstItem="2R3-3D-RvF" firstAttribute="top" secondItem="H2p-sc-9uM" secondAttribute="top" constant="19" id="ebE-af-XAf"/>
+                    <constraint firstItem="W4y-dS-A1j" firstAttribute="top" secondItem="2R3-3D-RvF" secondAttribute="bottom" constant="12" id="fU0-KC-xzB"/>
+                    <constraint firstItem="2R3-3D-RvF" firstAttribute="leading" secondItem="H2p-sc-9uM" secondAttribute="leading" constant="18" id="jYE-0d-YUk"/>
+                    <constraint firstAttribute="trailing" secondItem="wGf-6B-ttP" secondAttribute="trailing" id="miA-hf-Pfy"/>
+                </constraints>
+            </tableViewCellContentView>
+            <viewLayoutGuide key="safeArea" id="aW0-zy-SZf"/>
+            <connections>
+                <outlet property="selectButton" destination="BOS-HX-moQ" id="Ncm-N3-69O"/>
+            </connections>
+            <point key="canvasLocation" x="319.56521739130437" y="61.941964285714285"/>
+        </tableViewCell>
+    </objects>
+    <resources>
+        <image name="qrdd_pop02_radio_nor" width="17" height="17"/>
+        <image name="qrdd_pop02_radio_sel" width="17" height="17"/>
+    </resources>
+</document>

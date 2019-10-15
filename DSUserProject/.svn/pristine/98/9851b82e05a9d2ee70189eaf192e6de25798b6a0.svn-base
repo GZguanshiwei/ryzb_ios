@@ -1,0 +1,41 @@
+//
+//  PayTransferSuccessViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/7/10.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "PayTransferSuccessViewController.h"
+
+@interface PayTransferSuccessViewController ()
+@property (weak, nonatomic) IBOutlet UILabel *showMoneyLabel;
+@property (weak, nonatomic) IBOutlet UILabel *bankNameLabel;
+@property (weak, nonatomic) IBOutlet UILabel *ownerNameLabel;
+@property (weak, nonatomic) IBOutlet UILabel *accountNoLabel;
+
+@end
+
+@implementation PayTransferSuccessViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    
+}
+
+-(void)initData{
+    self.title = @"银行转账";
+    
+    self.showMoneyLabel.text = [NSString stringWithFormat:@"￥%.2f",self.totalPrice];
+}
+
+#pragma mark - Navigation
+-(void)leftButtonEvent:(UIButton *)sender navigationBar:(JMNavigationBar *)navigationBar{
+    [self.navigationController popToRootViewControllerAnimated:YES];
+}
+
+@end

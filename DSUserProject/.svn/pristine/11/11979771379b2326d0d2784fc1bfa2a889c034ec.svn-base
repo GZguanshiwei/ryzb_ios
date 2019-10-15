@@ -1,0 +1,40 @@
+//
+//  LiveGiftGoodsCell.m
+//  JMBaseProject
+//
+//  Created by 潘传标 on 2019/9/4.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "LiveGiftGoodsCell.h"
+
+@interface LiveGiftGoodsCell ()
+@property (weak, nonatomic) IBOutlet UIImageView *imageView;
+@property (weak, nonatomic) IBOutlet UILabel *nameLabel;
+@property (weak, nonatomic) IBOutlet UILabel *moneyLabel;
+
+@end
+
+
+@implementation LiveGiftGoodsCell
+
+- (void)awakeFromNib {
+    [super awakeFromNib];
+    // Initialization code
+}
+
+-(void)setCellData:(GiftModel *)cellData{
+    _cellData = cellData;
+    [self.imageView sd_setImageWithURL:[JMCommonMethod imageUrlWithPath:self.cellData.image]];
+    self.nameLabel.text = self.cellData.name;
+    self.moneyLabel.text = [NSString stringWithFormat:@"%@积分",self.cellData.integral];
+    
+    if(self.cellData.isSelect){
+        self.backgroundColor = [UIColor colorWithHexString:@"#FAFAFA"];
+    }else{
+        self.backgroundColor = [UIColor whiteColor];
+    }
+}
+
+
+@end

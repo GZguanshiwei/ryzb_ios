@@ -1,0 +1,79 @@
+//
+//  ShopCartViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/15.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "ShopCartViewController.h"
+#import "NewsViewController.h"
+#import "StoreSearchViewController.h"
+
+@interface ShopCartViewController ()
+@property (weak, nonatomic) IBOutlet UIView *unreadNumView;
+@property (strong, nonatomic) IBOutlet UILabel *unreadNumLabel;
+
+@end
+
+@implementation ShopCartViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    //获取系统消息未读数
+    [self requsetUnReadCount];
+}
+
+-(void)initControl{
+    self.unreadNumView.hidden = YES;
+    self.unreadNumView.layer.cornerRadius = self.unreadNumView.mj_h/2.0;
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(requsetUnReadCount) name:kNotificationSystemNotice object:nil];
+}
+
+-(void)initData{
+  
+}
+
+#pragma mark - Navigation
+-(BOOL)navUIBaseViewControllerIsNeedNavBar:(JMNavUIBaseViewController *)navUIBaseViewController{
+    return NO;
+}
+
+#pragma mark - Actions
+- (IBAction)messageAction:(id)sender {
+    NewsViewController *newsVC = [[NewsViewController alloc] initWithStoryboardName:@"News"];
+    [self.navigationController pushViewController:newsVC animated:YES];
+}
+- (IBAction)searchAction:(id)sender {
+    //搜索
+    StoreSearchViewController *searchVC = [[StoreSearchViewController alloc] initWithStoryboardName:@"Search"];
+    [self.navigationController pushViewController:searchVC animated:NO];
+}
+
+#pragma mark - 网络
+/**
+ 获取系统消息未读数
+ */
+- (void)requsetUnReadCount {
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [[JMRequestManager sharedManager] POST:kUrlUnReadCount parameters:params completion:^(JMBaseResponse *response) {
+        if (response.error) {
+            
+        }else {
+            NSString *num = [response.responseObject getJsonValue:@"data"];
+            if (num.integerValue == 0) {
+                self.unreadNumView.hidden = YES;
+            }else {
+                self.unreadNumView.hidden = NO;
+                self.unreadNumLabel.text = num;
+            }
+        }
+    }];
+}
+
+@end

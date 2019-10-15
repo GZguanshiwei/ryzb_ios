@@ -1,0 +1,116 @@
+//
+//  ResaleViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/19.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "ResaleViewController.h"
+#import "ResaleCell.h"
+#import "OffShelfViewController.h"
+#import "MoreOperationView.h"
+#import "ShareTipView.h"
+#import "EditResaleGoodViewController.h"
+
+@interface ResaleViewController ()<UITableViewDelegate,UITableViewDataSource,ResaleCellDelegate>
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
+@property (strong, nonatomic) NSMutableArray *tableData;
+@end
+
+@implementation ResaleViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.tableView.dataSource = self;
+    self.tableView.delegate = self;
+    self.tableView.rowHeight = 195.0;
+}
+
+-(void)initData{
+    self.tableData = [[NSMutableArray alloc] init];
+    for(int i=0;i<4;i++){
+        [self.tableData addObject:@"1"];
+    }
+}
+
+#pragma mark - UITableView
+-(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
+    return self.tableData.count;
+}
+
+-(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+    ResaleCell *cell = [tableView dequeueReusableCellWithIdentifier:@"ResaleCell"];
+    cell.delegate = self;
+    return cell;
+}
+
+#pragma mark - ResaleCellDelegate
+-(void)didShare:(NSInteger)index{
+    ShareTipView *shareTipView = [[ShareTipView alloc] initWithXib];
+    [shareTipView showViewWithDoneBlock:^(NSDictionary *params) {
+        
+    }];
+}
+
+-(void)didCustomerService:(NSInteger)index{
+    
+}
+
+-(void)didBuy:(NSInteger)index{
+    
+}
+
+-(void)didMoreOperation:(NSInteger)index{
+    MoreOperationView *moreOperationView = [[MoreOperationView alloc] initWithXib];
+    [moreOperationView showViewWithDoneBlock:^(NSDictionary *params) {
+        NSInteger index = [params getJsonValue:@"ButtonIndex"].integerValue;
+        switch (index) {
+            case 0:
+                //查看原宝贝
+                break;
+            case 1:
+                //修改
+                [self goEidtGoodVC:index];
+                break;
+            case 2:
+                //删除
+                [self deleteOpreation:index];
+                break;
+            default:
+                break;
+        }
+    }];
+}
+
+#pragma mark - Actions
+
+- (IBAction)offShelfAction:(id)sender {
+    //已下架
+    OffShelfViewController *offShelfVC = [[OffShelfViewController alloc] initWithStoryboardName:@"ShopCart"];
+    [self.navigationController pushViewController:offShelfVC animated:YES];
+}
+
+#pragma mark - 跳转
+-(void)deleteOpreation:(NSInteger)index{
+    ScreenCenterTipView *tipView = [[ScreenCenterTipView alloc] initWithXib];
+    tipView.message = @"确定要删除该商品？";
+    tipView.buttonTitles = @[@"取消",@"确定"];
+    [tipView showViewWithDoneBlock:^(NSDictionary * _Nonnull params) {
+        NSInteger buttonIndex = [params getJsonValue:@"ButtonIndex"].integerValue;
+        if(buttonIndex == 1){
+            //TODO
+        }
+    }];
+}
+
+-(void)goEidtGoodVC:(NSInteger)index{
+    EditResaleGoodViewController *editVC = [[EditResaleGoodViewController alloc] initWithStoryboardName:@"ShopCart"];
+    [self.navigationController pushViewController:editVC animated:YES];
+}
+
+@end

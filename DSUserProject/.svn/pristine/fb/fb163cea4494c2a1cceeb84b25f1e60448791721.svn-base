@@ -1,0 +1,439 @@
+//
+//  OrderDetailViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/26.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "OrderDetailViewController.h"
+#import "OrderModel.h"
+#import "RefundViewController.h"
+#import "RefundAndGoodViewController.h"
+#import "EvaluateViewController.h"
+#import "AddressListViewController.h"
+#import "PayViewController.h"
+#import "LogisticsViewController.h"
+
+@interface OrderDetailViewController ()
+@property (weak, nonatomic) IBOutlet UILabel *statusTipLabel;
+@property (weak, nonatomic) IBOutlet UILabel *timeTipLabel;
+
+//收货地址
+@property (weak, nonatomic) IBOutlet UIView *noAddressView;
+@property (weak, nonatomic) IBOutlet UIView *hasAddressView;
+@property (weak, nonatomic) IBOutlet UILabel *nameLabel;
+@property (weak, nonatomic) IBOutlet UILabel *phoneLabel;
+@property (weak, nonatomic) IBOutlet UILabel *addressLabel;
+
+//商品信息
+@property (weak, nonatomic) IBOutlet UIImageView *goodCoverImageView;
+@property (weak, nonatomic) IBOutlet UILabel *goodTitleLabel;
+@property (weak, nonatomic) IBOutlet UIView *afterSaleTagView;
+@property (weak, nonatomic) IBOutlet UILabel *priceLabel;
+
+@property (weak, nonatomic) IBOutlet UILabel *totalPayLabel;
+@property (weak, nonatomic) IBOutlet UILabel *orderNoLabel;
+@property (weak, nonatomic) IBOutlet UIStackView *orderInfoStackView;
+
+@property (nonatomic, strong) OrderModel *order;
+
+@property (weak, nonatomic) IBOutlet UIButton *oneButton;
+@property (weak, nonatomic) IBOutlet UIButton *twoButton;
+@property (weak, nonatomic) IBOutlet UIButton *threeButton;
+
+@property (nonatomic, strong) AddressModel *selectAddress;
+
+@end
+
+@implementation OrderDetailViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.afterSaleTagView.layer.cornerRadius = 2.0;
+    self.afterSaleTagView.layer.borderColor = [UIColor colorWithHexString:@"#DC2C2C"].CGColor;
+    self.afterSaleTagView.layer.borderWidth = 0.8;
+}
+
+-(void)initData{
+    self.title = @"订单详情";
+    self.timeTipLabel.text = nil;
+    [self requestOrderDetail];
+}
+
+-(void)refreshOrderDetail{
+    if(self.order){
+        //订单状态
+        [self refreshState];
+        //收货地址
+        [self refreshAddress];
+        
+        //商品详情
+        [self.goodCoverImageView sd_setImageWithURL:[JMCommonMethod imageUrlWithPath:self.order.good.coverImage]];
+        self.goodTitleLabel.text = self.order.good.title;
+        self.priceLabel.text = [NSString stringWithFormat:@"￥%@",self.order.good.price];
+        self.totalPayLabel.text = [NSString stringWithFormat:@"￥%@",self.order.totalPay];
+        if(self.order.afterSaleState == JMOrderAfterSale_InAudit){
+            self.afterSaleTagView.hidden = NO;
+        }else{
+            self.afterSaleTagView.hidden = YES;
+        }
+        
+        //时间信息
+        self.orderNoLabel.text = [NSString stringWithFormat:@"订单号：%@",self.order.orderNo];
+        [self refreshTimeInfo];
+        
+        //底部操作按钮
+        [self refreshBottomButtons];
+    }
+}
+
+-(void)refreshState{
+    switch (self.order.state) {
+        case JMOrderState_Close:
+            self.statusTipLabel.text = @"交易关闭";
+            self.timeTipLabel.attributedText = nil;
+            break;
+        case JMOrderState_WaitPay:
+            self.statusTipLabel.text = @"等待买家付款";
+            //TODO 还剩 1天 23小时 自动关闭订单
+            break;
+        case JMOrderState_WaitFaHuo:
+            self.statusTipLabel.text = @"等待商家发货";
+            self.timeTipLabel.attributedText = nil;
+            break;
+        case JMOrderState_WaitShouHuo:
+            self.statusTipLabel.text = @"商家已发货";
+            //TODO 还剩 1天 23小时 自动关闭订单
+            break;
+        case JMOrderState_Complete:
+        case JMOrderState_WaitEvaluate:
+            self.statusTipLabel.text = @"交易成功";
+            self.timeTipLabel.attributedText = nil;
+            break;
+        
+        default:
+            break;
+    }
+}
+
+-(void)refreshAddress{
+    BOOL hasAddress = NO;
+    if(self.order.address.phone.length == 0){
+        if(self.selectAddress){
+            //选择了收货地址
+            hasAddress = YES;
+        }else{
+            hasAddress = NO;
+        }
+    }else{
+        hasAddress = NO;
+    }
+    if(hasAddress){
+        //有收货地址
+        self.hasAddressView.hidden = NO;
+        self.noAddressView.hidden = YES;
+        if(self.selectAddress){
+            self.nameLabel.text = [NSString stringWithFormat:@"收货人：%@",self.selectAddress.phone];
+            self.phoneLabel.text = self.selectAddress.phone;
+            self.addressLabel.text = [NSString stringWithFormat:@"收货地址：%@",[self.selectAddress allAddress]];
+        }else{
+            self.nameLabel.text = [NSString stringWithFormat:@"收货人：%@",self.order.address.phone];
+            self.phoneLabel.text = self.order.address.phone;
+            self.addressLabel.text = [NSString stringWithFormat:@"收货地址：%@",self.order.address.address];
+        }
+    }else{
+        //没有收货地址
+        self.hasAddressView.hidden = YES;
+        self.noAddressView.hidden = NO;
+        self.nameLabel.text = nil;
+        self.phoneLabel.text = nil;
+        self.addressLabel.text = nil;
+    }
+}
+
+-(void)refreshTimeInfo{
+    NSMutableArray *array = [[NSMutableArray alloc] init];
+    if(self.order.createTime.length > 0){
+        [array addObject:[NSString stringWithFormat:@"创建时间：%@",self.order.createTime]];
+    }
+    if(self.order.payTime.length > 0){
+        [array addObject:[NSString stringWithFormat:@"支付时间：%@",self.order.payTime]];
+    }
+    if(self.order.faHuoTime.length > 0){
+        [array addObject:[NSString stringWithFormat:@"发货时间：%@",self.order.faHuoTime]];
+    }
+    if(self.order.completeTime.length > 0){
+        [array addObject:[NSString stringWithFormat:@"收货时间：%@",self.order.completeTime]];
+    }
+    for(NSString *str in array){
+        UILabel *label = [[UILabel alloc] init];
+        label.text = str;
+        label.font = [UIFont systemFontOfSize:13 weight:UIFontWeightRegular];
+        label.textColor = [UIColor colorWithHexString:@"#242121"];
+        [self.orderInfoStackView addArrangedSubview:label];
+    }
+}
+
+-(void)refreshBottomButtons{
+    NSMutableArray *buttons = [[NSMutableArray alloc] init];
+    switch (self.order.state) {
+        case JMOrderState_Close:
+            [buttons addObject:@"删除订单"];
+            break;
+        case JMOrderState_WaitPay:
+            [buttons addObject:@"付款"];
+            break;
+        case JMOrderState_WaitFaHuo:
+            if(self.order.afterSaleState == JMOrderAfterSale_InAudit){
+                
+            }else{
+                [buttons addObject:@"申请退款"];
+            }
+            break;
+        case JMOrderState_WaitShouHuo:
+            if(self.order.afterSaleState == JMOrderAfterSale_InAudit){
+                [buttons addObject:@"查看物流"];
+            }else{
+                [buttons addObject:@"确认收货"];
+                [buttons addObject:@"查看物流"];
+                [buttons addObject:@"退款"];
+            }
+            break;
+        case JMOrderState_Complete:
+            [buttons addObject:@"删除订单"];
+            [buttons addObject:@"查看评价"];
+            [buttons addObject:@"查看物流"];
+            break;
+        case JMOrderState_WaitEvaluate:
+            [buttons addObject:@"评价"];
+            [buttons addObject:@"查看物流"];
+            break;
+            
+        default:
+            break;
+    }
+    switch (buttons.count) {
+        case 0:
+            self.oneButton.hidden = YES;
+            self.twoButton.hidden = YES;
+            self.threeButton.hidden = YES;
+            break;
+        case 1:
+            self.oneButton.hidden = NO;
+            self.twoButton.hidden = YES;
+            self.threeButton.hidden = YES;
+            break;
+        case 2:
+            self.oneButton.hidden = NO;
+            self.twoButton.hidden = NO;
+            self.threeButton.hidden = YES;
+            break;
+        case 3:
+            self.oneButton.hidden = NO;
+            self.twoButton.hidden = NO;
+            self.threeButton.hidden = NO;
+            break;
+        default:
+            break;
+    }
+    if(buttons.count >= 1){
+        [self.oneButton setTitle:buttons[0] forState:UIControlStateNormal];
+    }
+    if(buttons.count >= 2){
+        [self.twoButton setTitle:buttons[1] forState:UIControlStateNormal];
+    }
+    if(buttons.count >= 3){
+        [self.threeButton setTitle:buttons[2] forState:UIControlStateNormal];
+    }
+}
+
+#pragma mark - Actions
+- (IBAction)choiceAddressAction:(id)sender {
+    //添加地址
+    if(self.order.address.phone.length == 0){
+        [self goSelectAddressVC];
+    }
+}
+
+- (IBAction)bottomOperationButtonAction:(id)sender {
+    //底部操作按钮
+    UIButton *button = (UIButton *)sender;
+    NSString *title = button.currentTitle;
+    if([title isEqualToString:@"删除订单"]){
+        [self deleteOrder];
+    }else if([title isEqualToString:@"付款"]){
+        [self payOrder];
+    }else if([title isEqualToString:@"申请退款"] || [title isEqualToString:@"退款"]){
+        [self refundOrder];
+    }else if([title isEqualToString:@"查看物流"]){
+        [self goLogisticsVC:self.order.orderNo];
+    }else if([title isEqualToString:@"确认收货"]){
+        [self confirmShouHuo];
+    }else if([title isEqualToString:@"查看评价"]){
+        
+    }else if([title isEqualToString:@"评价"]){
+        [self goEvaluateVC];
+    }
+}
+
+-(void)deleteOrder{
+    ScreenCenterTipView *tipView = [[ScreenCenterTipView alloc] initWithXib];
+    tipView.message = @"确定要删除订单？";
+    tipView.buttonTitles = @[@"取消",@"确定"];
+    [tipView showViewWithDoneBlock:^(NSDictionary * _Nonnull params) {
+        NSInteger buttonIndex = [params getJsonValue:@"ButtonIndex"].integerValue;
+        if(buttonIndex == 1){
+            [self requestDeleteOrder];
+        }
+    }];
+}
+
+-(void)confirmShouHuo{
+    ScreenCenterTipView *tipView = [[ScreenCenterTipView alloc] initWithXib];
+    tipView.message = @"确认收货之后将不能进行退款/退货，是否确认收货？";
+    tipView.buttonTitles = @[@"取消",@"确定"];
+    [tipView showViewWithDoneBlock:^(NSDictionary * _Nonnull params) {
+        NSInteger buttonIndex = [params getJsonValue:@"ButtonIndex"].integerValue;
+        if(buttonIndex == 1){
+            [self requestConfirmShouHuo];
+        }
+    }];
+}
+
+-(void)refundOrder{
+    ScreenCenterTipView *tipView = [[ScreenCenterTipView alloc] initWithXib];
+    tipView.message = @"每个订单只能申请一次退款，未避免审核不通过，请先联系客服协商一致后再申请退款！";
+    tipView.buttonTitles = @[@"取消",@"确定"];
+    [tipView showViewWithDoneBlock:^(NSDictionary * _Nonnull params) {
+        NSInteger buttonIndex = [params getJsonValue:@"ButtonIndex"].integerValue;
+        if(buttonIndex == 1){
+            if(self.order.state == JMOrderState_WaitFaHuo){
+                [self goRefundVC:self.order];
+            }else if(self.order.state == JMOrderState_WaitShouHuo){
+                [self goRefundAndGoodVC:self.order];
+            }
+        }
+    }];
+}
+
+-(void)payOrder{
+    if(self.order.address.phone.length == 0){
+        if(self.selectAddress == nil){
+            [JMProgressHelper toastInWindowWithMessage:@"请选择收货地址"];
+            return;
+        }
+        [self requestAddressCommit];
+    }else{
+        [self goPayVC];
+    }
+}
+
+#pragma mark - 跳转
+-(void)goRefundVC:(OrderModel *)order{
+    //仅退款
+    RefundViewController *refundVC = [[RefundViewController alloc] initWithStoryboardName:@"Order"];
+    refundVC.order = order;
+    [self.navigationController pushViewController:refundVC animated:YES];
+}
+
+-(void)goRefundAndGoodVC:(OrderModel *)order{
+    //退货退款
+    RefundAndGoodViewController *refundAndGoodVC = [[RefundAndGoodViewController alloc] initWithStoryboardName:@"Order"];
+    refundAndGoodVC.order = order;
+    [self.navigationController pushViewController:refundAndGoodVC animated:YES];
+}
+
+-(void)goEvaluateVC{
+    EvaluateViewController *evaluateVC = [[EvaluateViewController alloc] initWithStoryboardName:@"Order"];
+    [self.navigationController pushViewController:evaluateVC animated:YES];
+}
+
+-(void)goSelectAddressVC{
+    AddressListViewController *addressListVC = [[AddressListViewController alloc] initWithStoryboardName:@"Address"];
+    addressListVC.selectBlock = ^(AddressModel * _Nonnull address) {
+        self.selectAddress = address;
+        [self refreshAddress];
+    };
+    [self.navigationController pushViewController:addressListVC animated:YES];
+}
+
+-(void)goPayVC{
+    PayViewController *payVC = [[PayViewController alloc] initWithStoryboardName:@"Pay"];
+    payVC.orderNo = self.order.orderNo;
+    payVC.totalPrice = self.order.totalPay.doubleValue;
+    [self.navigationController pushViewController:payVC animated:YES];
+}
+
+-(void)goLogisticsVC:(NSString *)orderNo{
+    LogisticsViewController *logisticsVC = [[LogisticsViewController alloc] initWithStoryboardName:@"Logistics"];
+    logisticsVC.orderNo = orderNo;
+    [self.navigationController pushViewController:logisticsVC animated:YES];
+}
+
+#pragma mark - 网络
+-(void)requestOrderDetail{
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:self.orderId key:@"orderId"];
+    [[JMRequestManager sharedManager] POST:kUrlOrderDetail parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            NSDictionary *dataDic = response.responseObject[@"data"];
+            self.order = [[OrderModel alloc] initWithDetailDictionary:dataDic];
+            [self refreshOrderDetail];
+        }
+    }];
+}
+
+-(void)requestDeleteOrder{
+    //删除订单
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:self.order.orderId key:@"orderId"];
+    [self showLoading];
+    [[JMRequestManager sharedManager] POST:kUrlDeleteOrder parameters:params completion:^(JMBaseResponse *response) {
+        [self dismissLoading];
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            [JMProgressHelper toastInWindowWithMessage:response.responseObject[@"desc"]];
+            [self.navigationController popViewControllerAnimated:YES];
+        }
+    }];
+}
+
+-(void)requestConfirmShouHuo{
+    //确认收货
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:self.order.orderId key:@"orderId"];
+    [self showLoading];
+    [[JMRequestManager sharedManager] POST:kUrlConfirmShouHuo parameters:params completion:^(JMBaseResponse *response) {
+        [self dismissLoading];
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            [JMProgressHelper toastInWindowWithMessage:response.responseObject[@"desc"]];
+            [self.navigationController popViewControllerAnimated:YES];
+        }
+    }];
+}
+
+-(void)requestAddressCommit{
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:self.order.orderNo key:@"orderNo"];
+    [params setJsonValue:self.selectAddress.addressId key:@"addressId"];
+    [self showLoading];
+    [[JMRequestManager sharedManager] POST:kUrlOrderAddAddress parameters:params completion:^(JMBaseResponse *response) {
+        [self dismissLoading];
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            [self goPayVC];
+        }
+    }];
+}
+@end

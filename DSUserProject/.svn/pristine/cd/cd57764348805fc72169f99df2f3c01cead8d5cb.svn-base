@@ -1,0 +1,13 @@
+//
+//  GoodDetailModel.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/7/13.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "GoodDetailModel.h"
+
+@implementation GoodDetailModel
+
+@end

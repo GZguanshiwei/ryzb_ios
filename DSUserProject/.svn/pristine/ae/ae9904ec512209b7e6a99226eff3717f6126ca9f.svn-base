@@ -1,0 +1,82 @@
+//
+//  IntegralExchangeViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/9/11.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "IntegralExchangeViewController.h"
+#import "MyExchangeListCell.h"
+#import "IntegralExchangeModel.h"
+#import "LogisticsViewController.h"
+
+@interface IntegralExchangeViewController ()<UITableViewDelegate,UITableViewDataSource>
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
+@property (strong, nonatomic) NSMutableArray *tableData;
+@property (strong, nonatomic) JMRefreshTool *refreshTool;
+@end
+
+@implementation IntegralExchangeViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.tableView.dataSource = self;
+    self.tableView.delegate = self;
+    self.tableView.rowHeight = 140;
+}
+
+-(void)initData{
+    [self requestExchangeRecord];
+}
+
+#pragma mark - UITableView
+-(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
+    return self.tableData.count;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    MyExchangeListCell *cell = [tableView dequeueReusableCellWithIdentifier:myExchangeListCellID forIndexPath:indexPath];
+    IntegralExchangeModel *model = self.tableData[indexPath.row];
+    cell.cellData = model;
+    //物流信息
+    cell.logisticsButtonBlock = ^{
+        LogisticsViewController *logisticsVC = [[LogisticsViewController alloc] initWithStoryboardName:@"Logistics"];
+        logisticsVC.orderNo = model.logistics;
+        [self.navigationController pushViewController:logisticsVC animated:YES];
+    };
+    return cell;
+}
+
+#pragma mark - 网络
+-(void)requestExchangeRecord{
+    if(self.refreshTool == nil){
+        JMWeak(self);
+        self.refreshTool = [[JMRefreshTool alloc] initWithScrollView:self.tableView dataAnalysisBlock:^NSArray *(NSDictionary *responseData) {
+            NSMutableArray *array = [[NSMutableArray alloc] init];
+            NSArray *listArray = responseData[@"data"][@"list"];
+            for(NSDictionary *dic in listArray){
+                IntegralExchangeModel *model = [[IntegralExchangeModel alloc] initWithDictionary:dic];
+                [array addObject:model];
+            }
+            if([weakself.refreshTool isAddData]){
+                [weakself.tableData addObjectsFromArray:array];
+            }else{
+                weakself.tableData = array;
+            }
+            [weakself.tableView reloadData];
+            return array;
+        }];
+        self.refreshTool.requestUrl = kUrlIntegralExchangeRecord;
+        NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+        self.refreshTool.requestParams = params;
+    }
+    [self.tableView.mj_header beginRefreshing];
+}
+
+@end

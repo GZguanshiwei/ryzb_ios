@@ -1,0 +1,49 @@
+//
+//  ResaleTipView.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/7/3.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "ResaleTipView.h"
+
+@interface ResaleTipView ()
+@property (weak, nonatomic) IBOutlet UILabel *priceLabel;
+@property (weak, nonatomic) IBOutlet UILabel *liRunTipLabel;
+@property (weak, nonatomic) IBOutlet UILabel *liRunLabel;
+@property (weak, nonatomic) IBOutlet UITextView *contentTextView;
+
+@end
+
+
+@implementation ResaleTipView
+
+/*
+// Only override drawRect: if you perform custom drawing.
+// An empty implementation adversely affects performance during animation.
+- (void)drawRect:(CGRect)rect {
+    // Drawing code
+}
+*/
+- (IBAction)cancelAction:(id)sender {
+    [self hideView];
+}
+- (IBAction)resaleAction:(id)sender {
+    if(self.buttonClickBlock){
+        NSMutableDictionary *params = [[NSMutableDictionary alloc] init];
+        [params setJsonValue:@"1" key:@"ButtonIndex"];
+        self.buttonClickBlock(params);
+    }
+    [self hideView];
+}
+- (IBAction)infoAction:(id)sender {
+    if(self.buttonClickBlock){
+        NSMutableDictionary *params = [[NSMutableDictionary alloc] init];
+        [params setJsonValue:@"0" key:@"ButtonIndex"];
+        self.buttonClickBlock(params);
+    }
+    [self hideView];
+}
+
+@end

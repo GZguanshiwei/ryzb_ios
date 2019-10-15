@@ -1,0 +1,18 @@
+//
+//  JMPickPhotoTool.h
+//  JMBaseProject
+//
+//  Created by liuny on 2018/6/6.
+//  Copyright © 2018年 liuny. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+@interface JMPickPhotoTool : NSObject
+//使用系统弹框+UIImagePickerController
+-(void)startSystemPickPhotoWithDoneBlock:(void(^)(NSArray<UIImage *> *pickImage))doneBlock;
+//使用自定义弹出框
+-(void)startCustomPickPhotoWithDoneBlock:(void(^)(NSArray<UIImage *> *pickImage))doneBlock;
+//使用系统弹框+TZImagePickerController
+-(void)startTZImagePickPhotoWithMaxImagesCount:(NSInteger)imgCount doneBlock:(void(^)(NSArray<UIImage *> *pickImage))doneBlock needCrop:(BOOL)needCrop;
+@end

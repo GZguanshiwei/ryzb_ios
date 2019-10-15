@@ -1,0 +1,683 @@
+//
+//  LivePlayViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/17.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "LivePlayViewController.h"
+#import "ComplaintViewController.h"
+#import "LiveCommentViewController.h"
+#import "TCMsgModel.h"
+#import "MLVBLiveRoom.h"
+#import "LiveMessageCell.h"
+#import "RoomDetailModel.h"
+#import "LiveInfoViewController.h"
+#import "LiveLevelViewController.h"
+#import "LiveGiftViewController.h"
+#import "LiveLevelModel.h"
+
+@interface LivePlayViewController ()<UITextFieldDelegate,UITableViewDelegate,UITableViewDataSource,MLVBLiveRoomDelegate>
+
+@property (weak, nonatomic) IBOutlet UILabel *titleLabel;
+@property (weak, nonatomic) IBOutlet UILabel *onlinePeopleLabel;
+@property (weak, nonatomic) IBOutlet UILabel *idLabel;
+@property (weak, nonatomic) IBOutlet UITextField *inputContentTF;
+@property (weak, nonatomic) IBOutlet UIButton *storeButton;
+//赞
+@property (weak, nonatomic) IBOutlet UIView *zanNumView;
+@property (weak, nonatomic) IBOutlet UILabel *zanNumLabel;
+@property (weak, nonatomic) IBOutlet UIButton *zanButton;
+//评论
+@property (weak, nonatomic) IBOutlet UIView *commentNumView;
+@property (weak, nonatomic) IBOutlet UILabel *commentNumLabel;
+
+@property (weak, nonatomic) IBOutlet UIScrollView *scrollView;
+
+@property (weak, nonatomic) IBOutlet UITableView *messageTableView;
+@property (strong, nonatomic) NSMutableArray *messageArray;
+@property (strong, nonatomic) IBOutlet UIImageView *gradeImageView;
+@property (strong, nonatomic) IBOutlet UILabel *gradeValueLabel;
+
+
+@property (nonatomic, strong) LiveInfoViewController *roomInfoVC;
+@property (strong, nonatomic) NSString *playUrl;
+@property (nonatomic, retain) MLVBLiveRoom* liveRoom;
+@property (assign, nonatomic) BOOL isNotifiedEnterGroup;
+@property (strong, nonatomic) RoomDetailModel *roomDetail;
+@property (assign, nonatomic) BOOL isTourists;
+@end
+
+@implementation LivePlayViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+    self.view.userInteractionEnabled = YES;
+  
+}
+
+
+-(void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender{
+    if([segue.identifier isEqualToString:@"Info"]){
+        self.roomInfoVC = (LiveInfoViewController *)segue.destinationViewController;
+    }
+}
+
+-(void)initControl{
+    self.fd_interactivePopDisabled = YES;
+    self.view.backgroundColor = kColorMain;
+    
+    self.zanNumView.layer.cornerRadius = self.zanNumView.mj_h/2.0;
+    self.commentNumView.layer.cornerRadius = self.commentNumView.mj_h/2.0;
+    
+    self.scrollView.contentOffset = CGPointMake(kScreenWidth, 0);
+    
+    self.messageTableView.dataSource = self;
+    self.messageTableView.delegate = self;
+    self.messageTableView.rowHeight = UITableViewAutomaticDimension;
+    self.messageTableView.estimatedRowHeight = 28.0;
+    
+    self.inputContentTF.delegate = self;
+    
+    NSAttributedString *attrString = [[NSAttributedString alloc] initWithString:@"说点什么吧~" attributes:@{NSForegroundColorAttributeName:[UIColor whiteColor]}];
+    self.inputContentTF.attributedPlaceholder = attrString;
+}
+
+-(void)initData{
+    self.isNotifiedEnterGroup = NO;
+    self.liveRoom = [MLVBLiveRoom sharedInstance];
+    [self.liveRoom setCameraMuteImage:[UIImage imageNamed:@"pause_publish.jpg"]];
+    self.liveRoom.delegate = self;
+    
+    NSNotificationCenter *nc = [NSNotificationCenter defaultCenter];
+    [nc addObserver:self selector:@selector(refreshOnlinePeople:) name:kNotificationLiveOnlinePeopleChange object:nil];
+    [nc addObserver:self selector:@selector(orderPaying) name:kNotificationOrderPaying object:nil];
+    [nc addObserver:self selector:@selector(orderPaySuccess) name:kNotificationOrderPaySuccess object:nil];
+    //被禁言
+    [nc addObserver:self selector:@selector(liveRoomBanned:) name:kNotificationLiveRoomBanned object:nil];
+    
+    [self requestRoomInfo];
+    JMLoginUserModel *user =  [JMProjectManager sharedJMProjectManager].loginUser;
+    if ([user.sessionId isEqualToString:@"sessionId"]) {
+        self.isTourists = YES;
+    }else
+    {
+        self.isTourists = NO;
+    }
+    
+    [self requestMyLiveLevel];
+//    [[MLVBLiveRoom sharedInstance] setSelfProfile:user.nickName avatarURL:user.headUrl completion:nil];
+}
+-(void)refreshRoomDetail{
+    if(self.roomDetail){
+        self.titleLabel.text = self.roomDetail.name;
+        self.onlinePeopleLabel.text = self.roomDetail.onlinePeopleNum;
+        self.idLabel.text = [NSString stringWithFormat:@"ID:%@",self.roomDetail.roomNo];
+        self.zanNumLabel.text = self.roomDetail.zanNum;
+        
+        self.roomInfoVC.roomDetail = self.roomDetail;
+        self.storeButton.selected = self.roomDetail.isAttention;
+        
+        self.commentNumLabel.text = self.roomDetail.commentNum;
+    }
+}
+
+-(void)refreshOnlinePeople:(NSNotification *)note{
+    NSString *number = note.object;
+    self.onlinePeopleLabel.text = number;
+}
+
+/**
+ 被禁言
+ */
+- (void)liveRoomBanned:(NSNotification *)note {
+    NSString *desc = note.object;
+    ScreenCenterTipView *tipView = [[ScreenCenterTipView alloc] initWithXib];
+    tipView.message = desc;
+    tipView.buttonTitles = @[@"确定"];
+    [tipView showViewWithDoneBlock:^(NSDictionary * _Nonnull params) {
+    }];
+}
+
+/**
+ 正在付款
+ */
+- (void)orderPaying {
+    //发送自定义消息
+    [self.liveRoom sendRoomCustomMsg:[@(TCMsgModelType_Paying) stringValue] msg:nil completion:nil];
+}
+
+/**
+ 付款成功
+ */
+- (void)orderPaySuccess {
+    //发送自定义消息
+    [self.liveRoom sendRoomCustomMsg:[@(TCMsgModelType_PaySuccess) stringValue] msg:nil completion:nil];
+}
+
+- (void)startRtmp {
+    [[UIApplication sharedApplication] setIdleTimerDisabled:YES];
+    if (![self checkPlayUrl:self.playUrl]) {
+        return;
+    }
+    [self initRoomLogic];
+}
+
+- (void)stopRtmp {
+    if (self.liveRoom) {
+        [self.liveRoom exitRoom:self.roomDetail.roomId isCreator:NO completion:^(int errCode, NSString *errMsg) {
+            NSLog(@"exitRoom: errCode[%d] errMsg[%@]", errCode, errMsg);
+        }];
+    }
+    [[UIApplication sharedApplication] setIdleTimerDisabled:NO];
+}
+
+- (void)initRoomLogic {
+    [self.liveRoom enterRoom:self.roomId playUrl:self.playUrl view:self.videoParentView completion:^(int errCode, NSString *errMsg) {
+        NSLog(@"enterRoom: errCode[%d] errMsg[%@]", errCode, errMsg);
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (errCode == 0) {
+                NSLog(@"连接成功");
+                
+                [self.liveRoom sendRoomCustomMsg:[@(TCMsgModelType_MemberEnterRoom) stringValue] msg:nil completion:nil];
+                self.isNotifiedEnterGroup = YES;
+            } else {
+                NSLog(@"进入直播间失败");
+                [JMProgressHelper toastInWindowWithMessage:[NSString stringWithFormat:@"%@%d", @"进入直播间失败", errCode]];
+                [self closeVC];
+            }
+        });
+    }];
+}
+
+- (BOOL)checkPlayUrl:(NSString *)playUrl {
+    if (!([playUrl hasPrefix:@"http:"] || [playUrl hasPrefix:@"https:"] || [playUrl hasPrefix:@"rtmp:"] )) {
+        [JMProgressHelper toastInWindowWithMessage:@"播放地址不合法，目前仅支持rtmp,flv,hls,mp4播放方式!"];
+        return NO;
+    }
+    
+    if ([playUrl hasPrefix:@"rtmp:"]) {
+        
+    } else if (([playUrl hasPrefix:@"https:"] || [playUrl hasPrefix:@"http:"]) && [playUrl rangeOfString:@".flv"].length > 0) {
+        
+    } else{
+        [JMProgressHelper toastInWindowWithMessage:@"播放地址不合法，直播目前仅支持rtmp,flv播放方式!"];
+        return NO;
+    }
+
+    return YES;
+}
+
+- (void)closeVC{
+    [self stopRtmp];
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    
+    if (self.playUrl) {
+        if(self.isNotifiedEnterGroup){
+            [self requestExitRoom];
+            [self.liveRoom sendRoomCustomMsg:[@(TCMsgModelType_MemberQuitRoom) stringValue] msg:nil completion:nil];
+        }
+    }
+    [self.navigationController dismissViewControllerAnimated:YES completion:nil];
+}
+
+
+
+#pragma mark - MLVBLiveRoomDelegate
+- (void)onDebugLog:(NSString *)msg {
+    NSLog(@"onDebugLog:%@", msg);
+}
+
+- (void)onRoomDestroy:(NSString *)roomID {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSLog(@"onRoomDestroy, roomID:%@", roomID);
+        [JMProgressHelper toastInWindowWithMessage:@"直播结束"];
+        [[JMProjectManager sharedJMProjectManager] exitRoom:self.roomId];
+//        [self closeVC];
+    });
+}
+
+- (void)onError:(int)errCode errMsg:(NSString *)errMsg extraInfo:(NSDictionary *)extraInfo {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSLog(@"onError:%d, %@", errCode, errMsg);
+        if(errCode != 0){
+            if (errCode == ROOM_ERR_IM_FORCE_OFFLINE) {
+                // IM被强制下线（如多端登录）
+//                [self closeVC];
+                [[JMProjectManager sharedJMProjectManager] exitRoom:self.roomId];
+              
+            }else {
+                [JMProgressHelper toastInWindowWithMessage:@"直播中断"];
+//                [self closeVC];
+                [[JMProjectManager sharedJMProjectManager] exitRoom:self.roomId];
+            }
+        }
+    });
+}
+
+- (void)onRecvRoomTextMsg:(NSString *)roomID userID:(NSString *)userID userName:(NSString *)userName userAvatar:(NSString *)userAvatar message:(NSString *)message {
+    TCMsgModel *msg = [[TCMsgModel alloc] init];
+    msg.userId = userID;
+    msg.userHeadImageUrl = userAvatar;
+    msg.userName = userName;
+    msg.msgType = TCMsgModelType_NormalMsg;
+    msg.userMsg = message;
+    [self handleIMMessage:msg];
+}
+
+- (void)onRecvRoomCustomMsg:(NSString *)roomID userID:(NSString *)userID userName:(NSString *)userName userAvatar:(NSString *)userAvatar cmd:(NSString *)cmd message:(NSString *)message {
+    TCMsgModel *msg = [[TCMsgModel alloc] init];
+    msg.userId = userID;
+    msg.userHeadImageUrl = userAvatar;
+    msg.userName = userName.length > 0? userName : userID;
+    msg.msgType = [cmd integerValue];
+    switch (msg.msgType) {
+        case TCMsgModelType_MemberEnterRoom:
+            msg.userMsg = @"加入房间";
+            break;
+        case TCMsgModelType_MemberQuitRoom:
+            msg.userMsg = @"退出房间";
+            break;
+        case TCMsgModelType_Praise:
+            msg.userMsg  =  @"点了个赞";
+            self.roomDetail.zanNum = [NSString stringWithFormat:@"%ld",self.roomDetail.zanNum.integerValue+1];
+            self.zanNumLabel.text = self.roomDetail.zanNum;
+            break;
+        case TCMsgModelType_Focus0nMsg:
+            msg.userMsg  =  @"关注了你";
+//            self.roomDetail.zanNum = [NSString stringWithFormat:@"%ld",self.roomDetail.zanNum.integerValue+1];
+//            self.zanNumLabel.text = self.roomDetail.zanNum;
+            break;
+        case TCMsgModelType_Paying:
+            msg.userMsg = @"正在付款";
+            break;
+        case TCMsgModelType_PaySuccess:
+            msg.userMsg = @"付款成功";
+            break;
+        case TCMsgModelType_AnchorMsg:
+            msg.userMsg = message;
+            break;
+        default:
+            break;
+    }
+    [self handleIMMessage:msg];
+}
+
+- (void)handleIMMessage:(TCMsgModel *)msg{
+    if(self.messageArray == nil){
+        self.messageArray = [[NSMutableArray alloc] init];
+    }
+    if (msg.msgType == TCMsgModelType_MemberQuitRoom) {
+        return;
+    }
+    [self.messageArray addObject:msg];
+    [self.messageTableView reloadData];
+    //滚动到底部
+    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:(self.messageArray.count-1) inSection:0];
+    [self.messageTableView scrollToRowAtIndexPath:indexPath atScrollPosition:UITableViewScrollPositionBottom animated:NO];
+}
+
+#pragma mark - UITextFieldDelegate
+- (BOOL)textFieldShouldReturn:(UITextField *)textField{
+    [super textFieldShouldReturn:textField];
+    NSString *textMsg = [textField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    if (textMsg.length <= 0) {
+        textField.text = @"";
+        [JMProgressHelper toastInWindowWithMessage:@"消息不能为空"];
+        return YES;
+    }
+    JMLoginUserModel *loginUser = [JMProjectManager sharedJMProjectManager].loginUser;
+    
+    TCMsgModel *msgModel = [[TCMsgModel alloc] init];
+    msgModel.userName = @"我";
+    msgModel.userId = loginUser.userId;
+    //替换手机号码
+    msgModel.userMsg  =  [JMCommonMethod getTelephoneNumWith:textMsg];
+    msgModel.userHeadImageUrl = loginUser.headUrl;
+    msgModel.msgType = TCMsgModelType_NormalMsg;
+    [[MLVBLiveRoom sharedInstance] sendRoomTextMsg:msgModel.userMsg completion:^(int errCode, NSString *errMsg) {
+        NSLog(@"===[%d],[%@]===",errCode,errMsg);
+        if (errCode == 10017) {
+            //因被禁言而不能发送消息，请检查发送者是否被设置禁言。
+            msgModel.userMsg  = @"禁言中";
+            [self handleIMMessage:msgModel];
+        }else if (errCode == 80001) {
+            //文本安全打击，文本中可能包含敏感词汇
+            msgModel.userMsg  = @"文本中可能包含敏感词汇，无法发送";
+            [self handleIMMessage:msgModel];
+        }else {
+            [self handleIMMessage:msgModel];
+        }
+    }];
+    
+    self.inputContentTF.text = nil;
+    return YES;
+}
+
+#pragma mark - Navigation
+-(BOOL)navUIBaseViewControllerIsNeedNavBar:(JMNavUIBaseViewController *)navUIBaseViewController{
+    return NO;
+}
+
+- (UIReturnKeyType)textViewControllerLastReturnKeyType:(JMTextViewController *)textViewController
+{
+    return UIReturnKeySend;
+}
+
+#pragma mark - UITableView
+-(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
+    return self.messageArray.count;
+}
+
+-(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+    LiveMessageCell *cell = [tableView dequeueReusableCellWithIdentifier:@"LiveMessageCell"];
+    TCMsgModel *msg = self.messageArray[indexPath.row];
+    switch (msg.msgType) {
+        case TCMsgModelType_MemberEnterRoom:
+//        case TCMsgModelType_MemberQuitRoom:
+        {
+            NSString *message = [NSString stringWithFormat:@"%@ %@",msg.userName,msg.userMsg];
+            NSMutableAttributedString *attriStr = [[NSMutableAttributedString alloc] initWithString:message];
+            [attriStr addAttribute:NSForegroundColorAttributeName value:[UIColor colorWithHexString:@"#46C596"] range:NSMakeRange(0, message.length)];
+            cell.contentLabel.attributedText = attriStr;
+        }
+            break;
+        case TCMsgModelType_NormalMsg:
+        {
+            NSString *message = [NSString stringWithFormat:@"%@: %@",msg.userName,msg.userMsg];
+            NSMutableAttributedString *attriStr = [[NSMutableAttributedString alloc] initWithString:message];
+            [attriStr addAttribute:NSForegroundColorAttributeName value:[UIColor colorWithHexString:@"#46C596"] range:NSMakeRange(0, msg.userName.length+1)];
+            cell.contentLabel.attributedText = attriStr;
+        }
+            break;
+        case TCMsgModelType_Focus0nMsg:
+        case TCMsgModelType_Praise:
+        {
+            NSString *message = [NSString stringWithFormat:@"%@ %@",msg.userName,msg.userMsg];
+            NSMutableAttributedString *attriStr = [[NSMutableAttributedString alloc] initWithString:message];
+            [attriStr addAttribute:NSForegroundColorAttributeName value:[UIColor colorWithHexString:@"#46C596"] range:NSMakeRange(0, msg.userName.length)];
+            cell.contentLabel.attributedText = attriStr;
+        }
+            break;
+        case TCMsgModelType_Paying:
+        {
+            NSString *message = [NSString stringWithFormat:@"%@ %@",msg.userName,msg.userMsg];
+            NSMutableAttributedString *attriStr = [[NSMutableAttributedString alloc] initWithString:message];
+            [attriStr addAttribute:NSForegroundColorAttributeName value:[UIColor colorWithHexString:@"#FF701C"] range:NSMakeRange(0, message.length)];
+            cell.contentLabel.attributedText = attriStr;
+        }
+            break;
+        case TCMsgModelType_PaySuccess:
+        {
+            NSString *message = [NSString stringWithFormat:@"%@ %@",msg.userName,msg.userMsg];
+            NSMutableAttributedString *attriStr = [[NSMutableAttributedString alloc] initWithString:message];
+            [attriStr addAttribute:NSForegroundColorAttributeName value:[UIColor colorWithHexString:@"#FDBE1B"] range:NSMakeRange(0, message.length)];
+            cell.contentLabel.attributedText = attriStr;
+        }
+            break;
+        case TCMsgModelType_AnchorMsg:
+        {
+            NSString *message = [NSString stringWithFormat:@"%@: %@",msg.userName,msg.userMsg];
+            NSMutableAttributedString *attriStr = [[NSMutableAttributedString alloc] initWithString:message];
+            [attriStr addAttribute:NSForegroundColorAttributeName value:[UIColor colorWithHexString:@"#ff1c1c"] range:NSMakeRange(0, message.length)];
+            cell.contentLabel.attributedText = attriStr;
+        }
+            break;
+        default:
+            break;
+    }
+    return cell;
+}
+
+
+#pragma mark - Actions
+
+//我的粉丝等级
+- (IBAction)myLevelsAction:(id)sender {
+//    self.levelView.hidden = NO;
+    
+    
+    LiveLevelViewController *levelVC = [[LiveLevelViewController alloc] initWithStoryboardName:@"LivePlay"];
+    levelVC.roomId = self.roomId;
+    JMNavigationController *nav = [[JMNavigationController alloc] initWithRootViewController:levelVC];
+    //使用这种模式，后面的内容不会隐藏
+    nav.modalPresentationStyle = UIModalPresentationCustom;
+    [self presentViewController:nav animated:YES completion:nil];
+}
+
+
+- (IBAction)closeAction:(id)sender {
+    //关闭
+    [[JMProjectManager sharedJMProjectManager] liveSmallPlay:self.roomId];
+}
+
+- (IBAction)complaintAction:(id)sender {
+    if (self.isTourists) {
+        LoginViewController *loginVC = [[LoginViewController alloc] initWithStoryboardName:@"RegisterAndLogin"];
+        [self.navigationController pushViewController:loginVC  animated:YES];
+        return;
+    }
+    //投诉
+    [self goComplaintVC];
+}
+
+- (IBAction)shareAction:(id)sender {
+    if (self.isTourists) {
+        LoginViewController *loginVC = [[LoginViewController alloc] initWithStoryboardName:@"RegisterAndLogin"];
+        [self.navigationController pushViewController:loginVC  animated:YES];
+        return;
+    }
+    //分享
+    ShareTipView *shareView = [[ShareTipView alloc] initWithXib];
+    shareView.title = [NSString stringWithFormat:@"我发现了一个很有趣的%@直播，大家快来围观",self.roomDetail.name];
+    shareView.subtitle = self.roomDetail.roomDesc;
+    shareView.image = self.roomDetail.coverImage;
+    [shareView showShareWithType:Share_Live requestIds:self.roomId];
+}
+
+- (IBAction)storeAction:(id)sender {
+    //收藏、取消收藏
+    if (self.isTourists) {
+        LoginViewController *loginVC = [[LoginViewController alloc] initWithStoryboardName:@"RegisterAndLogin"];
+        [self.navigationController pushViewController:loginVC  animated:YES];
+        return;
+    }
+    [self requestAttentionRoom];
+}
+
+#pragma mark -  赠送礼物
+- (IBAction)giftAction:(id)sender {
+    if (self.isTourists) {
+        LoginViewController *loginVC = [[LoginViewController alloc] initWithStoryboardName:@"RegisterAndLogin"];
+        [self.navigationController pushViewController:loginVC  animated:YES];
+        return;
+    }
+    LiveGiftViewController *giftVC = [[LiveGiftViewController alloc] initWithStoryboardName:@"LivePlay"];
+    giftVC.toAccountId = self.roomDetail.creatorId;
+    //使用这种模式，后面的内容不会隐藏
+    giftVC.modalPresentationStyle = UIModalPresentationCustom;
+    [self presentViewController:giftVC animated:YES completion:nil];
+
+}
+
+- (IBAction)zanAction:(id)sender {
+    //点赞
+    if (self.isTourists) {
+        LoginViewController *loginVC = [[LoginViewController alloc] initWithStoryboardName:@"RegisterAndLogin"];
+        [self.navigationController pushViewController:loginVC  animated:YES];
+        return;
+    }
+    [self requestZanRoom];
+}
+
+- (IBAction)customerServiceAction:(id)sender {
+    //客服
+    if (self.isTourists) {
+        LoginViewController *loginVC = [[LoginViewController alloc] initWithStoryboardName:@"RegisterAndLogin"];
+        [self.navigationController pushViewController:loginVC  animated:YES];
+        return;
+    }
+    [self goCustomerServiceVC];
+}
+
+- (IBAction)commentAction:(id)sender {
+    //评论
+    if (self.isTourists) {
+        LoginViewController *loginVC = [[LoginViewController alloc] initWithStoryboardName:@"RegisterAndLogin"];
+        [self.navigationController pushViewController:loginVC  animated:YES];
+        return;
+    }
+    LiveCommentViewController *commentVC = [[LiveCommentViewController alloc] initWithStoryboardName:@"LivePlay"];
+    commentVC.roomId = self.roomId;
+    //使用这种模式，后面的内容不会隐藏
+    commentVC.modalPresentationStyle = UIModalPresentationCustom;
+    [self presentViewController:commentVC animated:YES completion:nil];
+}
+
+#pragma mark - 跳转
+-(void)goComplaintVC{
+    ComplaintViewController *complaintVC = [[ComplaintViewController alloc] initWithStoryboardName:@"LivePlay"];
+    complaintVC.userId = self.roomDetail.creatorId;
+    [self.navigationController pushViewController:complaintVC animated:YES];
+}
+
+-(void)goCustomerServiceVC{
+    JMLoginUserModel *loginUser = [JMProjectManager sharedJMProjectManager].loginUser;
+    //联系客服
+    QYSource *source = [[QYSource alloc] init];
+    source.title = loginUser.nickName;
+    source.urlString = loginUser.headUrl;
+    QiYuCustomServiceController *sessionViewController = [[QiYuCustomServiceController alloc] init];
+    sessionViewController.sessionTitle = @"客服";
+    sessionViewController.source = source;
+    [self.navigationController pushViewController:sessionViewController animated:YES];
+//    RCDCustomerServiceViewController *customerVC = [[RCDCustomerServiceViewController alloc] initCustomerService];
+//    [self.navigationController pushViewController:customerVC animated:YES];
+
+}
+
+#pragma mark - 网络
+-(void)requestRoomInfo{
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:self.roomId key:@"roomId"];
+    [[JMRequestManager sharedManager] POST:kUrlRoomInfo parameters:params completion:^(JMBaseResponse *response) {
+        NSString *codeStr = response.responseObject[@"code"];
+        if(codeStr.intValue == 0){
+            ScreenCenterTipView *tipView = [[ScreenCenterTipView alloc] initWithXib];
+            tipView.message = @"当前主播不在线，无法进入房间";
+            tipView.buttonTitles = @[@"我知道了"];
+            [tipView showViewWithDoneBlock:^(NSDictionary * _Nonnull params) {
+
+            }];
+            [self.navigationController dismissViewControllerAnimated:YES completion:nil];
+        }else{
+            NSDictionary *dataDic = response.responseObject[@"data"];
+            NSString *playUrl = [dataDic getJsonValue:@"playUrl"];
+            if(JMIsEmpty(playUrl) == NO){
+                self.playUrl = [playUrl stringByAppendingString:@".flv"];
+            }
+            [self startRtmp];
+            self.roomDetail = [[RoomDetailModel alloc] initWithDictionary:dataDic];
+            [self refreshRoomDetail];
+          
+        }
+    }];
+}
+
+//我的直播间等级
+-(void)requestMyLiveLevel{
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:self.roomId key:@"roomId"];
+    [[JMRequestManager sharedManager] POST:kUrlLiveLevelInfo parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            NSDictionary *dict = response.responseObject[@"data"];
+            LiveLevelModel *model = [[LiveLevelModel alloc] initWithDictionary:dict];
+            self.gradeImageView.image = [UIImage imageNamed:[NSString stringWithFormat:@"live_tag_small_%@",model.grade]];
+            self.gradeValueLabel.text = [NSString stringWithFormat:@"铁值%@",model.ironValue];
+        }
+    }];
+}
+
+-(void)requestAttentionRoom{
+    //关注、取消关注
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:self.roomDetail.roomId key:@"ids"];
+    [params setJsonValue:@"0" key:@"type"];
+    self.storeButton.enabled = NO;
+    
+    NSString *requestUrl;
+    if(self.roomDetail.isAttention){
+        requestUrl = kUrlLiveCancelAttention;
+    }else{
+        requestUrl = kUrlLiveAttention;
+    }
+    
+    [[JMRequestManager sharedManager] POST:requestUrl parameters:params completion:^(JMBaseResponse *response) {
+        self.storeButton.enabled = YES;
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            self.roomDetail.isAttention = !self.roomDetail.isAttention;
+            self.storeButton.selected = self.roomDetail.isAttention;
+            //发送自定义消息
+            if (self.storeButton.selected) {
+                [self.liveRoom sendRoomCustomMsg:[@(TCMsgModelType_Focus0nMsg) stringValue] msg:nil completion:nil];
+                TCMsgModel *msgModel = [[TCMsgModel alloc] init];
+                msgModel.userName = @"我";
+                msgModel.userId = [JMProjectManager sharedJMProjectManager].loginUser.userId;
+                msgModel.userMsg  =  @"关注了该直播间";
+                msgModel.userHeadImageUrl = [JMProjectManager sharedJMProjectManager].loginUser.headUrl;
+                msgModel.msgType = TCMsgModelType_Focus0nMsg;
+                [self handleIMMessage:msgModel];
+            }
+          
+        }
+    }];
+}
+
+-(void)requestZanRoom{
+    //点赞
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:self.roomId key:@"roomId"];
+    [[JMRequestManager sharedManager] POST:kUrlLiveZan parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            self.roomDetail.zanNum = [NSString stringWithFormat:@"%ld",self.roomDetail.zanNum.integerValue+1];
+            self.zanNumLabel.text = self.roomDetail.zanNum;
+            //发送自定义消息
+            [self.liveRoom sendRoomCustomMsg:[@(TCMsgModelType_Praise) stringValue] msg:nil completion:nil];
+            
+            TCMsgModel *msgModel = [[TCMsgModel alloc] init];
+            msgModel.userName = @"我";
+            msgModel.userId = [JMProjectManager sharedJMProjectManager].loginUser.userId;
+            msgModel.userMsg  =  @"点了个赞";
+            msgModel.userHeadImageUrl = [JMProjectManager sharedJMProjectManager].loginUser.headUrl;
+            msgModel.msgType = TCMsgModelType_Praise;
+            
+            [self handleIMMessage:msgModel];
+            
+            CGRect coordinate = [self.zanButton convertRect: self.zanButton.bounds toView:self.view];
+            [JMCommonMethod praiseAnimation:self.view coordinate:coordinate];
+        }
+    }];
+}
+
+-(void)requestExitRoom{
+    //退出房间
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:self.roomId key:@"roomId"];
+    [[JMRequestManager sharedManager] POST:kUrlLiveExitRoom parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            
+        }
+    }];
+}
+
+@end

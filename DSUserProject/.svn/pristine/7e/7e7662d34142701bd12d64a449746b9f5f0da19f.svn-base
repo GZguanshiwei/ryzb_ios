@@ -1,0 +1,247 @@
+//
+//  ResaleSearchResultViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/7/4.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "ResaleSearchResultViewController.h"
+#import "ResaleCell.h"
+#import "GoodDetailViewController.h"
+#import "ShareTipView.h"
+#import "MoreOperationView.h"
+#import "EditResaleGoodViewController.h"
+#import "MakeOrderViewController.h"
+
+@interface ResaleSearchResultViewController ()<ResaleCellDelegate,UITableViewDelegate,UITableViewDataSource>
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
+@property (nonatomic, strong) NSMutableArray *tableData;
+@property (weak, nonatomic) IBOutlet UIView *noDataView;
+
+@property (strong, nonatomic) JMRefreshTool *refreshTool;
+@end
+
+@implementation ResaleSearchResultViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.tableView.dataSource = self;
+    self.tableView.delegate = self;
+    self.tableView.rowHeight = 195.0;
+}
+
+-(void)initData{
+    
+}
+
+-(void)updateShow{
+    if(self.tableData.count == 0){
+        [self.view bringSubviewToFront:self.noDataView];
+    }else{
+        [self.view bringSubviewToFront:self.tableView];
+    }
+    [self.tableView reloadData];
+}
+
+-(void)setSearchKey:(NSString *)searchKey{
+    if(searchKey.length > 0 && [searchKey isEqualToString:_searchKey] == NO){
+        _searchKey = searchKey;
+        [self requestResaleList];
+    }
+}
+
+#pragma mark - UITableView
+-(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
+    return self.tableData.count;
+}
+
+-(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+    ResaleCell *cell = [tableView dequeueReusableCellWithIdentifier:@"ResaleCell"];
+    cell.delegate = self;
+    cell.cellData = self.tableData[indexPath.row];
+    return cell;
+}
+
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
+    GoodDetailViewController *detailVC = [[GoodDetailViewController alloc] initWithStoryboardName:@"GoodDetail"];
+    GoodModel *good = self.tableData[indexPath.row];
+    detailVC.goodId = good.goodId;
+    [self.navigationController pushViewController:detailVC animated:YES];
+}
+
+/**
+ 分享弹窗
+ 
+ @param shareUrl 分享地址
+ */
+- (void)showShareView:(NSString *)shareUrl withGood:(GoodModel *)good{
+    ShareTipView *shareTipView = [[ShareTipView alloc] initWithXib];
+    [shareTipView showViewWithDoneBlock:^(NSDictionary *params) {
+        NSString *ButtonIndex = [params getJsonValue:@"ButtonIndex"];
+        NSString *shareMessage = @"支持第三方鉴定担保交易，确保天然A货，到货7天无理由可退换";
+        switch (ButtonIndex.intValue) {
+            case 0:
+                // 微信
+                [JMUMengHelper shareWebPageToPlatformType:UMSocialPlatformType_WechatSession shareTitle:good.title subTitle:shareMessage thumbImage:good.coverImage shareURL:shareUrl];
+                break;
+            case 1:
+                // 朋友圈
+                [JMUMengHelper shareWebPageToPlatformType:UMSocialPlatformType_WechatTimeLine shareTitle:good.title subTitle:shareMessage thumbImage:good.coverImage shareURL:shareUrl];
+                break;
+            case 2:
+            {
+                // 复制链接
+                UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
+                pasteboard.string = shareUrl;
+                [JMProgressHelper toastInWindowWithMessage:@"复制成功"];
+            }
+                break;
+            default:
+                break;
+        }
+    }];
+}
+
+#pragma mark - ResaleCellDelegate
+-(void)didShare:(NSInteger)index{
+    //分享
+    [self requestGetGoodsResaleShareUrl:index];
+}
+
+-(void)didCustomerService:(NSInteger)index{
+    JMLoginUserModel *loginUser = [JMProjectManager sharedJMProjectManager].loginUser;
+    //联系客服
+    QYSource *source = [[QYSource alloc] init];
+    source.title = loginUser.nickName;
+    source.urlString = loginUser.headUrl;
+    QiYuCustomServiceController *sessionViewController = [[QiYuCustomServiceController alloc] init];
+    sessionViewController.sessionTitle = @"客服";
+    sessionViewController.source = source;
+    [self.navigationController pushViewController:sessionViewController animated:YES];
+//    RCDCustomerServiceViewController *customerVC = [[RCDCustomerServiceViewController alloc] initCustomerService];
+//    [self.navigationController pushViewController:customerVC animated:YES];
+}
+
+-(void)didBuy:(NSInteger)index{
+    MakeOrderViewController *makeOrderVC = [[MakeOrderViewController alloc] initWithStoryboardName:@"GoodDetail"];
+    makeOrderVC.good = self.tableData[index];
+    [self.navigationController pushViewController:makeOrderVC animated:YES];
+}
+
+-(void)didMoreOperation:(NSInteger)index{
+    MoreOperationView *moreOperationView = [[MoreOperationView alloc] initWithXib];
+    [moreOperationView showViewWithDoneBlock:^(NSDictionary *params) {
+        NSInteger buttonIndex = [params getJsonValue:@"ButtonIndex"].integerValue;
+        switch (buttonIndex) {
+            case 0:
+                //查看原宝贝
+                [self goGoodDetailVC:index];
+                break;
+            case 1:
+                //修改
+                [self goEidtGoodVC:index];
+                break;
+            case 2:
+                //删除
+                [self deleteOpreation:index];
+                break;
+            default:
+                break;
+        }
+    }];
+}
+
+#pragma mark - 跳转
+- (void)goGoodDetailVC:(NSInteger)index {
+    GoodDetailViewController *detailVC = [[GoodDetailViewController alloc] initWithStoryboardName:@"GoodDetail"];
+    GoodModel *good = self.tableData[index];
+    detailVC.goodId = good.goodId;
+    [self.navigationController pushViewController:detailVC animated:YES];
+}
+
+-(void)deleteOpreation:(NSInteger)index{
+    ScreenCenterTipView *tipView = [[ScreenCenterTipView alloc] initWithXib];
+    tipView.message = @"确定要删除该商品？";
+    tipView.buttonTitles = @[@"取消",@"确定"];
+    [tipView showViewWithDoneBlock:^(NSDictionary * _Nonnull params) {
+        NSInteger buttonIndex = [params getJsonValue:@"ButtonIndex"].integerValue;
+        if(buttonIndex == 1){
+            [self requestDeleteAtIndex:index];
+        }
+    }];
+}
+
+-(void)goEidtGoodVC:(NSInteger)index{
+    EditResaleGoodViewController *editVC = [[EditResaleGoodViewController alloc] initWithStoryboardName:@"ShopCart"];
+    editVC.good = self.tableData[index];
+    [self.navigationController pushViewController:editVC animated:YES];
+}
+
+#pragma mark - 网络
+-(void)requestResaleList{
+    if(self.refreshTool == nil){
+        JMWeak(self);
+        self.refreshTool = [[JMRefreshTool alloc] initWithScrollView:self.tableView dataAnalysisBlock:^NSArray *(NSDictionary *responseData) {
+            NSMutableArray *array = [[NSMutableArray alloc] init];
+            NSDictionary *dataDic = responseData[@"data"];
+            NSArray *listArray = dataDic[@"list"];
+            for(NSDictionary *dic in listArray){
+                GoodModel *model = [[GoodModel alloc] initWithDictionary:dic];
+                [array addObject:model];
+            }
+            if([weakself.refreshTool isAddData] == YES){
+                [weakself.tableData addObjectsFromArray:array];
+            }else{
+                weakself.tableData = array;
+            }
+            [weakself updateShow];
+            return array;
+        }];
+        self.refreshTool.requestUrl = kUrlMyResaleList;
+        
+    }
+    
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:@"1" key:@"type"];
+    [params setJsonValue:self.searchKey key:@"keyword"];
+    self.refreshTool.requestParams = params;
+    [self.tableView.mj_header beginRefreshing];
+}
+
+-(void)requestDeleteAtIndex:(NSInteger)index{
+    //删除
+    GoodModel *good = self.tableData[index];
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:good.goodId key:@"goodsId"];
+    [[JMRequestManager sharedManager] POST:kUrlDeleteResaleGood parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            [JMProgressHelper toastInWindowWithMessage:response.responseObject[@"desc"]];
+            [self.tableData removeObjectAtIndex:index];
+            [self.tableView reloadData];
+        }
+    }];
+}
+
+- (void)requestGetGoodsResaleShareUrl:(NSInteger)index {
+    //获取转售分享链接
+    GoodModel *good = self.tableData[index];
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:good.goodsResaleId key:@"goodsResaleId"];
+    [[JMRequestManager sharedManager] POST:kUrlGetGoodsResaleShareUrl parameters:params completion:^(JMBaseResponse *response) {
+        if (response.error) {
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            NSString *shareUrl = response.responseObject[@"data"];
+            [self showShareView:shareUrl withGood:good];
+        }
+    }];
+}
+
+@end

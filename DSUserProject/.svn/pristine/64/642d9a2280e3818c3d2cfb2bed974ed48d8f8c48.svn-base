@@ -1,0 +1,35 @@
+//
+//  MyCouponModel.h
+//  JMBaseProject
+//
+//  Created by 抽筋的灯 on 2019/9/10.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+NS_ASSUME_NONNULL_BEGIN
+
+@interface MyCouponModel : NSObject
+
+@property (nonatomic, copy) NSString *couponId;
+@property (nonatomic, copy) NSString *type;//0商家使用1直播间使用2全部可用
+@property (nonatomic, copy) NSString *overTime;//过期时间
+@property (nonatomic, copy) NSString *name;//优惠券名称
+@property (nonatomic, copy) NSString *deductionPrice;//优惠价格
+@property (nonatomic, copy) NSString *restrictPrice;//满多少才可以用
+@property (nonatomic, copy) NSString *tips;//使用须知
+
+@property (nonatomic, assign) BOOL canAddUse;//是否可以叠加使用 YES:可以叠加
+@property (nonatomic, assign) BOOL isSelect;
+
+//直播间优惠券
+@property (nonatomic, copy) NSString *roomId;//直播间id
+@property (nonatomic, copy) NSString *roomName;//直播间名称
+
+-(instancetype)initWithDictionary:(NSDictionary *)dict;
+-(instancetype)initWithAlertDictionary:(NSDictionary *)dict;
+-(NSString *)instructionsText;
+@end
+
+NS_ASSUME_NONNULL_END

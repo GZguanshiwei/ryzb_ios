@@ -1,0 +1,64 @@
+//
+//  LiveLevelViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/9/16.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "LiveLevelViewController.h"
+#import "LiveLevelRecordViewController.h"
+
+@interface LiveLevelViewController ()
+
+@end
+
+@implementation LiveLevelViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.view.backgroundColor = [UIColor clearColor];
+}
+
+-(void)initData{
+    [self requestMyLiveLevel];
+}
+
+#pragma mark - UINavigation
+-(BOOL)navUIBaseViewControllerIsNeedNavBar:(JMNavUIBaseViewController *)navUIBaseViewController{
+    return NO;
+}
+
+#pragma mark - Actions
+- (IBAction)closeAction:(id)sender {
+    [self dismissViewControllerAnimated:YES completion:nil];
+}
+
+- (IBAction)recordAction:(id)sender {
+    LiveLevelRecordViewController *recordVC = [[LiveLevelRecordViewController alloc] initWithStoryboardName:@"LivePlay"];
+    [self.navigationController pushViewController:recordVC animated:NO];
+}
+
+- (IBAction)levelRuleAction:(id)sender {
+    HtmlViewController *htmlVC = [[HtmlViewController alloc] init];
+    htmlVC.type = Html_FansLevel;
+    [self.navigationController pushViewController:htmlVC animated:YES];
+}
+
+#pragma mark - 网络
+-(void)requestMyLiveLevel{
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:self.roomId key:@"roomId"];
+    [[JMRequestManager sharedManager] POST:kUrlLiveLevelInfo parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            
+        }
+    }];
+}
+@end

@@ -1,0 +1,45 @@
+//
+//  IntegralRecordListController.m
+//  JMBaseProject
+//
+//  Created by 潘传标 on 2019/9/6.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "IntegralRecordListController.h"
+#import "LiveIronRecordListCell.h"
+@interface IntegralRecordListController ()
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
+
+@end
+
+@implementation IntegralRecordListController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+- (void)initControl
+{
+    self.title = @"积分记录";
+    self.view.backgroundColor = [UIColor whiteColor];
+    [self.tableView registerNib:[UINib nibWithNibName:@"LiveIronRecordListCell" bundle:nil] forCellReuseIdentifier:@"LiveIronRecordListCell"];
+}
+
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return 55;
+}
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return 10;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    LiveIronRecordListCell *listCell = [tableView dequeueReusableCellWithIdentifier:@"LiveIronRecordListCell" forIndexPath:indexPath];
+    return listCell;
+}
+@end

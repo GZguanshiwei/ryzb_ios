@@ -1,0 +1,152 @@
+//
+//  StoreSearchResultViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/7/4.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "StoreSearchResultViewController.h"
+#import "StoreCell.h"
+#import "StoreInvalidCell.h"
+#import "MakeOrderViewController.h"
+#import "GoodDetailViewController.h"
+
+@interface StoreSearchResultViewController ()<UITableViewDelegate,UITableViewDataSource,StoreCellDelegate>
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
+@property (strong, nonatomic) NSMutableArray *tableData;
+@property (weak, nonatomic) IBOutlet UIView *noDataView;
+
+@property (strong, nonatomic) JMRefreshTool *refreshTool;
+@end
+
+@implementation StoreSearchResultViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+
+-(void)initControl{
+    self.tableView.dataSource = self;
+    self.tableView.delegate = self;
+}
+
+-(void)initData{
+    
+}
+
+-(void)updateShow{
+    if(self.tableData.count == 0){
+        [self.view bringSubviewToFront:self.noDataView];
+    }else{
+        [self.view bringSubviewToFront:self.tableView];
+    }
+    [self.tableView reloadData];
+}
+
+-(void)setSearchKey:(NSString *)searchKey{
+    if(searchKey.length > 0 && [searchKey isEqualToString:_searchKey] == NO){
+        _searchKey = searchKey;
+        [self requestSearchStoreWithKey:self.searchKey];
+    }
+}
+
+
+#pragma mark - UITableView
+-(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
+    NSInteger rtn = self.tableData.count;
+    return rtn;
+}
+
+-(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+    StoreCell *cell = [tableView dequeueReusableCellWithIdentifier:@"StoreCell"];
+    cell.delegate = self;
+    cell.indexPath = indexPath;
+    cell.storeGood = self.tableData[indexPath.row];
+    return cell;
+}
+
+-(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
+    CGFloat rtn = 195;
+    return rtn;
+}
+
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
+    GoodDetailViewController *detailVC = [[GoodDetailViewController alloc] initWithStoryboardName:@"GoodDetail"];
+    GoodModel *good = self.tableData[indexPath.row];
+    detailVC.goodId = good.goodId;
+    [self.navigationController pushViewController:detailVC animated:YES];
+}
+
+#pragma mark - StoreCellDelegate
+-(void)didBuy:(NSIndexPath *)indexPath{
+    MakeOrderViewController *makeOrderVC = [[MakeOrderViewController alloc] initWithStoryboardName:@"GoodDetail"];
+    makeOrderVC.good = self.tableData[indexPath.row];
+    [self.navigationController pushViewController:makeOrderVC animated:YES];
+}
+
+-(void)didCancelStore:(NSIndexPath *)indexPath{
+    ScreenCenterTipView *tipView = [[ScreenCenterTipView alloc] initWithXib];
+    tipView.message = @"确定要取消收藏该商品？";
+    tipView.buttonTitles = @[@"取消",@"确定"];
+    [tipView showViewWithDoneBlock:^(NSDictionary * _Nonnull params) {
+        NSInteger buttonIndex = [params getJsonValue:@"ButtonIndex"].integerValue;
+        if(buttonIndex == 1){
+            [self requestCollectionAtIndex:indexPath];
+        }
+    }];
+}
+
+-(void)didCustomerService:(NSIndexPath *)indexPath{
+    RCDCustomerServiceViewController *customerVC = [[RCDCustomerServiceViewController alloc] initCustomerService];
+    [self.navigationController pushViewController:customerVC animated:YES];
+}
+
+#pragma mark - 网络
+-(void)requestSearchStoreWithKey:(NSString *)key{
+    if(self.refreshTool == nil){
+        JMWeak(self);
+        self.refreshTool = [[JMRefreshTool alloc] initWithScrollView:self.tableView dataAnalysisBlock:^NSArray *(NSDictionary *responseData) {
+            NSMutableArray *array = [[NSMutableArray alloc] init];
+            NSDictionary *dataDic = responseData[@"data"];
+            NSArray *listArray = dataDic[@"list"];
+            for(NSDictionary *dic in listArray){
+                GoodModel *model = [[GoodModel alloc] initWithCollectionDictionary:dic];
+                [array addObject:model];
+            }
+            if([weakself.refreshTool isAddData] == YES){
+                [weakself.tableData addObjectsFromArray:array];
+            }else{
+                weakself.tableData = array;
+            }
+            [weakself.tableView reloadData];
+            [weakself updateShow];
+            return array;
+        }];
+        self.refreshTool.requestUrl = kUrlCollectionList;
+    }
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:key key:@"keyword"];
+    self.refreshTool.requestParams = params;
+    
+    [self.tableView.mj_header beginRefreshing];
+}
+
+-(void)requestCollectionAtIndex:(NSIndexPath *)indexPath{
+    //收藏、取消收藏
+    GoodModel *good = self.tableData[indexPath.row];
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:good.goodId key:@"goodsId"];
+    [[JMRequestManager sharedManager] POST:kUrlCollectionGood parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            [JMProgressHelper toastInWindowWithMessage:response.responseObject[@"desc"]];
+            [self.tableData removeObjectAtIndex:indexPath.row];
+            [self.tableView reloadData];
+        }
+    }];
+}
+@end

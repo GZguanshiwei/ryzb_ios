@@ -1,0 +1,68 @@
+//
+//  LiveSmallListCell.m
+//  JMBaseProject
+//
+//  Created by 潘传标 on 2019/9/3.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "LiveSmallListCell.h"
+#import "LiveRoomModel.h"
+@interface LiveSmallListCell()
+@property (weak, nonatomic) IBOutlet UIView *backView;
+
+@property (weak, nonatomic) IBOutlet UIImageView *stateIconImageView;
+@property (weak, nonatomic) IBOutlet UILabel *stateLabel;
+@property (weak, nonatomic) IBOutlet UILabel *titleLabel;
+@property (weak, nonatomic) IBOutlet UIImageView *headImageView;
+@property (weak, nonatomic) IBOutlet UILabel *nameLabel;
+@property (weak, nonatomic) IBOutlet UIImageView *peopleIconImageView;
+@property (weak, nonatomic) IBOutlet UIImageView *liveCoverImageView;
+@property (weak, nonatomic) IBOutlet UIView *mainView;
+@property (weak, nonatomic) IBOutlet UILabel *addressLable;
+@property (weak, nonatomic) IBOutlet UILabel *numLable;
+
+@end
+@implementation LiveSmallListCell
+
+- (void)awakeFromNib
+{
+    [super awakeFromNib];
+    self.backView.layer.cornerRadius = 5;
+    self.backView.layer.masksToBounds = YES;
+    self.headImageView.layer.cornerRadius = self.headImageView.mj_w * 0.5;
+    self.headImageView.layer.masksToBounds = YES;
+}
+
+
+- (void)setRoomModel:(LiveRoomModel *)roomModel
+{
+      _roomModel = roomModel;
+     switch (self.roomModel.state.integerValue) {
+        case 0:
+            self.stateLabel.text = @"直播中";
+            self.stateIconImageView.image = [UIImage imageNamed:@"home_a06"];
+            //在线人数
+            self.peopleIconImageView.hidden = NO;
+             self.numLable.hidden = NO;
+             self.numLable.text = self.roomModel.onlinePeople;
+            break;
+        case 1:
+        case 2:
+            self.stateLabel.text = @"离线中";
+            self.stateIconImageView.image = [UIImage imageNamed:@"home_a07"];
+            //在线人数
+            self.peopleIconImageView.hidden = YES;
+             self.numLable.hidden  = YES;
+            break;
+        default:
+            break;
+    }
+    [self.liveCoverImageView sd_setImageWithURL:[JMCommonMethod imageUrlWithPath:self.roomModel.coverImage]];
+    self.titleLabel.text = self.roomModel.name;
+    [self.headImageView sd_setImageWithURL:[JMCommonMethod imageUrlWithPath:self.roomModel.anchorHead]];
+    self.nameLabel.text = self.roomModel.anchorName;
+    self.addressLable.text = self.roomModel.city;
+    
+}
+@end

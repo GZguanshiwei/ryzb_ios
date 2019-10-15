@@ -1,0 +1,23 @@
+//
+//  FansLevelInforController.h
+//  JMBaseProject
+//
+//  Created by 潘传标 on 2019/9/4.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "JMBaseViewController.h"
+
+typedef NS_ENUM(NSUInteger, FansLevelInforControllerType) {
+    FansLevelInforControllerTypeFansInfor, // 粉丝等级介绍
+    FansLevelInforControllerTypeSorce, // 积分等级介绍
+    FansLevelInforControllerTypesService,
+     FansLevelInforControllerTypeIntegral, //积分规则
+    //鉴宝服务介绍
+    FansLevelInforControllerTypesBargaining //砍价规则
+};
+
+@interface FansLevelInforController : JMBaseViewController
+@property(nonatomic,assign)FansLevelInforControllerType  type;
+@end
+

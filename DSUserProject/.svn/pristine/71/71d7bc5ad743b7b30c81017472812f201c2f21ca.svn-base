@@ -1,0 +1,30 @@
+//
+//  LiveCell.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/28.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "LiveCell.h"
+
+@interface LiveCell ()
+@property (weak, nonatomic) IBOutlet UIImageView *coverImageView;
+@property (weak, nonatomic) IBOutlet UIImageView *statusImageView;
+@property (weak, nonatomic) IBOutlet UILabel *statusLabel;
+@property (weak, nonatomic) IBOutlet UILabel *titleLabel;
+
+@end
+
+@implementation LiveCell
+
+-(void)awakeFromNib{
+    [super awakeFromNib];
+    [self initControl];
+}
+
+-(void)initControl{
+    self.coverImageView.layer.cornerRadius = 7.0;
+}
+
+@end

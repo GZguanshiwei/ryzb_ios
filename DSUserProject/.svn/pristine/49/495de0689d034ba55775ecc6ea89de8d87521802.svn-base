@@ -1,0 +1,43 @@
+//
+//  MyShopEditPhoneViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/28.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "MyShopEditPhoneViewController.h"
+
+@interface MyShopEditPhoneViewController ()
+@property (weak, nonatomic) IBOutlet UITextField *phoneTextField;
+
+@end
+
+@implementation MyShopEditPhoneViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.title = @"联系电话";
+    self.view.backgroundColor = [UIColor whiteColor];
+}
+
+-(void)initData{
+    
+}
+
+#pragma mark - Navigation
+-(UIImage *)jmNavigationBarRightButtonImage:(UIButton *)rightButton navigationBar:(JMNavigationBar *)navigationBar{
+    [JMCommonMethod navigationItemSet:rightButton fontColor:[UIColor whiteColor]];
+    [rightButton setTitle:@"保存" forState:UIControlStateNormal];
+    return nil;
+}
+
+-(void)rightButtonEvent:(UIButton *)sender navigationBar:(JMNavigationBar *)navigationBar{
+    
+}
+
+@end

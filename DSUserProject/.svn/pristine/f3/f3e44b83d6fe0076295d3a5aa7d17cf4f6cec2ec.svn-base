@@ -1,0 +1,63 @@
+//
+//  MyShopViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/26.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "MyShopViewController.h"
+#import "ShareTipView.h"
+#import "ShopOrderViewController.h"
+#import "MyShopEditPhoneViewController.h"
+
+@interface MyShopViewController ()
+@property (weak, nonatomic) IBOutlet UILabel *showPhoneLabel;
+
+@end
+
+@implementation MyShopViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    
+}
+
+-(void)initData{
+    self.title = @"我的店铺";
+}
+
+#pragma mark - Actions
+- (IBAction)shareAction:(id)sender {
+    //分享
+    ShareTipView *shareTipView = [[ShareTipView alloc] initWithXib];
+    [shareTipView showViewWithDoneBlock:^(NSDictionary *params) {
+        
+    }];
+}
+
+- (IBAction)allOrderAction:(id)sender {
+    [self goOrderVCWithType:0];
+}
+
+- (IBAction)orderWithStatusAction:(id)sender {
+    UIButton *button = (UIButton *)sender;
+    [self goOrderVCWithType:button.tag];
+}
+
+- (IBAction)editPhoneAction:(id)sender {
+    MyShopEditPhoneViewController *editPhoneVC = [[MyShopEditPhoneViewController alloc] initWithStoryboardName:@"UserCenter"];
+    [self.navigationController pushViewController:editPhoneVC animated:YES];
+}
+
+#pragma mark - 跳转
+-(void)goOrderVCWithType:(NSInteger)type{
+    ShopOrderViewController *orderVC = [[ShopOrderViewController alloc] initWithStoryboardName:@"ShopOrder"];
+    orderVC.selectIndex = type;
+    [self.navigationController pushViewController:orderVC animated:YES];
+}
+@end

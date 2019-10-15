@@ -1,0 +1,46 @@
+//
+//  WithdrawalViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/26.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "WithdrawalViewController.h"
+#import "WithdrawalSuccessViewController.h"
+
+@interface WithdrawalViewController ()
+@property (weak, nonatomic) IBOutlet UITextField *moneyTextField;
+@property (weak, nonatomic) IBOutlet UITextField *nameTextField;
+@property (weak, nonatomic) IBOutlet UITextField *bankNameTextField;
+@property (weak, nonatomic) IBOutlet UITextField *bankBranchNameTextField;
+@property (weak, nonatomic) IBOutlet UITextField *cardIdTextField;
+
+@end
+
+@implementation WithdrawalViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    
+}
+
+-(void)initData{
+    self.title = @"申请提现";
+}
+
+#pragma mark - Actions
+- (IBAction)commitAction:(id)sender {
+    [self goSuccessVC];
+}
+
+-(void)goSuccessVC{
+    WithdrawalSuccessViewController *successVC = [[WithdrawalSuccessViewController alloc] initWithStoryboardName:@"Wallet"];
+    [self.navigationController pushViewController:successVC animated:YES];
+}
+
+@end

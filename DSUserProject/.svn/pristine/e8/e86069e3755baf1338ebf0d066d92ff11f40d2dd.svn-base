@@ -1,0 +1,166 @@
+//
+//  JMHttpUrl.h
+//  JMBaseProject
+//
+//  Created by liuny on 2018/7/14.
+//  Copyright © 2018年 liuny. All rights reserved.
+//
+
+/*
+ *此处存放项目中接口请求url
+ */
+
+#ifndef JMHttpUrl_h
+#define JMHttpUrl_h
+
+//demo时候使用设为YES，接入接口后设置为NO
+static BOOL kUseTestData = NO;
+
+//#define ImageBaseUrl @"http://10.0.0.160:8082/shop-webcast"
+//#define BaseUrl @"http://10.0.0.250/shop-webcast"
+
+#if DEBUG
+//#define BaseUrl @"http://10.0.0.168:8081/shop-webcast"
+//#define ImageBaseUrl @"http://10.0.0.168:8081/shop-webcast"
+//培鑫本地
+#define BaseUrl @"http://10.0.0.250:8181/shop-webcast"
+#define ImageBaseUrl @"http://10.0.0.250:8181/shop-webcast"
+//测试服
+//#define BaseUrl @"http://120.79.3.175/shop-webcast"
+//#define ImageBaseUrl @"http://120.79.3.175/shop-webcast"
+// 正式服
+//#define BaseUrl @"http://114.55.167.83/shop-webcast"
+//#define ImageBaseUrl @"http://114.55.167.83/shop-webcast"
+#else
+//培鑫本地
+#define BaseUrl @"http://10.0.0.250:8181/shop-webcast"
+#define ImageBaseUrl @"http://10.0.0.250:8181/shop-webcast"
+//测试服
+//#define BaseUrl @"http://120.79.3.175/shop-webcast"
+//#define ImageBaseUrl @"http://120.79.3.175/shop-webcast"
+// 正式服
+//#define BaseUrl @"http://114.55.167.83/shop-webcast"
+//#define ImageBaseUrl @"http://114.55.167.83/shop-webcast"
+#endif
+
+#define fPinUrl(url) [NSString stringWithFormat:@"%@/%@",BaseUrl,url]
+
+#define kUrlAppVersion              fPinUrl(@"api/app/selectAppVersion")
+
+#define RongCloud_SERVICE_ID @"KEFU156412521294939" //客服ID
+
+#pragma mark ------登录注册------
+#define kUrlLogin                   fPinUrl(@"api/account/login")//登录
+#define kUrlLoginUserInfo           fPinUrl(@"api/account/user/myInformation")//获取登录用户信息
+#define kUrlSendCode                fPinUrl(@"api/account/codeByMobile")//发送验证码
+#define kUrlRegister                fPinUrl(@"api/account/registerByMobile")//注册
+#define kUrlLogout                  fPinUrl(@"api/account/logout")//登出
+#define kUrlFindPassword            fPinUrl(@"api/account/findPasswordByMobile")//找回密码
+#define kUrlChangePassword          fPinUrl(@"api/account/updatePwd")//修改密码
+#define kUrlLoginAuthorize          fPinUrl(@"api/account/authorize")//第三方授权登录
+#define kUrlThirdLoginBindPhone     fPinUrl(@"api/account/bdMobileLogin")//第三方登录绑定手机号
+
+#define kUrlTXUserSig               fPinUrl(@"api/account/genUserSig")//云通信的userSig
+#define kUrlTypeList                fPinUrl(@"api/label/listColumnByType")//获取栏目列表
+#define kUrlLiveList                fPinUrl(@"api/room/selectRoomPage")//首页直播间列表
+#define kUrlGoodList                fPinUrl(@"api/goods/pageByColumnId")//根据栏目id获取商品列表
+#define kUrlRoomInfo                fPinUrl(@"api/room/selectRoomDetail")//获取直播间详情
+#define kUrlUploadHead              fPinUrl(@"api/account/user/updateInformation")//更新头像
+#define kUrlCheckCode               fPinUrl(@"api/account/checkCode")//校验旧手机号验证码
+#define kUrlChangePhone             fPinUrl(@"api/account/replaceMobile")//更换手机号码
+#define kUrlUpdatePayPwd            fPinUrl(@"api/account/user/updatePayPwd")//更新支付密码
+
+#define kUrlTypeLevelOne            fPinUrl(@"api/goods/goodsLabel")//商品分类
+#define kUrlMyResaleList            fPinUrl(@"api/goods/pageMyResaleGoods")//我的转售商品列表
+#define kUrlGoodDetail              fPinUrl(@"api/goods/detail")//商品详情
+#define kUrlGoodEvaluateList        fPinUrl(@"api/goods/star/pageByGoods")//商品评论列表
+#define kUrlResaleGood              fPinUrl(@"api/goods/resaleGoods")//转售商品
+#define kUrlCollectionGood          fPinUrl(@"api/user/collect/addOrDel")//添加、删除商品到收藏
+#define kUrlCollectionList          fPinUrl(@"api/user/collect/page")//商品收藏列表
+#define kUrlDeleteResaleGood        fPinUrl(@"api/goods/deleteResaleGoods")//删除转售商品
+#define kUrlEditResaleGood          fPinUrl(@"api/goods/updateMyResaleGoods")//编辑转售的商品
+#define kUrlDownOrder               fPinUrl(@"api/order/create")//创建立即购买订单
+#define kUrlPay                     fPinUrl(@"api/pay/pay")//支付订单
+#define kUrlCancelPay               fPinUrl(@"api/pay/cancelPay")//取消支付
+#define kUrlManyPay                 fPinUrl(@"api/pay/gradingPay")//分次支付订单
+
+#define kUrlBankInfo                fPinUrl(@"api/content/bankContent")//平台银行卡信息
+
+#define kUrlOrderList               fPinUrl(@"api/order/page")//我的订单
+#define kUrlOrderMyOrderNum         fPinUrl(@"api/order/myOrderNum")//我的订单个数
+#define kUrlDeleteOrder             fPinUrl(@"api/order/delOrder")//删除订单
+#define kUrlConfirmShouHuo          fPinUrl(@"api/order/confirmReceipt")//确认收货
+#define kUrlRefundOrder             fPinUrl(@"api/order/refundOnlyMoney")//申请仅退款
+#define kUrlRefundWithGoodOrder     fPinUrl(@"api/order/refundMoneyGoods")//申请退货退款
+#define kUrlRefundList              fPinUrl(@"api/order/refundList")//售后列表
+#define kUrlOrderDetail             fPinUrl(@"api/order/detail")//订单详情
+#define kUrlOrderAddAddress         fPinUrl(@"api/order/setOrderAddress")//为订单设置收货地址
+#define kUrlAfterSaleDetail         fPinUrl(@"api/order/refundDetail")//退款详情
+#define kUrlAfterSaleLogistics      fPinUrl(@"api/order/refundLogisticsNo")//提交退货物流单号
+#define kUrlAfterSaleClose          fPinUrl(@"api/order/cancelRefund")//关闭申请
+
+#define kUrlAccountBlance           fPinUrl(@"api/account/user/cashPrice")//我的钱包
+
+#define kUrlHtmlContent             fPinUrl(@"api/content/get")//获取系统文本，h5文本，图片，各种协议等信息
+#define kUrlComplaintAnchor         fPinUrl(@"api/report/report")//举报投诉用户
+#define kUrlEvaluateGood            fPinUrl(@"api/goods/star/evaluate")//发表评价
+#define kUrlWithdrawRatio           fPinUrl(@"api/configure/getByName")//提现手续费比例
+#define kUrlWithdraw                fPinUrl(@"api/account/user/balanceExtract")//提现
+#define kUrlWithdrawRecord          fPinUrl(@"api/account/user/pageExtractLog")//账单明细
+
+#define kUrlSystemMessage           fPinUrl(@"api/notice/page")//系统消息列表
+#define kUrlUnReadCount             fPinUrl(@"api/notice/unReadCount")//未读消息数
+#define kUrlFeedback                fPinUrl(@"api/suggest/save")//意见反馈
+#define kUrlBanner                  fPinUrl(@"api/img/listByType")//轮播图
+#define kUrlRecommendList           fPinUrl(@"api/goods/page")//商品列表
+#define kUrlLiveAttentionList       fPinUrl(@"api/room/selectMyFollowRoom")//查询我关注的直播间
+#define kUrlLiveAttention           fPinUrl(@"api/follow/followRes")//关注直播间
+#define kUrlLiveCancelAttention     fPinUrl(@"api/follow/cancelFollowRes")//取消关注
+#define kUrlLiveZan                 fPinUrl(@"api/room/zan")//点赞直播间或取消点赞直播间
+
+#define kUrlLogistics               fPinUrl(@"api/order/selectOrderLogistics")//查看订单物流状态
+#define kUrlEditShopMobile          fPinUrl(@"api/account/user/updateShopMobile")//更新店铺手机号
+#define kUrlInviteUrl               fPinUrl(@"api/share/getInviteFriendsShareUrl")//获取邀请好友链接
+#define kUrlLiveExitRoom            fPinUrl(@"api/room/leaveRoom")//离开直播间
+#define kUrlHotSearchList           fPinUrl(@"api/goods/hotSearch")//热门搜索关键词列表
+#define kUrlMyEvaluateWithOrder     fPinUrl(@"api/goods/star/goodsStarByOrderId")//单个订单评论列表
+#define kUrlOrdergoodsCanPay        fPinUrl(@"api/order/goodsCanPay")//是否能购买
+
+#pragma mark ------分享------
+#define kUrlSelectRoomShareUrl         fPinUrl(@"api/share/selectRoomShareUrl")//获取直播间分享地址
+#define kUrlGetGoodsResaleShareUrl     fPinUrl(@"api/share/getGoodsResaleShareUrl")//获取转售分享链接
+#define kUrlGetShopShareUrl            fPinUrl(@"api/share/getShopShareUrl")//获取店铺分享链接
+#define kUrlGetInviteFriendsShareUrl   fPinUrl(@"api/share/getInviteFriendsShareUrl")//获取邀请好友链接
+
+
+#define kUrlCreateBargain           fPinUrl(@"api/bargain/createBargain")//发起单个商品的砍价
+#define kUrlGoodBargainPrice        fPinUrl(@"api/bargain/getBargain")//获取商品的砍价信息
+#define kUrlBargainList             fPinUrl(@"api/bargain/bargainList")//我的砍价列表
+#define kUrlBargainDetail           fPinUrl(@"api/bargain/bargainDetail")//砍价详情
+#define kUrlBargain                 fPinUrl(@"api/bargain/bargain")//进行砍价
+#define kUrlMyMember                fPinUrl(@"api/account/user/myMember")//获取我的会员等级信息
+#define kUrlMyAccountList           fPinUrl(@"api/extract/account/list")//我的提现账户列表
+#define kUrlSaveAccount             fPinUrl(@"api/extract/account/save")//新增提现账户
+#define kUrlDeleteAccount           fPinUrl(@"api/extract/account/delete")//删除提现账户
+#define kUrlMyCouponList            fPinUrl(@"api/coupon/account/page")//我的优惠券列表
+
+#define kUrlIntegralShop            fPinUrl(@"api/shop/integral/page")//积分商城
+#define kUrlMyInfo                  fPinUrl(@"api/account/user/myInformation")//获取用户昵称和头像和经验和积分(获取个人信息)
+#define kUrlIntegralExchangeRecord      fPinUrl(@"api/shop/integral/pageMyExchange")//我兑换的列表(新)
+#define kUrlCouponDetail            fPinUrl(@"api/coupon/account/detail")//优惠券详情(新)
+#define kUrlIntegralExchange        fPinUrl(@"api/shop/integral/exchange")//积分兑换(新)
+#define kUrlDailyTasks              fPinUrl(@"api/configure/dailyTasks")//每日任务 (新)
+
+#define kUrlLiveGiftList            fPinUrl(@"api/gift/page")//礼物列表(新)
+#define kUrlLiveSendGift            fPinUrl(@"api/gift/give/send")//赠送礼物
+#define kUrlLiveLevelRecord         fPinUrl(@"api/room/account/pageRecord")//我的铁值表更记录
+#define kUrlVipLevelRecord          fPinUrl(@"api/account/user/integralOrder")//我的积分记录列表
+#define kUrlLiveLevelInfo           fPinUrl(@"api/room/account/home")//我的直播间等级(新)
+#define kUrlCouponAlert             fPinUrl(@"api/coupon/account/isAlter")//检查是否弹框提示优惠券
+#define kUrlKanJiaShareUrl          fPinUrl(@"api/share/selectBergainShareUrl")//获取砍价分享链接
+#define kUrlJianBaoPrice            fPinUrl(@"api/configure/getByName")//鉴宝费用
+#define kUrlPayManyTimeCreate       fPinUrl(@"api/order/createGradingOrder")//创建分次支付订单
+#define kUrlPayManyHasPay           fPinUrl(@"api/order/gradingPaySurplusPrice")//查看订单分次支付已支付金额
+
+#define kUrlEnd @""
+#endif /* JMHttpUrl_h */

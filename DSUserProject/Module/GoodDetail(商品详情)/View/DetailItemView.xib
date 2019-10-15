@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="14490.70" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+    <device id="retina5_5" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14490.49"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="BtG-v0-74W" customClass="DetailItemView">
+            <rect key="frame" x="0.0" y="0.0" width="414" height="44"/>
+            <subviews>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="252" verticalHuggingPriority="251" horizontalCompressionResistancePriority="751" text="款式" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="bp3-xd-7sc">
+                    <rect key="frame" x="15" y="13.666666666666664" width="29" height="17"/>
+                    <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                    <color key="textColor" red="0.53333333329999999" green="0.53333333329999999" blue="0.53333333329999999" alpha="1" colorSpace="calibratedRGB"/>
+                    <nil key="highlightedColor"/>
+                </label>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="耳饰，耳坠" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="KUB-h0-KS9">
+                    <rect key="frame" x="64" y="13.666666666666664" width="335" height="17"/>
+                    <fontDescription key="fontDescription" type="system" weight="medium" pointSize="14"/>
+                    <color key="textColor" red="0.2666666667" green="0.2666666667" blue="0.2666666667" alpha="1" colorSpace="calibratedRGB"/>
+                    <nil key="highlightedColor"/>
+                </label>
+                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="HuO-GX-CTl">
+                    <rect key="frame" x="15" y="43.666666666666664" width="384" height="0.3333333333333357"/>
+                    <color key="backgroundColor" red="0.93333333330000001" green="0.93333333330000001" blue="0.93333333330000001" alpha="1" colorSpace="calibratedRGB"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="0.5" id="hn0-KS-kjR"/>
+                    </constraints>
+                </view>
+            </subviews>
+            <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+            <constraints>
+                <constraint firstItem="bp3-xd-7sc" firstAttribute="centerY" secondItem="BtG-v0-74W" secondAttribute="centerY" id="05y-db-3Ia"/>
+                <constraint firstAttribute="trailing" secondItem="HuO-GX-CTl" secondAttribute="trailing" constant="15" id="1C2-R0-uTA"/>
+                <constraint firstItem="KUB-h0-KS9" firstAttribute="leading" secondItem="bp3-xd-7sc" secondAttribute="trailing" constant="20" id="2Ew-wQ-o5R"/>
+                <constraint firstAttribute="height" constant="44" id="6cG-Xq-pbL"/>
+                <constraint firstItem="KUB-h0-KS9" firstAttribute="centerY" secondItem="BtG-v0-74W" secondAttribute="centerY" id="FdL-W8-yjr"/>
+                <constraint firstAttribute="bottom" secondItem="HuO-GX-CTl" secondAttribute="bottom" id="LAS-J2-wHQ"/>
+                <constraint firstItem="bp3-xd-7sc" firstAttribute="leading" secondItem="BtG-v0-74W" secondAttribute="leading" constant="15" id="UNE-3x-wsj"/>
+                <constraint firstItem="HuO-GX-CTl" firstAttribute="leading" secondItem="BtG-v0-74W" secondAttribute="leading" constant="15" id="cYG-rn-mL3"/>
+                <constraint firstAttribute="trailing" secondItem="KUB-h0-KS9" secondAttribute="trailing" constant="15" id="d8o-4S-MsD"/>
+            </constraints>
+            <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
+            <viewLayoutGuide key="safeArea" id="tUU-T2-WlI"/>
+            <connections>
+                <outlet property="contentLabel" destination="KUB-h0-KS9" id="hmp-7m-SZ0"/>
+                <outlet property="tipLabel" destination="bp3-xd-7sc" id="w23-Ie-bg9"/>
+            </connections>
+        </view>
+    </objects>
+</document>

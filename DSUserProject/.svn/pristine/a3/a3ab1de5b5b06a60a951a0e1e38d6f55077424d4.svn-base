@@ -1,0 +1,88 @@
+//
+//  JMTabBarController.m
+//  JMBaseProject
+//
+//  Created by liuny on 2018/7/14.
+//  Copyright © 2018年 liuny. All rights reserved.
+//
+
+#import "JMTabBarController.h"
+
+@interface JMTabBarController ()
+
+@end
+
+@implementation JMTabBarController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    [self initControl];
+    [self initData];
+}
+
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+-(void)initControl{
+    //未选中的字体颜色
+    UIColor *colorUnselect = [UIColor blackColor];
+    [[UITabBarItem appearance] setTitleTextAttributes:@{NSForegroundColorAttributeName:colorUnselect} forState:UIControlStateNormal];
+    //选中的字体颜色
+    UIColor *colorSelect = [UIColor redColor];
+    [[UITabBarItem appearance] setTitleTextAttributes:@{NSForegroundColorAttributeName:colorSelect} forState:UIControlStateSelected];
+    //设置不透明
+    self.tabBar.translucent = NO;
+    //设置背景颜色
+    self.tabBar.barTintColor = [UIColor whiteColor];
+    //设置背景图片
+    [self.tabBar setBackgroundImage:nil];
+    //设置阴影图
+    [self.tabBar setShadowImage:nil];
+}
+
+-(void)initData{
+    [self setupViewControllers];
+}
+
+//设置选中与未选中的图标
+-(void)setupBarItem:(UITabBarItem *)item normalImageName:(NSString *)normalName selectImageName:(NSString *)selectName{
+    UIImage *imageSelected = [UIImage imageNamed:selectName];
+    UIImage *imageNormal = [UIImage imageNamed:normalName];
+    item.image = [imageNormal imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
+    item.selectedImage = [imageSelected imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
+}
+
+-(void)setupViewControllers{
+    
+    /*举例
+     NSMutableArray *viewControllers = [[NSMutableArray alloc] init];
+     HomeViewController *vc1 = [[HomeViewController alloc] initWithStoryboardName:@"Home"];
+     JMNavigationController *nav1 = [[JMNavigationController alloc] initWithRootViewController:vc1];
+     [self setupBarItem:nav1.tabBarItem normalImageName:@"Tab1" selectImageName:@"Tab1_Select"];
+     [nav1.tabBarItem setTitle:@"主页"];
+     [viewControllers addObject:nav1];
+     
+     MiYueParkViewController *vc2 = [[MiYueParkViewController alloc] initWithStoryboardName:@"MiYuePark"];
+     JMNavigationController *nav2 = [[JMNavigationController alloc] initWithRootViewController:vc2];
+     [self setupBarItem:nav2.tabBarItem normalImageName:@"Tab2" selectImageName:@"Tab2_Select"];
+     [nav2.tabBarItem setTitle:@"蜜密公园"];
+     [viewControllers addObject:nav2];
+     
+     MessageCenterViewController *vc3 = [[MessageCenterViewController alloc] initWithStoryboardName:@"MessageCenter"];
+     JMNavigationController *nav3 = [[JMNavigationController alloc] initWithRootViewController:vc3];
+     [self setupBarItem:nav3.tabBarItem normalImageName:@"Tab3" selectImageName:@"Tab3_Select"];
+     [nav3.tabBarItem setTitle:@"消息中心"];
+     [viewControllers addObject:nav3];
+     
+     UserCenterViewController *vc4 = [[UserCenterViewController alloc] initWithStoryboardName:@"UserCenter"];
+     JMNavigationController *nav4 = [[JMNavigationController alloc] initWithRootViewController:vc4];
+     [self setupBarItem:nav4.tabBarItem normalImageName:@"Tab4" selectImageName:@"Tab4_Select"];
+     [nav4.tabBarItem setTitle:@"个人中心"];
+     [viewControllers addObject:nav4];
+     
+     self.viewControllers = viewControllers;
+     */
+}
+@end

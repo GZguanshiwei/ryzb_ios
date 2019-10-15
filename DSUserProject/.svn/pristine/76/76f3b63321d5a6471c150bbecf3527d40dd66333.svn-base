@@ -1,0 +1,108 @@
+//
+//  MyBargainingViewController.m
+//  JMBaseProject
+//
+//  Created by 潘传标 on 2019/9/6.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "MyBargainingViewController.h"
+#import "MyBargaingListCell.h"
+#import "MyBargaingDetailController.h"
+@interface MyBargainingViewController ()<UITableViewDataSource,UITableViewDelegate>
+@property (strong, nonatomic) IBOutlet UITableView *tableView;
+@property (nonatomic, strong) NSMutableArray *tableData;
+@property (strong, nonatomic) JMRefreshTool *refreshTool;
+@end
+
+@implementation MyBargainingViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    
+}
+
+- (void)initControl
+{
+    self.title = @"我的砍价";
+}
+
+- (void)initData {
+    [self requestBargainList];
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return 162;
+}
+
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return 10;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    MyBargaingListCell *cell = [tableView dequeueReusableCellWithIdentifier:myBargaingListCellID forIndexPath:indexPath];
+    cell.buttonActionBlock = ^(NSInteger index) {
+        switch (index) {
+            case 0:
+                //直接购买
+                
+                break;
+            case 1:
+                //继续邀请好友
+                [self yaoQingActionBlock];
+                break;
+                
+            default:
+                break;
+        }
+    };
+    return cell;
+}
+
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    MyBargaingDetailController *detailVc = [[MyBargaingDetailController alloc] initWithStoryboardName:@"Mine"];
+    [self.navigationController pushViewController:detailVc animated:YES];
+}
+
+-(void)yaoQingActionBlock
+{
+    [DSZShareView showWithSelctButtonBlock:^(NSInteger index) {
+        
+    }];
+}
+
+#pragma mark - 网络
+-(void)requestBargainList{
+    if(self.refreshTool == nil){
+        MJWeakSelf;
+        self.refreshTool = [[JMRefreshTool alloc] initWithScrollView:self.tableView dataAnalysisBlock:^NSArray *(NSDictionary *responseData) {
+            NSMutableArray *array = [[NSMutableArray alloc] init];
+//            NSArray *listArray = responseData[@"data"][@"list"];
+//            for(NSDictionary *dic in listArray){
+//                GroupNoticeModel *model = [[GroupNoticeModel alloc] initWithDictionary:dic];
+//                [array addObject:model];
+//            }
+            if([weakSelf.refreshTool isAddData]){
+                [weakSelf.tableData addObjectsFromArray:array];
+            }else{
+                weakSelf.tableData = array;
+            }
+            
+            [weakSelf.tableView reloadData];
+            return array;
+        }];
+        
+        self.refreshTool.requestUrl = kUrlBargainList;
+        NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+        self.refreshTool.requestParams = params;
+    }
+    [self.tableView.mj_header beginRefreshing];
+}
+
+@end

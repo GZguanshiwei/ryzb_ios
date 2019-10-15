@@ -1,0 +1,17 @@
+//
+//  AfterSaleModel.h
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/7/11.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+NS_ASSUME_NONNULL_BEGIN
+
+@interface AfterSaleModel : NSObject
+
+@end
+
+NS_ASSUME_NONNULL_END

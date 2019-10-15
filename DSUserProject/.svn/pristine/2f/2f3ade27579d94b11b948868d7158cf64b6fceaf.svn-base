@@ -1,0 +1,71 @@
+//
+//  GoodTypeViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2018/12/24.
+//  Copyright © 2018 liuny. All rights reserved.
+//
+
+#import "GoodTypeViewController.h"
+#import "GroupLevelOneViewController.h"
+#import "GroupLevelTwoViewController.h"
+#import "NewsViewController.h"
+//#import "SearchViewController.h"
+
+@interface GoodTypeViewController()
+@property (weak, nonatomic) IBOutlet UIView *unreadNumView;
+@property (nonatomic, weak) GroupLevelOneViewController *levelOneVC;
+@property (nonatomic, weak) GroupLevelTwoViewController *levelTwoVC;
+@end
+
+@implementation GoodTypeViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender{
+    NSString *identifier = segue.identifier;
+    if([identifier isEqualToString:@"LevelOne"]){
+        self.levelOneVC = (GroupLevelOneViewController *)segue.destinationViewController;
+    }else if([identifier isEqualToString:@"LevelTwo"]){
+        self.levelTwoVC = (GroupLevelTwoViewController *)segue.destinationViewController;
+    }
+}
+
+-(void)initControl{
+    self.unreadNumView.layer.cornerRadius = self.unreadNumView.mj_h/2.0;
+}
+
+-(void)initData{
+    JMWeak(self);
+    self.levelOneVC.changeGroupBlock = ^(NSString * _Nonnull groupId) {
+        [weakself.levelTwoVC changeParentGroup:groupId];
+    };
+}
+
+#pragma mark - UINavigation
+-(BOOL)navUIBaseViewControllerIsNeedNavBar:(JMNavUIBaseViewController *)navUIBaseViewController{
+    return NO;
+}
+
+#pragma mark - Actions
+- (IBAction)searchAction:(id)sender {
+    [self goSearchVC];
+}
+
+- (IBAction)backAction:(id)sender {
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
+- (IBAction)messageAction:(id)sender {
+    NewsViewController *newsVC = [[NewsViewController alloc] initWithStoryboardName:@"News"];
+    [self.navigationController pushViewController:newsVC animated:YES];
+}
+#pragma mark - 跳转
+-(void)goSearchVC{
+//    SearchViewController *searchVC = [[SearchViewController alloc] initWithStoryboardName:@"Home"];
+//    [self.navigationController pushViewController:searchVC animated:YES];
+}
+@end

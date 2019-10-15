@@ -1,0 +1,41 @@
+//
+//  ShopCartViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/15.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "ShopCartViewController.h"
+#import "NewsViewController.h"
+
+@interface ShopCartViewController ()
+@property (weak, nonatomic) IBOutlet UIView *unreadNumView;
+@end
+
+@implementation ShopCartViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    
+}
+
+-(void)initData{
+    
+}
+
+#pragma mark - Navigation
+-(BOOL)navUIBaseViewControllerIsNeedNavBar:(JMNavUIBaseViewController *)navUIBaseViewController{
+    return NO;
+}
+
+#pragma mark - Actions
+- (IBAction)messageAction:(id)sender {
+    NewsViewController *newsVC = [[NewsViewController alloc] initWithStoryboardName:@"News"];
+    [self.navigationController pushViewController:newsVC animated:YES];
+}
+@end

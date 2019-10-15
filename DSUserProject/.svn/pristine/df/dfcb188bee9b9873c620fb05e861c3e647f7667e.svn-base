@@ -1,0 +1,37 @@
+//
+//  LiveInfoViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/28.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "LiveInfoViewController.h"
+
+@interface LiveInfoViewController ()
+
+@end
+
+@implementation LiveInfoViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.view.backgroundColor = [UIColor clearColor];
+}
+
+-(void)initData{
+    
+}
+
+#pragma mark - Actions
+- (IBAction)buyMethodAction:(id)sender {
+    //购买攻略
+    HtmlViewController *htmlVC = [[HtmlViewController alloc] init];
+    htmlVC.type = Html_Buy;
+    [self.navigationController pushViewController:htmlVC animated:YES];
+}
+@end

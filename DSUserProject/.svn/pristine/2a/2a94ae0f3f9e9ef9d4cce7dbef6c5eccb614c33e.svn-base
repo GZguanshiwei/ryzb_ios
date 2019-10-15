@@ -1,0 +1,26 @@
+//
+//  UserAgreementViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2018/11/7.
+//  Copyright © 2018 liuny. All rights reserved.
+//
+
+#import "UserAgreementViewController.h"
+
+@interface UserAgreementViewController ()
+
+@end
+
+@implementation UserAgreementViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.title = @"用户协议";
+}
+
+@end

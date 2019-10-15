@@ -1,0 +1,50 @@
+//
+//  UCInfoViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/25.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "UCInfoViewController.h"
+#import "UCEditNameViewController.h"
+#import "AddressManagerViewController.h"
+
+@interface UCInfoViewController ()
+@property (weak, nonatomic) IBOutlet UILabel *nameLabel;
+@property (strong, nonatomic) IBOutlet UIImageView *headImageView;
+@end
+
+@implementation UCInfoViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.title = @"个人信息";
+}
+
+-(void)initData{
+    
+}
+
+#pragma mark - Actions
+
+- (IBAction)headAction:(id)sender {
+    //头像
+}
+
+- (IBAction)nameAction:(id)sender {
+    //昵称
+    UCEditNameViewController *editNameVC = [[UCEditNameViewController alloc] initWithStoryboardName:@"UserCenter"];
+    [self.navigationController pushViewController:editNameVC animated:YES];
+}
+
+- (IBAction)addressAction:(id)sender {
+    //地址
+    AddressManagerViewController *addressVC = [[AddressManagerViewController alloc] initWithStoryboardName:@"Address"];
+    [self.navigationController pushViewController:addressVC animated:YES];
+}
+@end

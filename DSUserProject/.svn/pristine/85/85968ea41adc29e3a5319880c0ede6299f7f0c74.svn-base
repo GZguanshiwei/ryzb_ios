@@ -1,0 +1,97 @@
+//
+//  MarketLiveViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/15.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "MarketLiveViewController.h"
+#import "MarketLiveCell.h"
+#import "LiveAttentionCell.h"
+#import "SDCycleScrollView.h"
+
+@interface MarketLiveViewController ()<UITableViewDelegate,UITableViewDataSource,UICollectionViewDelegate,UICollectionViewDataSource,UICollectionViewDelegateFlowLayout,SDCycleScrollViewDelegate>
+@property (strong, nonatomic) SDCycleScrollView *cycleImageView;
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
+@property (strong, nonatomic) NSMutableArray *tableData;
+@property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
+@property (strong, nonatomic) NSMutableArray *collectionData;
+@property (weak, nonatomic) IBOutlet UIView *cycleScrollView;
+@end
+
+@implementation MarketLiveViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    //轮播图
+    SDCycleScrollView *cycleImageView = [SDCycleScrollView cycleScrollViewWithFrame:CGRectZero delegate:self placeholderImage:[UIImage imageNamed:@"home_ban"]];
+    cycleImageView.pageControlStyle = SDCycleScrollViewPageContolStyleClassic;
+    cycleImageView.bannerImageViewContentMode = UIViewContentModeScaleAspectFill;
+    cycleImageView.pageDotImage = [UIImage imageNamed:@"home_ban_unsel"];
+    cycleImageView.currentPageDotImage = [UIImage imageNamed:@"home_ban_sel"];
+    //宽高比345:175
+    CGFloat width = kScreenWidth - 30;
+    cycleImageView.frame = CGRectMake(0, 0, width,width*175/345);
+    self.cycleImageView = cycleImageView;
+    [self.cycleScrollView addSubview:cycleImageView];
+    self.cycleImageView.layer.cornerRadius = 7.0;
+    self.cycleImageView.layer.masksToBounds = YES;
+    
+    self.tableView.dataSource = self;
+    self.tableView.delegate = self;
+    self.tableView.rowHeight = 260;
+    
+    self.collectionView.dataSource = self;
+    self.collectionView.delegate = self;
+}
+
+-(void)initData{
+    self.tableData = [[NSMutableArray alloc] init];
+    for(int i=0;i<4;i++){
+        [self.tableData addObject:@"1"];
+    }
+    
+    self.collectionData = [[NSMutableArray alloc] init];
+    for(int i=0;i<4;i++){
+        [self.collectionData addObject:@"1"];
+    }
+    
+    NSMutableArray *array = [[NSMutableArray alloc] init];
+    [array addObject:[UIImage imageNamed:@"home_a04"]];
+    [array addObject:[UIImage imageNamed:@"home_a04"]];
+    self.cycleImageView.localizationImageNamesGroup = array;
+}
+
+#pragma mark - UITableView
+-(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
+    return self.tableData.count;
+}
+
+-(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+    MarketLiveCell *cell = [tableView dequeueReusableCellWithIdentifier:@"MarketLiveCell"];
+    return cell;
+}
+
+#pragma mark - UICollectionView
+-(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
+    NSInteger rtn = MIN(self.collectionData.count, 4);
+    return rtn;
+}
+
+- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
+    LiveAttentionCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"LiveAttentionCell" forIndexPath:indexPath];
+    return cell;
+}
+
+-(CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath{
+    CGSize rtn = CGSizeZero;
+    rtn.width = kScreenWidth/4.0;
+    rtn.height = kScreenWidth/4.0;
+    return rtn;
+}
+@end

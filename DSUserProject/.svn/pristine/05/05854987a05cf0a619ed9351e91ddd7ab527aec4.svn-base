@@ -1,0 +1,35 @@
+//
+//  MyCouponListCell.m
+//  JMBaseProject
+//
+//  Created by 潘传标 on 2019/9/6.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "MyCouponListCell.h"
+
+@interface MyCouponListCell ()
+
+
+
+@end
+
+@implementation MyCouponListCell
+
+- (void)awakeFromNib {
+    [super awakeFromNib];
+    // Initialization code
+}
+
+- (void)setSelected:(BOOL)selected animated:(BOOL)animated {
+    [super setSelected:selected animated:animated];
+
+    // Configure the view for the selected state
+}
+- (IBAction)buttonClick:(UIButton *)sender {
+    if (self.buttonActionBlock) {
+        self.buttonActionBlock(sender.tag);
+    }
+}
+
+@end

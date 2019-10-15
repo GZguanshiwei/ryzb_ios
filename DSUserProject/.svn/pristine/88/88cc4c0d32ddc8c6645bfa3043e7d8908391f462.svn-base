@@ -1,0 +1,54 @@
+//
+//  MyIntegralViewController.m
+//  JMBaseProject
+//
+//  Created by 潘传标 on 2019/9/6.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "MyIntegralViewController.h"
+#import "FansLevelInforController.h"
+#import "IntegralMallListController.h"
+@interface MyIntegralViewController ()
+
+@end
+
+@implementation MyIntegralViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+- (void)initControl
+{
+    self.title = @"我的积分";
+}
+
+
+- (IBAction)selectButtonClcik:(id)sender {
+    UIButton *button = (UIButton *)sender;
+    switch (button.tag) {
+        case 0:
+            //积分兑换
+        {
+            IntegralMallListController *mallVc = [[IntegralMallListController alloc] initWithStoryboardName:@"Mine"];
+         [self.navigationController pushViewController:mallVc animated:YES];
+        }
+            break;
+        case 1:
+            //积分规则
+        {
+            FansLevelInforController *fansVc = [[FansLevelInforController alloc] initWithStoryboardName:@"LivePlay"];
+            fansVc.type = FansLevelInforControllerTypeIntegral;
+            [self.navigationController pushViewController:fansVc animated:YES];
+            
+        }
+            
+            break;
+            
+        default:
+            break;
+    }
+}
+@end

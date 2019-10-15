@@ -1,0 +1,134 @@
+//
+//  MarketShopViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/19.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "MarketShopViewController.h"
+#import "MarketShopCell.h"
+#import "MarketShopHeader.h"
+#import "SDCycleScrollView.h"
+#import "GoodDetailViewController.h"
+#import "TagModel.h"
+#import "HomeTypeViewController.h"
+
+@interface MarketShopViewController ()<UICollectionViewDelegate,UICollectionViewDataSource,UICollectionViewDelegateFlowLayout,SDCycleScrollViewDelegate,MarketShopHeaderDelegate>
+@property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
+@property (strong, nonatomic) NSMutableArray *collectionData;
+@property (strong, nonatomic) MarketShopHeader *collectionHeader;
+@property (strong, nonatomic) SDCycleScrollView *cycleImageView;
+
+@property (strong, nonatomic) HomeTypeViewController *homeTypeVC;
+@property (strong, nonatomic) NSMutableArray *typesArray;
+@property (strong, nonatomic) UIButton *typeSelectButton;
+@end
+
+@implementation MarketShopViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.collectionView.dataSource = self;
+    self.collectionView.delegate = self;
+    
+}
+
+-(void)initData{
+    self.collectionData = [[NSMutableArray alloc] init];
+    for(int i=0;i<6;i++){
+        [self.collectionData addObject:@"1"];
+    }
+}
+
+-(MarketShopHeader *)collectionHeader{
+    if(_collectionHeader == nil){
+        _collectionHeader = [self.collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:@"MarketShopHeader" forIndexPath:[NSIndexPath indexPathForRow:0 inSection:0]];
+        _collectionHeader.delegate = self;
+    }
+    return _collectionHeader;
+}
+
+
+#pragma mark - UICollectionView
+-(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
+    return self.collectionData.count;
+}
+
+- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
+    MarketShopCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"MarketShopCell" forIndexPath:indexPath];
+    return cell;
+}
+
+-(UIEdgeInsets)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section{
+    return UIEdgeInsetsMake(0, 15, 0, 15);
+}
+
+-(CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath{
+    CGSize rtn = CGSizeZero;
+    rtn.width = (kScreenWidth-15*2-5)/2.0;
+    rtn.height = rtn.width + 75;
+    return rtn;
+}
+
+-(CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout minimumLineSpacingForSectionAtIndex:(NSInteger)section{
+    return 5.0;
+}
+
+-(CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout minimumInteritemSpacingForSectionAtIndex:(NSInteger)section{
+    return 5.0;
+}
+
+- (UICollectionReusableView *)collectionView:(UICollectionView *)collectionView viewForSupplementaryElementOfKind:(NSString *)kind atIndexPath:(NSIndexPath *)indexPath{
+    if([kind isEqualToString:UICollectionElementKindSectionHeader]){
+        return self.collectionHeader;
+    }
+    return nil;
+}
+
+-(CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout referenceSizeForHeaderInSection:(NSInteger)section{
+    //轮播图宽高比为345:175
+    CGFloat width = kScreenWidth - 15*2;
+    CGFloat height = width*175.0/345.0;
+    CGFloat needHeight = height+50+44+8*2;
+    return CGSizeMake(kScreenWidth, needHeight);
+}
+
+-(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
+    [self goGoodDetailVC:nil];
+}
+
+#pragma mark - MarketShopHeaderDelegate
+-(void)didShowAllType{
+    if(self.homeTypeVC == nil){
+        self.homeTypeVC = [[HomeTypeViewController alloc] initWithStoryboardName:@"Market"];
+    }
+    
+    [self.view addSubview:self.homeTypeVC.view];
+    [self.homeTypeVC.view mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.edges.equalTo(self.view);
+    }];
+}
+
+-(void)didChangeType:(TagModel *)type{
+    
+}
+
+#pragma mark - Actions
+- (IBAction)showAllTypeAction:(id)sender {
+    [self.view addSubview:self.homeTypeVC.view];
+    [self.homeTypeVC.view mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.edges.equalTo(self.view);
+    }];
+}
+
+#pragma mark - 跳转
+-(void)goGoodDetailVC:(NSString *)goodId{
+    GoodDetailViewController *detailVC = [[GoodDetailViewController alloc] initWithStoryboardName:@"GoodDetail"];
+    [self.navigationController pushViewController:detailVC animated:YES];
+}
+@end

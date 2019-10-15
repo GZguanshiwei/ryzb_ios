@@ -1,0 +1,45 @@
+//
+//  FansLevelInforController.m
+//  JMBaseProject
+//
+//  Created by 潘传标 on 2019/9/4.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "FansLevelInforController.h"
+
+@interface FansLevelInforController ()
+
+@end
+
+@implementation FansLevelInforController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl
+{
+    switch (self.type) {
+        case FansLevelInforControllerTypeFansInfor:
+                self.title  = @"粉丝等级介绍";
+            break;
+        case FansLevelInforControllerTypesService:
+            self.title  = @"鉴宝服务介绍";
+            break;
+        case FansLevelInforControllerTypesBargaining:
+            self.title  = @"砍价规则";
+            break;
+        case FansLevelInforControllerTypeSorce:
+            self.title  = @"等级介绍";
+            break;
+        case FansLevelInforControllerTypeIntegral:
+            self.title  = @"积分规则";
+            break;
+        default:
+            break;
+    }
+ 
+}
+@end

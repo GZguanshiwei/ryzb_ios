@@ -1,0 +1,13 @@
+//
+//  CouponModel.m
+//  JMBaseProject
+//
+//  Created by 潘传标 on 2019/9/5.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "CouponModel.h"
+
+@implementation CouponModel
+
+@end

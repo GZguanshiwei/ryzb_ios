@@ -1,0 +1,60 @@
+//
+//  GroupChildrenViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/7/18.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "GroupChildrenViewController.h"
+#import "GroupChildrenPageViewController.h"
+#import "NewsViewController.h"
+#import "SearchViewController.h"
+
+@interface GroupChildrenViewController ()
+@property (weak, nonatomic) IBOutlet UIView *unreadNumView;
+@end
+
+@implementation GroupChildrenViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender{
+    NSString *identifier = segue.identifier;
+    if([identifier isEqualToString:@"Page"]){
+        GroupChildrenPageViewController *pageVC = (GroupChildrenPageViewController *)segue.destinationViewController;
+        pageVC.typeId = self.typeId;
+    }
+}
+
+-(void)initControl{
+    self.unreadNumView.layer.cornerRadius = self.unreadNumView.mj_h/2.0;
+}
+
+#pragma mark - UINavigation
+-(BOOL)navUIBaseViewControllerIsNeedNavBar:(JMNavUIBaseViewController *)navUIBaseViewController{
+    return NO;
+}
+
+
+- (IBAction)searchAction:(id)sender {
+    [self goSearchVC];
+}
+
+- (IBAction)backAction:(id)sender {
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
+- (IBAction)messageAction:(id)sender {
+    NewsViewController *newsVC = [[NewsViewController alloc] initWithStoryboardName:@"News"];
+    [self.navigationController pushViewController:newsVC animated:YES];
+}
+#pragma mark - 跳转
+-(void)goSearchVC{
+    SearchViewController *searchVC = [[SearchViewController alloc] initWithStoryboardName:@"Search"];
+    [self.navigationController pushViewController:searchVC animated:NO];
+}
+@end

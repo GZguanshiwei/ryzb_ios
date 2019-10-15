@@ -1,0 +1,13 @@
+//
+//  IntegraMallListCell.m
+//  JMBaseProject
+//
+//  Created by 潘传标 on 2019/9/6.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "IntegraMallListCell.h"
+
+@implementation IntegraMallListCell
+
+@end

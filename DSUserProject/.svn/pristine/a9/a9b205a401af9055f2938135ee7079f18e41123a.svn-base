@@ -1,0 +1,54 @@
+//
+//  OrderCell.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/26.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "OrderCell.h"
+
+@interface OrderCell ()
+@property (weak, nonatomic) IBOutlet UILabel *orderNoLabel;
+@property (weak, nonatomic) IBOutlet UILabel *statusLabel;
+@property (weak, nonatomic) IBOutlet UIImageView *coverImageView;
+@property (weak, nonatomic) IBOutlet UILabel *titleLabel;
+@property (weak, nonatomic) IBOutlet UIView *tagView;
+@property (weak, nonatomic) IBOutlet UILabel *priceLabel;
+@property (weak, nonatomic) IBOutlet UILabel *totalPayLabel;
+
+@property (weak, nonatomic) IBOutlet UIButton *rightButton;
+@property (weak, nonatomic) IBOutlet UIButton *leftButton;
+@end
+
+@implementation OrderCell
+
+- (void)awakeFromNib {
+    [super awakeFromNib];
+    [self initControl];
+}
+
+- (void)setSelected:(BOOL)selected animated:(BOOL)animated {
+    [super setSelected:selected animated:animated];
+
+    // Configure the view for the selected state
+}
+
+-(void)initControl{
+    self.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.coverImageView.layer.cornerRadius = 4.0;
+    self.coverImageView.layer.masksToBounds = YES;
+    self.tagView.layer.cornerRadius = 2.0;
+    self.tagView.layer.borderColor = [UIColor colorWithHexString:@"#DC2C2C"].CGColor;
+    self.tagView.layer.borderWidth = 0.8;
+}
+
+
+- (IBAction)buttonAction:(id)sender {
+    if(self.delegate && [self.delegate respondsToSelector:@selector(clickOperationButton:title:)]){
+        UIButton *button = (UIButton *)sender;
+        [self.delegate clickOperationButton:self.index title:[button currentTitle]];
+    }
+}
+
+@end

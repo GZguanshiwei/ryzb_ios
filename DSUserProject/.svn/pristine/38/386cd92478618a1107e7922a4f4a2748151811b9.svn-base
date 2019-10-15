@@ -1,0 +1,120 @@
+//
+//  SetViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/25.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "SetViewController.h"
+#import "UCBindPhoneViewController.h"
+#import "UCChangePasswordViewController.h"
+#import "JMCacheCleanHelper.h"
+
+@interface SetViewController ()<UITableViewDelegate,UITableViewDataSource>
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
+@property (strong, nonatomic) NSMutableArray *tableData;
+@end
+
+@implementation SetViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.tableView.dataSource = self;
+    self.tableView.delegate = self;
+    self.tableView.rowHeight = 60.0;
+    self.tableView.tableFooterView = [UIView new];
+}
+
+-(void)initData{
+    self.title = @"设置";
+    
+    self.tableData = [[NSMutableArray alloc] init];
+    [self.tableData addObject:@"密码设置"];
+    [self.tableData addObject:@"绑定手机设置"];
+    NSString *cacahSize = [NSString stringWithFormat:@"清除缓存(%.2fM)",[JMCacheCleanHelper cachesSize]];
+    [self.tableData addObject:cacahSize];
+    [self.tableData addObject:@"注销"];
+}
+
+#pragma mark - UITableView
+-(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
+    return self.tableData.count;
+}
+
+-(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"Cell"];
+    NSString *title = self.tableData[indexPath.row];
+    cell.textLabel.text = title;
+    return cell;
+}
+
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    switch (indexPath.row) {
+        case 0:
+            [self goChangePasswordVC];
+            break;
+        case 1:
+            [self goBindPhoneVC];
+            break;
+        case 2:
+            [self clearCache];
+            break;
+        case 3:
+            [self tipForLogout];
+            break;
+        default:
+            break;
+    }
+}
+
+//清理缓存
+- (void)clearCache {
+    ScreenCenterTipView *tipView = [[ScreenCenterTipView alloc] initWithXib];
+    tipView.message = @"确认清除缓存数据？";
+    tipView.buttonTitles = @[@"取消", @"确定"];
+    [tipView showViewWithDoneBlock:^(NSDictionary *params) {
+        NSInteger buttonIndex = [params getJsonValue:@"ButtonIndex"].integerValue;
+        if(buttonIndex == 1){
+            [JMCacheCleanHelper cleanCachesCompletion:^{
+                [JMProgressHelper toastInWindowWithMessage:@"缓存清除成功"];
+                NSString *cacahSize = [NSString stringWithFormat:@"清除缓存(%.2fM)",[JMCacheCleanHelper cachesSize]];
+                [self.tableData replaceObjectAtIndex:2 withObject:cacahSize];
+                [self.tableView reloadData];
+            }];
+        }
+    }];
+}
+
+-(void)tipForLogout{
+    ScreenCenterTipView *tipView = [[ScreenCenterTipView alloc] initWithXib];
+    tipView.message = @"确认退出当前账号？";
+    tipView.buttonTitles = @[@"取消", @"确定"];
+    [tipView showViewWithDoneBlock:^(NSDictionary *params) {
+        NSInteger buttonIndex = [params getJsonValue:@"ButtonIndex"].integerValue;
+        if(buttonIndex == 1){
+            [[JMProjectManager sharedJMProjectManager] logoutWithSuccessBlock:^{
+                [[JMProjectManager sharedJMProjectManager] showLoginViewController];
+            } failBlock:^(NSString *errorMsg) {
+                [JMProgressHelper toastInWindowWithMessage:errorMsg];
+            }];
+        }
+    }];
+}
+
+#pragma mark - 跳转
+-(void)goChangePasswordVC{
+    UCChangePasswordViewController *changePasswordVC = [[UCChangePasswordViewController alloc] initWithStoryboardName:@"UserCenter"];
+    [self.navigationController pushViewController:changePasswordVC animated:YES];
+}
+
+-(void)goBindPhoneVC{
+    UCBindPhoneViewController *bindPhoneVC = [[UCBindPhoneViewController alloc] initWithStoryboardName:@"UserCenter"];
+    [self.navigationController pushViewController:bindPhoneVC animated:YES];
+}
+@end

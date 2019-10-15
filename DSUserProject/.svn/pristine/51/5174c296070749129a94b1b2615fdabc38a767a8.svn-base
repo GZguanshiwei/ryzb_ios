@@ -1,0 +1,42 @@
+//
+//  AboutUsViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/25.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "AboutUsViewController.h"
+#import "FeedbackViewController.h"
+
+@interface AboutUsViewController ()
+@property (weak, nonatomic) IBOutlet UIImageView *iconImageView;
+
+@end
+
+@implementation AboutUsViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.view.backgroundColor = [UIColor whiteColor];
+    
+    self.iconImageView.layer.cornerRadius = self.iconImageView.mj_h/2.0;
+    self.iconImageView.layer.masksToBounds = YES;
+}
+
+-(void)initData{
+    self.title = @"关于我们";
+}
+
+#pragma mark - Actions
+- (IBAction)feedbackAction:(id)sender {
+    //意见反馈
+    FeedbackViewController *feedbackVC = [[FeedbackViewController alloc] initWithStoryboardName:@"UserCenter"];
+    [self.navigationController pushViewController:feedbackVC animated:YES];
+}
+
+@end

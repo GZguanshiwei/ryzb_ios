@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="14490.70" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+    <device id="retina6_1" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14490.49"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <tableViewCell contentMode="scaleToFill" restorationIdentifier="LiveIronRecordListCell" selectionStyle="none" indentationWidth="10" reuseIdentifier="LiveIronRecordListCell" rowHeight="56" id="KGk-i7-Jjw" customClass="LiveIronRecordListCell">
+            <rect key="frame" x="0.0" y="0.0" width="324" height="56"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" ambiguous="YES" tableViewCell="KGk-i7-Jjw" id="H2p-sc-9uM">
+                <rect key="frame" x="0.0" y="0.0" width="324" height="55.5"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="AZK-LN-H2E">
+                        <rect key="frame" x="0.0" y="0.0" width="324" height="55"/>
+                        <subviews>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="live_pop_level_icon_watch" translatesAutoresizingMaskIntoConstraints="NO" id="vdd-QJ-GNx">
+                                <rect key="frame" x="23" y="19.5" width="16" height="16"/>
+                            </imageView>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="观看直播满10分钟" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="NWd-2s-Xp8">
+                                <rect key="frame" x="56" y="10" width="107.5" height="16"/>
+                                <fontDescription key="fontDescription" type="system" weight="medium" pointSize="13"/>
+                                <color key="textColor" red="0.20000000000000001" green="0.20000000000000001" blue="0.20000000000000001" alpha="1" colorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="2019-06-14 15:42:09" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="PsV-3f-YGE">
+                                <rect key="frame" x="56" y="30.5" width="125" height="14.5"/>
+                                <fontDescription key="fontDescription" type="system" weight="medium" pointSize="12"/>
+                                <color key="textColor" red="0.59999999999999998" green="0.59999999999999998" blue="0.59999999999999998" alpha="1" colorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="+10分" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="LHe-wv-EgU">
+                                <rect key="frame" x="259" y="18.5" width="42" height="18"/>
+                                <fontDescription key="fontDescription" type="system" weight="medium" pointSize="15"/>
+                                <color key="textColor" red="0.32156862749999998" green="0.81568627449999997" blue="0.63529411759999999" alpha="1" colorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <constraints>
+                            <constraint firstItem="NWd-2s-Xp8" firstAttribute="top" secondItem="AZK-LN-H2E" secondAttribute="top" constant="10" id="2Yd-vB-GyR"/>
+                            <constraint firstItem="LHe-wv-EgU" firstAttribute="centerY" secondItem="AZK-LN-H2E" secondAttribute="centerY" id="7xN-K6-61i"/>
+                            <constraint firstItem="NWd-2s-Xp8" firstAttribute="leading" secondItem="vdd-QJ-GNx" secondAttribute="trailing" constant="17" id="BME-tl-FL4"/>
+                            <constraint firstAttribute="trailing" secondItem="LHe-wv-EgU" secondAttribute="trailing" constant="23" id="Gq1-le-364"/>
+                            <constraint firstItem="vdd-QJ-GNx" firstAttribute="leading" secondItem="AZK-LN-H2E" secondAttribute="leading" constant="23" id="mTt-YG-zND"/>
+                            <constraint firstItem="PsV-3f-YGE" firstAttribute="leading" secondItem="NWd-2s-Xp8" secondAttribute="leading" id="vjQ-2r-Irq"/>
+                            <constraint firstItem="vdd-QJ-GNx" firstAttribute="centerY" secondItem="AZK-LN-H2E" secondAttribute="centerY" id="w8i-Qh-4gZ"/>
+                            <constraint firstAttribute="bottom" secondItem="PsV-3f-YGE" secondAttribute="bottom" constant="10" id="wCc-5m-Vcu"/>
+                            <constraint firstAttribute="height" constant="55" id="y0d-Ge-1W3"/>
+                        </constraints>
+                    </view>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="AZK-LN-H2E" firstAttribute="top" secondItem="H2p-sc-9uM" secondAttribute="top" id="8q9-8L-8lD"/>
+                    <constraint firstAttribute="bottom" secondItem="AZK-LN-H2E" secondAttribute="bottom" id="F1w-bF-fDY"/>
+                    <constraint firstItem="AZK-LN-H2E" firstAttribute="leading" secondItem="H2p-sc-9uM" secondAttribute="leading" id="Nov-sD-Y8s"/>
+                    <constraint firstAttribute="trailing" secondItem="AZK-LN-H2E" secondAttribute="trailing" id="PTE-TQ-yYP"/>
+                </constraints>
+            </tableViewCellContentView>
+            <viewLayoutGuide key="safeArea" id="aW0-zy-SZf"/>
+            <point key="canvasLocation" x="37.681159420289859" y="38.839285714285715"/>
+        </tableViewCell>
+    </objects>
+    <resources>
+        <image name="live_pop_level_icon_watch" width="28" height="24.5"/>
+    </resources>
+</document>

@@ -1,0 +1,303 @@
+//
+//  MarketShopViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/19.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "MarketShopViewController.h"
+#import "MarketShopCell.h"
+#import "MarketShopHeader.h"
+#import "SDCycleScrollView.h"
+#import "GoodDetailViewController.h"
+#import "TagModel.h"
+#import "HomeTypeViewController.h"
+#import "ResaleTipView.h"
+#import "ResaleSuccessTipView.h"
+#import "GoodModel.h"
+
+@interface MarketShopViewController ()<UICollectionViewDelegate,UICollectionViewDataSource,UICollectionViewDelegateFlowLayout,SDCycleScrollViewDelegate,MarketShopHeaderDelegate,MarketShopCellDelegate>
+@property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
+@property (strong, nonatomic) NSMutableArray *collectionData;
+@property (strong, nonatomic) MarketShopHeader *collectionHeader;
+@property (strong, nonatomic) SDCycleScrollView *cycleImageView;
+
+@property (strong, nonatomic) HomeTypeViewController *homeTypeVC;
+@property (strong, nonatomic) NSMutableArray *typesArray;
+
+@property (strong, nonatomic) JMRefreshTool *refreshTool;
+@end
+
+@implementation MarketShopViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.collectionView.dataSource = self;
+    self.collectionView.delegate = self;
+    
+}
+
+-(void)initData{
+    [self requestTypeList];
+}
+
+-(MarketShopHeader *)collectionHeader{
+    if(_collectionHeader == nil){
+        _collectionHeader = [self.collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:@"MarketShopHeader" forIndexPath:[NSIndexPath indexPathForRow:0 inSection:0]];
+        _collectionHeader.delegate = self;
+    }
+    return _collectionHeader;
+}
+
+
+#pragma mark - UICollectionView
+-(NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView{
+    return 1;
+}
+
+-(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
+    return self.collectionData.count;
+}
+
+- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
+    MarketShopCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"MarketShopCell" forIndexPath:indexPath];
+    cell.delegate = self;
+    cell.index = indexPath.row;
+    cell.cellData = self.collectionData[indexPath.row];
+    return cell;
+}
+
+-(UIEdgeInsets)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section{
+    return UIEdgeInsetsMake(0, 15, 0, 15);
+}
+
+-(CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath{
+    CGSize rtn = CGSizeZero;
+    rtn.width = (kScreenWidth-15*2-5)/2.0;
+    rtn.height = rtn.width + 75;
+    return rtn;
+}
+
+-(CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout minimumLineSpacingForSectionAtIndex:(NSInteger)section{
+    return 5.0;
+}
+
+-(CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout minimumInteritemSpacingForSectionAtIndex:(NSInteger)section{
+    return 5.0;
+}
+
+- (UICollectionReusableView *)collectionView:(UICollectionView *)collectionView viewForSupplementaryElementOfKind:(NSString *)kind atIndexPath:(NSIndexPath *)indexPath{
+    if([kind isEqualToString:UICollectionElementKindSectionHeader]){
+        return self.collectionHeader;
+    }
+    return nil;
+}
+
+-(CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout referenceSizeForHeaderInSection:(NSInteger)section{
+    //轮播图宽高比为345:175
+    CGFloat width = kScreenWidth - 15*2;
+    CGFloat height = width*175.0/345.0;
+    CGFloat needHeight = height+50+44+8*2;
+    return CGSizeMake(kScreenWidth, needHeight);
+}
+
+-(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
+    GoodModel *good = self.collectionData[indexPath.row];
+    [self goGoodDetailVC:good.goodId];
+}
+
+#pragma mark - MarketShopHeaderDelegate
+-(void)didShowAllType{
+    if(self.homeTypeVC == nil){
+        self.homeTypeVC = [[HomeTypeViewController alloc] initWithStoryboardName:@"Market"];
+        JMWeak(self);
+        self.homeTypeVC.selectBlock = ^(NSInteger index) {
+            [weakself updateSelectType:index];
+        };
+    }
+    self.homeTypeVC.typesArray = self.typesArray;
+    [self.view addSubview:self.homeTypeVC.view];
+    [self.homeTypeVC.view mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.edges.equalTo(self.view);
+    }];
+}
+
+-(void)didChangeType:(NSInteger)index{
+    [self updateSelectType:index];
+}
+
+-(void)updateSelectType:(NSInteger)index{
+    self.collectionHeader.typesArray = self.typesArray;
+    TagModel *model = self.typesArray[index];
+    [self requestGoodListWithTypeId:model.tagId];
+}
+
+
+#pragma mark - MarketShopCellDelegate
+-(void)didStore:(NSInteger)index{
+    [self requestCollectionAtIndex:index];
+}
+
+-(void)didResale:(NSInteger)index{
+    ResaleTipView *resaleView = [[ResaleTipView alloc] initWithXib];
+    GoodModel *good = self.collectionData[index];
+    resaleView.good = good;
+    [resaleView showViewWithDoneBlock:^(NSDictionary * _Nonnull params) {
+        NSString *buttonIndex = [params getJsonValue:@"ButtonIndex"];
+        switch (buttonIndex.integerValue) {
+                case 0://购买帮助
+                [self goBuyHelpHtmlVC];
+                break;
+                case 1://转售
+                [self requestResaleWithGood:good.goodId content:[params getJsonValue:@"Content"] index:index];
+                break;
+            default:
+                break;
+        }
+    }];
+}
+
+-(void)showResaleSuccess{
+    ResaleSuccessTipView *successView = [[ResaleSuccessTipView alloc] initWithXib];
+    [successView showViewWithDoneBlock:^(NSDictionary * _Nonnull params) {
+        NSString *buttonIndex = [params getJsonValue:@"ButtonIndex"];
+        switch (buttonIndex.integerValue) {
+                case 0://购买帮助
+                [self goBuyHelpHtmlVC];
+                break;
+                case 1://分享朋友圈
+                
+                break;
+            default:
+                break;
+        }
+    }];
+}
+
+
+-(void)goBuyHelpHtmlVC{
+    HtmlViewController *htmlVC = [[HtmlViewController alloc] init];
+    htmlVC.type = Html_Buy;
+    [self.navigationController pushViewController:htmlVC animated:YES];
+}
+
+#pragma mark - Actions
+- (IBAction)showAllTypeAction:(id)sender {
+    [self.view addSubview:self.homeTypeVC.view];
+    [self.homeTypeVC.view mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.edges.equalTo(self.view);
+    }];
+}
+
+#pragma mark - 跳转
+-(void)goGoodDetailVC:(NSString *)goodId{
+    GoodDetailViewController *detailVC = [[GoodDetailViewController alloc] initWithStoryboardName:@"GoodDetail"];
+    detailVC.goodId = goodId;
+    [self.navigationController pushViewController:detailVC animated:YES];
+}
+
+#pragma mark - 网络
+-(void)requestTypeList{
+    //商品类别
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:@"4" key:@"type"];
+    [[JMRequestManager sharedManager] POST:kUrlTypeList parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            NSArray *dataList = response.responseObject[@"data"];
+            NSMutableArray *array = [[NSMutableArray alloc] init];
+            for(NSDictionary *dic in dataList){
+                TagModel *model = [[TagModel alloc] initWithDictionary:dic];
+                [array addObject:model];
+            }
+            self.typesArray = array;
+            TagModel *firstItem = self.typesArray.firstObject;
+            firstItem.isSelect = YES;
+            self.collectionHeader.typesArray = self.typesArray;
+            [self requestGoodListWithTypeId:firstItem.tagId];
+        }
+    }];
+}
+
+-(void)requestGoodListWithTypeId:(NSString *)typeId{
+    //类别下的商品列表
+    if(self.refreshTool == nil){
+        JMWeak(self);
+        self.refreshTool = [[JMRefreshTool alloc] initWithScrollView:self.collectionView dataAnalysisBlock:^NSArray *(NSDictionary *responseData) {
+            NSMutableArray *array = [[NSMutableArray alloc] init];
+            NSArray *listArray = responseData[@"data"][@"list"];
+            for(NSDictionary *dic in listArray){
+                GoodModel *model = [[GoodModel alloc] initWithDictionary:dic];
+                [array addObject:model];
+            }
+            if([weakself.refreshTool isAddData]){
+                [weakself.collectionData addObjectsFromArray:array];
+            }else{
+                weakself.collectionData = array;
+            }
+            [weakself.collectionView reloadData];
+            return array;
+        }];
+        self.refreshTool.requestUrl = kUrlGoodList;
+        //        self.refreshTool.isRefreshHeader = NO;
+    }
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:typeId key:@"columnId"];
+    self.refreshTool.requestParams = params;
+    [self.refreshTool loadMore:NO];
+}
+
+-(void)requestResaleWithGood:(NSString *)goodId content:(NSString *)content index:(NSInteger)index{
+    //转售
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:goodId key:@"goodsId"];
+    [params setJsonValue:content key:@"describe"];
+    [[JMRequestManager sharedManager] POST:kUrlResaleGood parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            [self showResaleSuccess];
+            [self refreshGoodAtIndex:index];
+        }
+    }];
+}
+
+-(void)requestCollectionAtIndex:(NSInteger)index{
+    //收藏、取消收藏
+    GoodModel *good = self.collectionData[index];
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:good.goodId key:@"goodsId"];
+    [[JMRequestManager sharedManager] POST:kUrlCollectionGood parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            [JMProgressHelper toastInWindowWithMessage:response.responseObject[@"desc"]];
+            [self refreshGoodAtIndex:index];
+        }
+    }];
+}
+
+-(void)refreshGoodAtIndex:(NSInteger)index{
+    GoodModel *good = self.collectionData[index];
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:good.goodId key:@"goodsId"];
+    [[JMRequestManager sharedManager] POST:kUrlGoodDetail parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            NSDictionary *dataDic = response.responseObject[@"data"];
+            good.isCollected = [dataDic getJsonValue:@"isCollected"].boolValue;
+            good.collectedNum = [dataDic getJsonValue:@"collectedNum"];
+            good.resaleNum = [dataDic getJsonValue:@"resaleNum"];
+            NSIndexPath *row = [NSIndexPath indexPathForItem:index inSection:0];
+            [self.collectionView reloadItemsAtIndexPaths:@[row]];
+        }
+    }];
+}
+@end

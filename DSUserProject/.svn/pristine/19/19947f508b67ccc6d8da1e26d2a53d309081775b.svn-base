@@ -1,0 +1,38 @@
+//
+//  EvaluateSuccessViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/27.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "EvaluateSuccessViewController.h"
+#import "EvaluateListViewController.h"
+
+@interface EvaluateSuccessViewController ()
+
+@end
+
+@implementation EvaluateSuccessViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.view.backgroundColor = [UIColor whiteColor];
+}
+
+-(void)initData{
+    self.title = @"评价完成";
+}
+
+- (IBAction)evaluateInfoAction:(id)sender {
+    //查看评价详情
+    EvaluateListViewController *evaluateListVC = [[EvaluateListViewController alloc] initWithStoryboardName:@"Order"];
+    evaluateListVC.orderId = self.orderId;
+    [self.navigationController pushViewController:evaluateListVC animated:YES];
+}
+
+@end

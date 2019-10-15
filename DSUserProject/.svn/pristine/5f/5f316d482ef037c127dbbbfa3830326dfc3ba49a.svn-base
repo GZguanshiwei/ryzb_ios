@@ -1,0 +1,249 @@
+//
+//  MyBargaingDetailController.m
+//  JMBaseProject
+//
+//  Created by 潘传标 on 2019/9/6.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "MyBargaingDetailController.h"
+#import "MyBargingRecordCell.h"
+#import "BargainModel.h"
+#import "BargainUserModel.h"
+#import "GoodDetailViewController.h"
+#import "MakeOrderViewController.h"
+
+@interface MyBargaingDetailController ()<UITableViewDataSource,UITableViewDelegate>
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *recordConstraint;
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
+@property (strong, nonatomic) NSMutableArray *tableData;
+
+@property (weak, nonatomic) IBOutlet UIImageView *goodCoverImageView;
+@property (weak, nonatomic) IBOutlet UILabel *goodNameLabel;
+@property (weak, nonatomic) IBOutlet UILabel *goodPriceLabel;
+@property (weak, nonatomic) IBOutlet UILabel *downMoneyLabel;
+@property (weak, nonatomic) IBOutlet UIButton *oneButton;
+@property (weak, nonatomic) IBOutlet UIButton *twoButton;
+
+@property (weak, nonatomic) IBOutlet UIView *timeView;
+/** 时 */
+@property (strong, nonatomic) IBOutlet UILabel *hourOneLabel;
+@property (strong, nonatomic) IBOutlet UILabel *hourTwoLabel;
+/** 分 */
+@property (strong, nonatomic) IBOutlet UILabel *minOneLabel;
+@property (strong, nonatomic) IBOutlet UILabel *minTwoLabel;
+/** 秒 */
+@property (strong, nonatomic) IBOutlet UILabel *secondOneLabel;
+@property (strong, nonatomic) IBOutlet UILabel *secondTwoLabel;
+@property (strong, nonatomic) IBOutlet UIProgressView *progressView;
+
+@property (nonatomic, strong) BargainModel *bargainInfo;
+@property (nonatomic, strong) NSTimer *timer;
+@end
+
+@implementation MyBargaingDetailController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)dealloc{
+    if (_timer) {
+        [_timer invalidate];
+        _timer = nil;
+    }
+}
+
+-(void)initControl
+{
+    self.title = @"砍价详情";
+    self.jm_navgationBar.backgroundColor = [UIColor colorWithHexString:@"#FFC01C"];
+    self.view.backgroundColor = [UIColor colorWithHexString:@"#FFC01C"];
+    
+    ViewRadius(self.goodCoverImageView, 8);
+    ViewRadius(self.progressView, 10);
+}
+
+-(void)initData{
+    [self requestBargainDetail];
+}
+
+
+- (void)startTimer
+{
+    if (!_timer) {
+        _timer = [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(refreshBargainInfo) userInfo:nil repeats:YES];
+        
+        [[NSRunLoop mainRunLoop] addTimer:_timer forMode:NSRunLoopCommonModes];
+    }
+}
+
+-(void)refreshBargainInfo{
+    if(self.bargainInfo){
+        NSString *showTime = [self.bargainInfo showTime];
+        switch (self.bargainInfo.status.integerValue) {
+            case 0:
+            {
+                self.timeView.hidden = NO;
+                self.downMoneyLabel.text = [NSString stringWithFormat:@"已砍%@元",self.bargainInfo.downMoney];
+                self.hourOneLabel.text = [showTime substringWithRange:NSMakeRange(0, 1)];
+                self.hourTwoLabel.text = [showTime substringWithRange:NSMakeRange(1, 1)];
+                self.minOneLabel.text = [showTime substringWithRange:NSMakeRange(3, 1)];
+                self.minTwoLabel.text = [showTime substringWithRange:NSMakeRange(4, 1)];
+                self.secondOneLabel.text = [showTime substringWithRange:NSMakeRange(6, 1)];
+                self.secondTwoLabel.text = [showTime substringWithRange:NSMakeRange(7, 1)];
+                self.progressView.progress = self.bargainInfo.downMoney.doubleValue/self.bargainInfo.goodPrice.doubleValue;
+                
+                break;
+            }
+            case 1://成功
+                self.timeView.hidden = YES;
+                self.downMoneyLabel.text = @"恭喜你砍至0元！";
+                
+                self.twoButton.hidden = YES;
+                [self.oneButton setTitle:@"0元购买" forState:UIControlStateNormal];
+                self.progressView.progress = 1.0;
+                break;
+            case 2://失败
+                self.timeView.hidden = YES;
+                self.downMoneyLabel.text = [NSString stringWithFormat:@"已砍%@元",self.bargainInfo.downMoney];
+                
+                self.twoButton.hidden = YES;
+                self.oneButton.enabled = NO;
+                self.progressView.progress = self.bargainInfo.downMoney.doubleValue/self.bargainInfo.goodPrice.doubleValue;
+                break;
+            default:
+                break;
+        }
+    }
+}
+
+#pragma mark - UITableView
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return 50;
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return self.tableData.count;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    MyBargingRecordCell * cell = [tableView dequeueReusableCellWithIdentifier:myBargingRecordCellID forIndexPath:indexPath];
+    cell.cellData = self.tableData[indexPath.row];
+    return cell;
+}
+
+#pragma mark - Action
+- (IBAction)goodDetailAction:(id)sender {
+    //商品详情
+    [self goGoodDetail];
+}
+
+- (IBAction)ruleAction:(id)sender {
+    //活动规则
+    HtmlViewController *htmlVC = [[HtmlViewController alloc] init];
+    htmlVC.type = Html_Bargaining;
+    [self.navigationController pushViewController:htmlVC animated:YES];
+}
+
+- (IBAction)yaoQinAction:(id)sender {
+    UIButton *button = (UIButton *)sender;
+    NSString *title = button.currentTitle;
+    if([title isEqualToString:@"邀请好友帮我砍价"]){
+        [self kanJiaShare];
+    }else if([title isEqualToString:@"0元购买"]){
+        [self goMakeOrder];
+    }
+}
+
+//直接购买
+- (IBAction)buyAction:(id)sender {
+    [self goMakeOrder];
+    
+}
+
+#pragma mark - 跳转
+-(void)goGoodDetail{
+    GoodDetailViewController *detailVC = [[GoodDetailViewController alloc] initWithStoryboardName:@"GoodDetail"];
+    detailVC.goodId = self.bargainInfo.goodId;
+    [self.navigationController pushViewController:detailVC animated:YES];
+}
+
+-(void)goMakeOrder{
+    //下单
+    NSMutableDictionary *parames = [JMCommonMethod baseRequestParams];
+    [parames setJsonValue:self.bargainInfo.goodId key:@"goodsId"];
+    [[JMRequestManager sharedManager] GET:kUrlOrdergoodsCanPay parameters:parames completion:^(JMBaseResponse *response) {
+        if (response.error) {
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            NSString *canBuyStr  = response.responseObject[@"data"];
+            if (canBuyStr.integerValue == 1) {
+                //购买
+                MakeOrderViewController *makeOrderVC = [[MakeOrderViewController alloc] initWithStoryboardName:@"GoodDetail"];
+                GoodModel *good = [[GoodModel alloc] init];
+                good.goodId = self.bargainInfo.goodId;
+                good.title = self.bargainInfo.name;
+                good.price = self.bargainInfo.goodPrice;
+                good.coverImage = self.bargainInfo.coverImage;
+                makeOrderVC.good = good;
+                [self.navigationController pushViewController:makeOrderVC animated:YES];
+            }else{
+                [JMProgressHelper toastInWindowWithMessage:@"此商品正在结缘中"];
+            }
+        }
+    }];
+}
+
+-(void)kanJiaShare{
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:self.bargainInfo.goodId key:@"goodsId"];
+    [[JMRequestManager sharedManager] POST:kUrlCreateBargain parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            ShareTipView *shareTipView = [[ShareTipView alloc] initWithXib];
+            shareTipView.title = self.bargainInfo.name;
+            shareTipView.subtitle = [NSString stringWithFormat:@"我正在%@APP参与砍价0元购的活动，快来帮我砍一刀吧",[UIApplication sharedApplication].appBundleName];
+            shareTipView.image = self.bargainInfo.coverImage;
+            [shareTipView showShareWithType:Share_Bargain requestIds:self.bargainInfo.bargainId];
+        }
+    }];
+}
+
+#pragma mark - 网络
+-(void)requestBargainDetail{
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:self.bargainId key:@"bargainId"];
+    [[JMRequestManager sharedManager] POST:kUrlBargainDetail parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            NSDictionary *goodDic = response.responseObject[@"data"][@"goods"];
+            [self.goodCoverImageView sd_setImageWithURL:[JMCommonMethod imageUrlWithPath:[goodDic getJsonValue:@"thumbnail"]]];
+            self.goodNameLabel.text = [goodDic getJsonValue:@"name"];
+            self.goodPriceLabel.text = [NSString stringWithFormat:@"￥%@",[goodDic getJsonValue:@"price"]];
+            
+            self.bargainInfo = [[BargainModel alloc] initWithDictionary:response.responseObject[@"data"]];
+            self.bargainInfo.coverImage = [goodDic getJsonValue:@"thumbnail"];
+            [self refreshBargainInfo];
+            [self startTimer];
+            
+            //好友帮砍记录
+            NSArray *list = response.responseObject[@"data"][@"accountList"];
+            NSMutableArray *array = [[NSMutableArray alloc] init];
+            for(NSDictionary *dic in list){
+                BargainUserModel *model = [[BargainUserModel alloc] initWithDictionary:dic];
+                [array addObject:model];
+            }
+            self.tableData = array;
+            self.recordConstraint.constant = 50 * self.tableData.count + 44 + 20;
+            [self.tableView reloadData];
+        }
+    }];
+}
+@end

@@ -1,0 +1,39 @@
+//
+//  JMLoginUserModel.m
+//  JMBaseProject
+//
+//  Created by liuny on 2018/7/15.
+//  Copyright © 2018年 liuny. All rights reserved.
+//
+
+#import "JMLoginUserModel.h"
+
+@implementation JMLoginUserModel
+
+MJCodingImplementation
+
+-(instancetype)initWithLoginDictionary:(NSDictionary *)dict{
+    self = [super init];
+    if(self){
+        self.sessionId = [dict getJsonValue:@"sessionId"];
+        self.userId = [dict getJsonValue:@"id"];
+        self.headUrl = [dict getJsonValue:@"head"];
+        self.mobile = [dict getJsonValue:@"mobile"];
+        self.userType = [dict getJsonValue:@"type"];
+        self.nickName = @"用户观看";
+    }
+    return self;
+}
+
+- (void)save {
+    [NSKeyedArchiver archiveRootObject:self toFile:kLoginUserSavePath];
+}
+
+- (void)clear {
+    [[NSFileManager defaultManager] removeItemAtPath:kLoginUserSavePath error:nil];
+}
+
+-(void)updateWithUserInfoDictionary:(NSDictionary *)dict{
+    //TODO
+}
+@end

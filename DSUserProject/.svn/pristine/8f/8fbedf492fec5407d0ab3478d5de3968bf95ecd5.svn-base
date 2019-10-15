@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="14490.70" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14490.49"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view contentMode="scaleToFill" id="iN0-l3-epB" customClass="PayPasswordAlterView">
+            <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <view alpha="0.5" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="3ce-V1-3vn">
+                    <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                    <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                </view>
+                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="nic-Zf-Vw3">
+                    <rect key="frame" x="0.0" y="258.5" width="375" height="183.5"/>
+                    <subviews>
+                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="请输入支付密码" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="hTi-7c-I36">
+                            <rect key="frame" x="134" y="15" width="107.5" height="18"/>
+                            <constraints>
+                                <constraint firstAttribute="height" constant="18" id="c3k-Yr-ux5"/>
+                            </constraints>
+                            <fontDescription key="fontDescription" type="system" pointSize="15"/>
+                            <color key="textColor" red="0.039215686270000001" green="0.039215686270000001" blue="0.039215686270000001" alpha="1" colorSpace="calibratedRGB"/>
+                            <nil key="highlightedColor"/>
+                        </label>
+                        <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="zco-je-Gd3">
+                            <rect key="frame" x="0.0" y="0.0" width="375" height="183.5"/>
+                        </button>
+                        <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="yVg-6C-pj8">
+                            <rect key="frame" x="330" y="4" width="40" height="40"/>
+                            <constraints>
+                                <constraint firstAttribute="width" constant="40" id="39k-vr-jiQ"/>
+                                <constraint firstAttribute="height" constant="40" id="PLu-Iv-omb"/>
+                            </constraints>
+                            <state key="normal" image="pay_pop_icon_cancel">
+                                <color key="titleColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            </state>
+                            <connections>
+                                <action selector="cancelButtonAction:" destination="iN0-l3-epB" eventType="touchUpInside" id="94j-qv-o1S"/>
+                            </connections>
+                        </button>
+                        <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="o25-pS-mvS">
+                            <rect key="frame" x="0.0" y="59" width="375" height="0.5"/>
+                            <color key="backgroundColor" red="0.8980392157" green="0.8980392157" blue="0.8980392157" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                            <constraints>
+                                <constraint firstAttribute="height" constant="0.5" id="ayx-zV-uGG"/>
+                            </constraints>
+                        </view>
+                        <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="m2P-pR-hII" customClass="CustomPasswordView">
+                            <rect key="frame" x="25.5" y="94.5" width="324" height="54"/>
+                            <color key="backgroundColor" cocoaTouchSystemColor="groupTableViewBackgroundColor"/>
+                            <constraints>
+                                <constraint firstAttribute="height" constant="54" id="TnP-LQ-KEn"/>
+                                <constraint firstAttribute="width" constant="324" id="jlt-d1-wlm"/>
+                            </constraints>
+                        </view>
+                    </subviews>
+                    <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                    <constraints>
+                        <constraint firstItem="zco-je-Gd3" firstAttribute="leading" secondItem="nic-Zf-Vw3" secondAttribute="leading" id="Kbo-Ku-kaF"/>
+                        <constraint firstAttribute="trailing" secondItem="zco-je-Gd3" secondAttribute="trailing" id="NYx-hF-Dyp"/>
+                        <constraint firstItem="m2P-pR-hII" firstAttribute="top" secondItem="o25-pS-mvS" secondAttribute="bottom" constant="35" id="OxI-Nf-o7Y"/>
+                        <constraint firstItem="m2P-pR-hII" firstAttribute="centerX" secondItem="nic-Zf-Vw3" secondAttribute="centerX" id="Qgf-mP-mm6"/>
+                        <constraint firstItem="o25-pS-mvS" firstAttribute="leading" secondItem="nic-Zf-Vw3" secondAttribute="leading" id="U4X-et-ekt"/>
+                        <constraint firstItem="zco-je-Gd3" firstAttribute="top" secondItem="nic-Zf-Vw3" secondAttribute="top" id="X8Q-dB-sEd"/>
+                        <constraint firstAttribute="bottom" secondItem="m2P-pR-hII" secondAttribute="bottom" constant="35" id="XgC-eF-D55"/>
+                        <constraint firstAttribute="trailing" secondItem="o25-pS-mvS" secondAttribute="trailing" id="cfr-oI-QcH"/>
+                        <constraint firstItem="hTi-7c-I36" firstAttribute="centerX" secondItem="nic-Zf-Vw3" secondAttribute="centerX" id="e9i-TR-KCg"/>
+                        <constraint firstItem="hTi-7c-I36" firstAttribute="top" secondItem="nic-Zf-Vw3" secondAttribute="top" constant="15" id="iyh-hL-xIO"/>
+                        <constraint firstAttribute="trailing" secondItem="yVg-6C-pj8" secondAttribute="trailing" constant="5" id="m3L-Xq-NFy"/>
+                        <constraint firstItem="hTi-7c-I36" firstAttribute="centerY" secondItem="yVg-6C-pj8" secondAttribute="centerY" id="m3c-cr-cqh"/>
+                        <constraint firstAttribute="bottom" secondItem="zco-je-Gd3" secondAttribute="bottom" id="w7g-79-4WH"/>
+                        <constraint firstItem="o25-pS-mvS" firstAttribute="top" secondItem="yVg-6C-pj8" secondAttribute="bottom" constant="15" id="wmW-8H-7FK"/>
+                    </constraints>
+                </view>
+            </subviews>
+            <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+            <constraints>
+                <constraint firstItem="nic-Zf-Vw3" firstAttribute="leading" secondItem="vUN-kp-3ea" secondAttribute="leading" id="CG4-3o-h9P"/>
+                <constraint firstItem="vUN-kp-3ea" firstAttribute="trailing" secondItem="3ce-V1-3vn" secondAttribute="trailing" id="GwF-7b-Ktl"/>
+                <constraint firstItem="vUN-kp-3ea" firstAttribute="bottom" secondItem="nic-Zf-Vw3" secondAttribute="bottom" constant="225" id="Ml4-s0-SEP"/>
+                <constraint firstItem="3ce-V1-3vn" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" id="NoX-4m-BxZ"/>
+                <constraint firstAttribute="bottom" secondItem="3ce-V1-3vn" secondAttribute="bottom" id="ehE-e4-G09"/>
+                <constraint firstItem="nic-Zf-Vw3" firstAttribute="centerX" secondItem="iN0-l3-epB" secondAttribute="centerX" id="gD7-f2-bFU"/>
+                <constraint firstItem="vUN-kp-3ea" firstAttribute="trailing" secondItem="nic-Zf-Vw3" secondAttribute="trailing" id="rkQ-Qo-oGm"/>
+                <constraint firstItem="3ce-V1-3vn" firstAttribute="top" secondItem="iN0-l3-epB" secondAttribute="top" id="zdi-HB-SxR"/>
+            </constraints>
+            <viewLayoutGuide key="safeArea" id="vUN-kp-3ea"/>
+            <connections>
+                <outlet property="bgView" destination="3ce-V1-3vn" id="PrO-rZ-Y8A"/>
+                <outlet property="passWordView" destination="m2P-pR-hII" id="xWF-K5-7dY"/>
+                <outlet property="titleLabel" destination="hTi-7c-I36" id="jss-zz-vKh"/>
+            </connections>
+            <point key="canvasLocation" x="132" y="154.27286356821591"/>
+        </view>
+    </objects>
+    <resources>
+        <image name="pay_pop_icon_cancel" width="13" height="13"/>
+    </resources>
+</document>

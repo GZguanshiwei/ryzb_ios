@@ -1,0 +1,21 @@
+//
+//  MarketShopHeader.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/19.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "MarketShopHeader.h"
+
+@implementation MarketShopHeader
+-(void)awakeFromNib{
+    [super awakeFromNib];
+    [self initControl];
+}
+
+-(void)initControl{
+    self.cycleScrollView.layer.cornerRadius = 7.0;
+    self.cycleScrollView.layer.masksToBounds = YES;
+}
+@end

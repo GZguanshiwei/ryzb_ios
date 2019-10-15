@@ -1,0 +1,81 @@
+//
+//  UCCheckOldPhoneViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/26.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "UCCheckOldPhoneViewController.h"
+#import "UCBindNewPhoneViewController.h"
+
+@interface UCCheckOldPhoneViewController ()
+@property (weak, nonatomic) IBOutlet UILabel *showPhoneLabel;
+@property (weak, nonatomic) IBOutlet UITextField *phoneCodeTextField;
+@property (weak, nonatomic) IBOutlet UIButton *phoneCodeButton;
+@property (weak, nonatomic) IBOutlet UIButton *commitButton;
+
+@property (strong, nonatomic) JMPhoneCodeTool *phoneCodeTool;
+@end
+
+@implementation UCCheckOldPhoneViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    [super viewWillDisappear:animated];
+    [self.phoneCodeTool stopTimer];
+}
+
+-(void)initControl{
+    self.view.backgroundColor = [UIColor whiteColor];
+}
+
+-(void)initData{
+    
+}
+
+-(JMPhoneCodeTool *)phoneCodeTool{
+    if(_phoneCodeTool == nil){
+        //此处的字典用于标识验证法发送的类型
+        _phoneCodeTool = [[JMPhoneCodeTool alloc] initWithPhoneCodeButton:self.phoneCodeButton requestParams:@{@"type":@"1"}];
+    }
+    return _phoneCodeTool;
+}
+
+#pragma mark - Navigation
+-(UIImage *)jmNavigationBarLeftButtonImage:(UIButton *)leftButton navigationBar:(JMNavigationBar *)navigationBar{
+    return [UIImage imageNamed:@"NavigationBack_Gray"];
+}
+
+-(UIColor *)jmNavigationBackgroundColor:(JMNavigationBar *)navigationBar{
+    return [UIColor whiteColor];
+}
+
+- (NSArray <UIButton *> *)textViewControllerRelationButtons:(JMTextViewController *)textViewController{
+    return @[self.commitButton];
+}
+
+-(UIStatusBarStyle)preferredStatusBarStyle{
+    return UIStatusBarStyleDefault;
+}
+
+#pragma mark - Actions
+- (IBAction)sendPhoneCodeAction:(id)sender {
+    //发送验证码
+    [self.view endEditing:YES];
+    //    self.phoneCodeTool.phoneNum = self.phoneTextField.text;
+    //如果是国际号码，需要设置区号
+    //    self.phoneCodeTool.areaId = @""
+    [self.phoneCodeTool sendPhoneCode];
+    
+}
+
+- (IBAction)commitAction:(id)sender {
+    UCBindNewPhoneViewController *bindNewPhoneVC = [[UCBindNewPhoneViewController alloc] initWithStoryboardName:@"UserCenter"];
+    [self.navigationController pushViewController:bindNewPhoneVC animated:YES];
+}
+@end

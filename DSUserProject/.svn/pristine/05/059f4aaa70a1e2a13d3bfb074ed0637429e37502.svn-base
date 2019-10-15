@@ -1,0 +1,36 @@
+//
+//  RefundViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/27.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "RefundViewController.h"
+
+@interface RefundViewController ()
+@property (weak, nonatomic) IBOutlet UITextView *reasonTextView;
+@property (weak, nonatomic) IBOutlet UILabel *moneyLabel;
+
+@end
+
+@implementation RefundViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    
+}
+
+-(void)initData{
+    self.title = @"申请退款";
+}
+
+#pragma mark - Actions
+- (IBAction)commitAction:(id)sender {
+}
+
+@end

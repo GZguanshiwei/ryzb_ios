@@ -1,0 +1,111 @@
+//
+//  AttentionLiveViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/17.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "AttentionLiveViewController.h"
+#import "AttentionLiveCell.h"
+#import "LiveRoomModel.h"
+
+@interface AttentionLiveViewController ()<UITableViewDelegate,UITableViewDataSource,AttentionLiveCellDelegate>
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
+@property (strong, nonatomic) NSMutableArray *tableData;
+@property (strong, nonatomic) JMRefreshTool *refreshTool;
+@end
+
+@implementation AttentionLiveViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.tableView.dataSource = self;
+    self.tableView.delegate = self;
+    self.tableView.rowHeight = 300;
+}
+
+-(void)initData{
+    self.title = @"我关注的直播间";
+    
+    [self requestAttentionList];
+}
+
+#pragma mark - UITableView
+-(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
+    return self.tableData.count;
+}
+
+-(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+    AttentionLiveCell *cell = [tableView dequeueReusableCellWithIdentifier:@"AttentionLiveCell"];
+    cell.delegate = self;
+    cell.cellData = self.tableData[indexPath.row];
+    return cell;
+}
+
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
+    LiveRoomModel *room = self.tableData[indexPath.row];
+    [[JMProjectManager sharedJMProjectManager] enterRoom:room.roomId];
+}
+
+#pragma mark - AttentionLiveCellDelegate
+-(void)didCancelAttention:(NSInteger)index{
+    ScreenCenterTipView *tipView = [[ScreenCenterTipView alloc] initWithXib];
+    tipView.message = @"确定要取消关注吗？";
+    tipView.buttonTitles = @[@"取消",@"确定"];
+    [tipView showViewWithDoneBlock:^(NSDictionary * _Nonnull params) {
+        NSInteger buttonIndex = [params getJsonValue:@"ButtonIndex"].integerValue;
+        if(buttonIndex == 1){
+            [self requestCancelAttentionRoom:index];
+        }
+    }];
+}
+
+-(void)requestAttentionList{
+    if(self.refreshTool == nil){
+        JMWeak(self);
+        self.refreshTool = [[JMRefreshTool alloc] initWithScrollView:self.tableView dataAnalysisBlock:^NSArray *(NSDictionary *responseData) {
+            NSMutableArray *array = [[NSMutableArray alloc] init];
+            NSDictionary *dataDic = responseData[@"data"];
+            NSArray *listArray = dataDic[@"list"];
+            for(NSDictionary *dic in listArray){
+                LiveRoomModel *model = [[LiveRoomModel alloc] initWithDictionary:dic];
+                [array addObject:model];
+            }
+            if([weakself.refreshTool isAddData] == YES){
+                [weakself.tableData addObjectsFromArray:array];
+            }else{
+                weakself.tableData = array;
+            }
+            [weakself.tableView reloadData];
+            return array;
+        }];
+        self.refreshTool.requestUrl = kUrlLiveAttentionList;
+        NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+        self.refreshTool.requestParams = params;
+    }
+    [self.tableView.mj_header beginRefreshing];
+}
+
+-(void)requestCancelAttentionRoom:(NSInteger)index{
+    //取消关注
+    LiveRoomModel *room = self.tableData[index];
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:room.roomId key:@"ids"];
+    [params setJsonValue:@"0" key:@"type"];
+    
+    [[JMRequestManager sharedManager] POST:kUrlLiveCancelAttention parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            [self.tableData removeObjectAtIndex:index];
+            [self.tableView reloadData];
+            [[NSNotificationCenter defaultCenter] postNotificationName:kNotificationLiveAttentionChange object:nil];
+        }
+    }];
+}
+@end

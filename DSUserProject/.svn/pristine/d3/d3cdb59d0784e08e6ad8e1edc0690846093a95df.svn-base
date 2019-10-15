@@ -1,0 +1,128 @@
+//
+//  MyShopViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/26.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "MyShopViewController.h"
+#import "ShareTipView.h"
+#import "ShopOrderViewController.h"
+#import "MyShopEditPhoneViewController.h"
+
+@interface MyShopViewController ()
+@property (weak, nonatomic) IBOutlet UILabel *showPhoneLabel;
+
+@end
+
+@implementation MyShopViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    
+}
+
+-(void)initData{
+    self.title = @"我的店铺";
+}
+
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    JMLoginUserModel *loginUser = [JMProjectManager sharedJMProjectManager].loginUser;
+    self.showPhoneLabel.text = loginUser.shopMobile;
+}
+
+/**
+ 分享弹窗
+ 
+ @param shareUrl 分享地址
+ */
+- (void)showShareView:(NSString *)shareUrl {
+    ShareTipView *shareTipView = [[ShareTipView alloc] initWithXib];
+    [shareTipView showViewWithDoneBlock:^(NSDictionary *params) {
+        NSString *ButtonIndex = [params getJsonValue:@"ButtonIndex"];
+        JMLoginUserModel *loginUser = [JMProjectManager sharedJMProjectManager].loginUser;
+        NSString *shareMessage = @"推荐这家店铺，支持担保交易";
+        switch (ButtonIndex.intValue) {
+            case 0:
+                // 微信
+                [JMUMengHelper shareWebPageToPlatformType:UMSocialPlatformType_WechatSession shareTitle:loginUser.nickName subTitle:shareMessage thumbImage:loginUser.headUrl shareURL:shareUrl];
+                break;
+            case 1:
+                // 朋友圈
+                [JMUMengHelper shareWebPageToPlatformType:UMSocialPlatformType_WechatTimeLine shareTitle:loginUser.nickName subTitle:shareMessage thumbImage:loginUser.headUrl shareURL:shareUrl];
+                break;
+            case 2:
+            {
+                // 复制链接
+                UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
+                pasteboard.string = shareUrl;
+                [JMProgressHelper toastInWindowWithMessage:@"复制成功"];
+            }
+                break;
+            default:
+                break;
+        }
+    }];
+}
+
+#pragma mark - Actions
+- (IBAction)previewShopAction:(id)sender {
+    //预览店铺
+    [self requestGetShopShareUrl:NO];
+}
+
+- (IBAction)shareAction:(id)sender {
+    //分享
+    [self requestGetShopShareUrl:YES];
+}
+
+- (IBAction)allOrderAction:(id)sender {
+    [self goOrderVCWithType:0];
+}
+
+- (IBAction)orderWithStatusAction:(id)sender {
+    UIButton *button = (UIButton *)sender;
+    [self goOrderVCWithType:button.tag];
+}
+
+- (IBAction)editPhoneAction:(id)sender {
+    MyShopEditPhoneViewController *editPhoneVC = [[MyShopEditPhoneViewController alloc] initWithStoryboardName:@"UserCenter"];
+    [self.navigationController pushViewController:editPhoneVC animated:YES];
+}
+
+#pragma mark - 跳转
+-(void)goOrderVCWithType:(NSInteger)type{
+    return;
+    ShopOrderViewController *orderVC = [[ShopOrderViewController alloc] initWithStoryboardName:@"ShopOrder"];
+    orderVC.selectIndex = type;
+    [self.navigationController pushViewController:orderVC animated:YES];
+}
+
+- (void)requestGetShopShareUrl:(BOOL)isShare {
+    //获取店铺分享链接
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [[JMRequestManager sharedManager] POST:kUrlGetShopShareUrl parameters:params completion:^(JMBaseResponse *response) {
+        if (response.error) {
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            NSString *shareUrl = response.responseObject[@"data"];
+            if (isShare) {
+                [self showShareView:shareUrl];
+            }else{
+                //跳转外链
+                if ([[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:shareUrl]]) {
+                    // 跳转到店铺分享链接
+                    [[UIApplication sharedApplication] openURL:[NSURL URLWithString:shareUrl]];
+                }
+            }
+        }
+    }];
+}
+
+@end

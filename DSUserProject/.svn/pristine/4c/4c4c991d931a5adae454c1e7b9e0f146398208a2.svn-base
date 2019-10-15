@@ -1,0 +1,82 @@
+//
+//  HtmlViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/7/2.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "HtmlViewController.h"
+
+@interface HtmlViewController ()
+
+@end
+
+@implementation HtmlViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    self.fd_interactivePopDisabled = NO;
+}
+
+-(void)initControl{
+    
+}
+
+-(void)initData{
+    switch (self.type) {
+        case Html_Buy:
+            self.title = @"购买攻略";
+            [self requestHtmlContent:@"5"];
+            break;
+        case Html_Register:
+            self.title = @"用户协议";
+            [self requestHtmlContent:@"3"];
+            break;
+        case Html_Help:
+            self.title = @"帮助中心";
+            [self requestHtmlContent:@"7"];
+            break;
+        case Html_Integral:
+            self.title = @"积分规则";
+            break;
+        case Html_FansLevel:
+            self.title = @"粉丝等级介绍";
+            break;
+        case Html_VipLevel:
+            self.title = @"等级介绍";
+            break;
+        case Html_Appraisal:
+            self.title = @"鉴宝服务介绍";
+            break;
+        case Html_Bargaining:
+            self.title = @"砍价规则";
+            break;
+        default:
+            break;
+    }
+}
+
+// 默认需要, 是否需要进度条
+- (BOOL)webViewController:(JMWebViewController *)webViewController webViewIsNeedProgressIndicator:(WKWebView *)webView{
+    return NO;
+}
+
+#pragma mark - 网络
+-(void)requestHtmlContent:(NSString *)type{
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:type key:@"id"];
+    [[JMRequestManager sharedManager] POST:kUrlHtmlContent parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            NSDictionary *dataDic = response.responseObject[@"data"];
+            NSString *type = [dataDic getJsonValue:@"type"];
+            if(type.intValue == 0){
+                NSString *htmlContent = [dataDic getJsonValue:@"content"];
+                [self.webView loadHTMLString:htmlContent baseURL:nil];
+            }
+        }
+    }];
+}
+@end

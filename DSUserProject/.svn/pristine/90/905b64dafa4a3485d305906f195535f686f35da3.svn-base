@@ -1,0 +1,23 @@
+//
+//  HtmlViewController.h
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/7/2.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "JMWebViewController.h"
+
+NS_ASSUME_NONNULL_BEGIN
+
+typedef enum{
+    Html_Register = 0,
+    Html_Buy,
+}Html_Type;
+
+
+@interface HtmlViewController : JMWebViewController
+@property(nonatomic, assign) Html_Type type;
+@end
+
+NS_ASSUME_NONNULL_END

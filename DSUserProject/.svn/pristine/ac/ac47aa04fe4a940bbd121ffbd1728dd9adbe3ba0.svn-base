@@ -1,0 +1,55 @@
+//
+//  OrderModel.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/4/24.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "OrderModel.h"
+
+@implementation OrderModel
+
+-(instancetype)initWithOrderListDictionary:(NSDictionary *)dict{
+    self = [super init];
+    if(self){
+        AddressModel *address = [[AddressModel alloc] init];
+        address.phone = [dict getJsonValue:@"addressPhone"];
+        address.name = [dict getJsonValue:@"addressName"];
+        address.address = [dict getJsonValue:@"address"];
+        self.address = address;
+        
+        self.orderId = [dict getJsonValue:@"id"];
+        self.orderNo = [dict getJsonValue:@"orderNo"];
+        self.totalPay = [dict getJsonValue:@"money"];
+        
+        NSArray *goodList = dict[@"goodsList"];
+        NSDictionary *goodDic = goodList.firstObject;
+        GoodModel *good = [[GoodModel alloc] init];
+        good.goodId = [goodDic getJsonValue:@"goodsId"];
+        good.title = [goodDic getJsonValue:@"goodsName"];
+        good.coverImage = [goodDic getJsonValue:@"skuImg"];
+        good.price = [goodDic getJsonValue:@"price"];
+        good.afterSaleId = [goodDic getJsonValue:@"id"];
+        self.good = good;
+        
+        self.state = [dict getJsonValue:@"state"].integerValue;
+        self.afterSaleState = [dict getJsonValue:@"refundState"].integerValue;
+    }
+    return self;
+}
+
+
+-(instancetype)initWithDetailDictionary:(NSDictionary *)dict{
+    self = [self initWithOrderListDictionary:dict];
+    if(self){
+        self.createTime = [dict getJsonValue:@"createTime"];
+        self.payTime = [dict getJsonValue:@"payTime"];
+        self.faHuoTime = [dict getJsonValue:@"sendTime"];
+        self.evaluateTime = [dict getJsonValue:@""];
+        self.completeTime = [dict getJsonValue:@"finishTime"];
+    }
+    return self;
+}
+
+@end

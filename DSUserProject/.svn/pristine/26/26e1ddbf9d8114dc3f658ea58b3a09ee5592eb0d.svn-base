@@ -1,0 +1,174 @@
+//
+//  JMPickPhotoTool.m
+//  JMBaseProject
+//
+//  Created by liuny on 2018/6/6.
+//  Copyright © 2018年 liuny. All rights reserved.
+//
+
+#import "JMPickPhotoTool.h"
+#import "JMPermissionHelper.h"
+#import "TZImagePickerController.h"
+
+@interface JMPickPhotoTool()<UIImagePickerControllerDelegate,UINavigationControllerDelegate>
+@property(nonatomic,copy) void(^doneBlock)(NSArray<UIImage *> *pickImage);
+@end
+
+@implementation JMPickPhotoTool
+//使用系统弹框+UIImagePickerController
+-(void)startSystemPickPhotoWithDoneBlock:(void(^)(NSArray<UIImage *> *pickImage))doneBlock{
+    self.doneBlock = doneBlock;
+    [JXTAlertController jm_showActionSheetWithTitle:nil message:nil appearanceProcess:^(JXTAlertController * _Nonnull alertMaker) {
+        alertMaker.addActionDefaultTitle(@"从相册选择").addActionDefaultTitle(@"拍照").addActionCancelTitle(@"取消");
+    } actionsBlock:^(NSInteger buttonIndex, UIAlertAction * _Nonnull action, JXTAlertController * _Nonnull alertSelf) {
+        if (buttonIndex == 0) {
+            [[JMPermissionHelper sharedInstance] accessPhoto:^(BOOL granted) {
+                [self choosePhoto];
+            }];
+        }else if (buttonIndex == 1) {
+            BOOL supportCamera = [self isSupportCamera];
+            if(supportCamera){
+                [[JMPermissionHelper sharedInstance] accessCamera:^(BOOL granted) {
+                    [self takePhoto];
+                }];
+            }
+        }
+    }];
+}
+
+//使用系统弹框+TZImagePickerController
+-(void)startTZImagePickPhotoWithMaxImagesCount:(NSInteger)imgCount doneBlock:(void(^)(NSArray<UIImage *> *pickImage))doneBlock needCrop:(BOOL)needCrop{
+    self.doneBlock = doneBlock;
+    [JXTAlertController jm_showActionSheetWithTitle:nil message:nil appearanceProcess:^(JXTAlertController * _Nonnull alertMaker) {
+        alertMaker.addActionDefaultTitle(@"从相册选择").addActionDefaultTitle(@"拍照").addActionCancelTitle(@"取消");
+    } actionsBlock:^(NSInteger buttonIndex, UIAlertAction * _Nonnull action, JXTAlertController * _Nonnull alertSelf) {
+        if (buttonIndex == 0) {
+            [[JMPermissionHelper sharedInstance] accessPhoto:^(BOOL granted) {
+                [self choosePhotoWithCount:imgCount needCrop:needCrop];
+            }];
+        }else if (buttonIndex == 1) {
+            BOOL supportCamera = [self isSupportCamera];
+            if(supportCamera){
+                [[JMPermissionHelper sharedInstance] accessCamera:^(BOOL granted) {
+                    [self takePhoto];
+                }];
+            }
+        }
+    }];
+}
+
+//使用自定义弹出框
+-(void)startCustomPickPhotoWithDoneBlock:(void(^)(NSArray<UIImage *> *pickImage))doneBlock{
+    self.doneBlock = doneBlock;
+    /*
+    GlobalTakePhotoView *customTakePhotoView = [[GlobalTakePhotoView alloc] initWithXib];
+    [customTakePhotoView showTakePhotoViewWithDoneBlock:^(NSInteger buttonIndex) {
+        if(buttonIndex == 0){
+            //拍照
+            BOOL supportCamera = [self isSupportCamera];
+            if(supportCamera){
+                [[LFPermissionMgr sharedInstance] accessCamera:^(BOOL granted) {
+                    [self takePhoto];
+                }];
+            }
+        }else if(buttonIndex == 1){
+            //从相册选择
+            [[LFPermissionMgr sharedInstance] accessPhoto:^(BOOL granted) {
+                [self choosePhoto];
+            }];
+        }
+    }];
+     */
+}
+
+
+/**
+ 判断设备是否支持拍照
+
+ @return YES:支持 NO:不支持
+ */
+-(BOOL)isSupportCamera{
+    BOOL canTakePhoto = [UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera];
+    if(canTakePhoto == NO){
+        [JXTAlertController jm_showAlertWithTitle:@"提示" message:@"设备不支持拍照" appearanceProcess:^(JXTAlertController * _Nonnull alertMaker) {
+            alertMaker.addActionDestructiveTitle(@"确认");
+        } actionsBlock:^(NSInteger buttonIndex, UIAlertAction * _Nonnull action, JXTAlertController * _Nonnull alertSelf) {
+        }];
+    }
+    return canTakePhoto;
+}
+
+/**
+ 使用第三方库TZImagePickerController获取图片
+
+ @param imgCount 图片的张数
+ @param needCrop 是否切图
+ */
+-(void)choosePhotoWithCount:(NSInteger)imgCount needCrop:(BOOL)needCrop {
+    NSInteger count = imgCount>1?imgCount:1;
+    TZImagePickerController *imagePickerVC = [[TZImagePickerController alloc] initWithMaxImagesCount:count delegate:nil];
+    imagePickerVC.allowPickingVideo = NO;
+    imagePickerVC.allowTakePicture = NO;
+    
+    if (needCrop) {
+        imagePickerVC.needCircleCrop = YES;
+        imagePickerVC.circleCropRadius = kScreenWidth/2-20;
+        imagePickerVC.allowCrop = YES;
+    }
+    
+    imagePickerVC.didFinishPickingPhotosHandle = ^(NSArray<UIImage *> *photos, NSArray *assets, BOOL isSelectOriginalPhoto) {
+        if (needCrop) {
+            [[TZImageManager manager] getPhotoWithAsset:assets.firstObject completion:^(UIImage *photo, NSDictionary *info, BOOL isDegraded) {
+                if(self.doneBlock){
+                    self.doneBlock(@[photo]);
+                }
+            }];
+        }
+        else {
+            if(self.doneBlock){
+                self.doneBlock(photos);
+            }
+        }
+    };
+    [[UIWindow jm_currentViewController] presentViewController:imagePickerVC animated:YES completion:nil];
+}
+
+/**
+ 使用系统方式获取一张图片
+ */
+-(void)choosePhoto{
+    UIImagePickerController *imagePicker = [[UIImagePickerController alloc] init];
+    imagePicker.delegate = self;
+    imagePicker.allowsEditing = YES;
+    imagePicker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
+    [[UIWindow jm_currentViewController] presentViewController:imagePicker animated:YES completion:nil];
+}
+
+
+/**
+ 使用系统方式拍照
+ */
+-(void)takePhoto{
+    UIImagePickerController *imagePicker = [[UIImagePickerController alloc] init];
+    imagePicker.delegate = self;
+    imagePicker.allowsEditing = YES;
+    imagePicker.sourceType = UIImagePickerControllerSourceTypeCamera;
+    [[UIWindow jm_currentViewController] presentViewController:imagePicker animated:YES completion:nil];
+}
+
+#pragma mark - UIImagePickerControllerDelegate
+-(void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info{
+    UIImage *image = info[UIImagePickerControllerEditedImage];
+    if(image){
+        if(self.doneBlock){
+            self.doneBlock(@[image]);
+        }
+    }
+    [picker dismissViewControllerAnimated:YES completion:nil];
+}
+
+-(void)imagePickerControllerDidCancel:(UIImagePickerController *)picker{
+    [picker dismissViewControllerAnimated:YES completion:nil];
+}
+
+@end

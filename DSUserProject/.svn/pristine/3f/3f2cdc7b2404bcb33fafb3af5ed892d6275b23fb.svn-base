@@ -1,0 +1,164 @@
+//
+//  IntegralGoodDetailViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/9/16.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "IntegralGoodDetailViewController.h"
+#import "ContainerScroll.h"
+#import "SDCycleScrollView.h"
+#import "AddressAlertViewController.h"
+#import "GoodDetailModel.h"
+
+@interface IntegralGoodDetailViewController ()<SDCycleScrollViewDelegate>
+@property (weak, nonatomic) IBOutlet ContainerScroll *containerScroll;
+@property (weak, nonatomic) IBOutlet UIScrollView *scrollView;
+@property (weak, nonatomic) IBOutlet UIView *carouselView;//轮播
+@property (weak, nonatomic) IBOutlet UILabel *priceLabel;
+@property (weak, nonatomic) IBOutlet UILabel *salesVolumeLabel;//销量
+@property (weak, nonatomic) IBOutlet UILabel *nameLabel;
+@property (weak, nonatomic) IBOutlet UIView *contaninerView;
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *contaninerViewHeigth;
+
+@property (nonatomic, assign) BOOL canScroll;
+@property (strong, nonatomic) SDCycleScrollView *cycleImageView;
+@property (strong, nonatomic) GoodDetailModel *goodDetail;
+@end
+
+@implementation IntegralGoodDetailViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+- (void)initControl {
+    self.scrollView.delegate = self;
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(acceptMsg:) name:@"superMove" object:nil];
+    self.contaninerViewHeigth.constant = kScreenHeight - 50 - [UIApplication sharedApplication].statusBarFrame.size.height;
+}
+
+- (void)initData {
+    self.nameLabel.text = self.good.name;
+    self.priceLabel.text = [NSString stringWithFormat:@"%@积分",self.good.exchangeIntegral];
+    self.nameLabel.text = self.good.name;
+    self.salesVolumeLabel.text = [NSString stringWithFormat:@"已兑换%@",self.good.exchangeCount];
+    
+    [self requestGoodDetail];
+}
+
+-(void)refreshBannelImage{
+    //轮播图
+    SDCycleScrollView *cycleImageView = [SDCycleScrollView cycleScrollViewWithFrame:CGRectZero delegate:self placeholderImage:[UIImage imageNamed:@"home_ban"]];
+    cycleImageView.pageControlStyle = SDCycleScrollViewPageContolStyleClassic;
+    cycleImageView.bannerImageViewContentMode = UIViewContentModeScaleAspectFill;
+    cycleImageView.pageDotImage = [UIImage imageNamed:@"home_ban_unsel"];
+    cycleImageView.currentPageDotImage = [UIImage imageNamed:@"home_ban_sel"];
+    self.cycleImageView = cycleImageView;
+    [self.carouselView addSubview:cycleImageView];
+    [self.cycleImageView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.edges.equalTo(self.carouselView);
+    }];
+    //设置数据
+    NSMutableArray *array = [[NSMutableArray alloc] initWithArray:self.goodDetail.infoImages];
+    if(self.goodDetail.videoUrl.length > 0){
+        [array insertObject:self.goodDetail.coverImage atIndex:0];
+    }
+    self.cycleImageView.imageURLStringsGroup = array;
+}
+
+
+#pragma mark -navigation
+- (UIColor *)jmNavigationBackgroundColor:(JMNavigationBar *)navigationBar {
+    return [UIColor clearColor];
+}
+
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender{
+//    self.productDetailsPageVC = [segue destinationViewController];
+//    self.productDetailsPageVC.productId = self.pointsMallModel.pointsMallIds;
+}
+
+#pragma mark -notification
+-(void)acceptMsg:(NSNotification *)notification {
+    self.canScroll = YES;
+}
+
+#pragma mark -scrollView
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
+    CGFloat height = self.contaninerView.mj_y;
+    NSLog(@"%f", height);
+    NSLog(@"%f", self.contaninerView.mj_y);
+    if (scrollView.contentOffset.y >= height) {
+        scrollView.contentOffset = CGPointMake(0, height);
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"childMove" object:nil userInfo:nil];
+        self.canScroll = NO;
+    } else {
+        if (scrollView.contentOffset.y > 0) {
+            if (!self.canScroll) {
+                scrollView.contentOffset = CGPointMake(0, height);
+            }
+        }
+    }
+}
+
+#pragma mark -Actions
+- (IBAction)keFuAction:(id)sender {
+    //联系客服
+    JMLoginUserModel *loginUser = [JMProjectManager sharedJMProjectManager].loginUser;
+    //联系客服
+    QYSource *source = [[QYSource alloc] init];
+    source.title = loginUser.nickName;
+    source.urlString = loginUser.headUrl;
+    QiYuCustomServiceController *sessionViewController = [[QiYuCustomServiceController alloc] init];
+    sessionViewController.sessionTitle = @"客服";
+    sessionViewController.source = source;
+    [self.navigationController pushViewController:sessionViewController animated:YES];
+}
+
+- (IBAction)exchangeAction:(id)sender {
+    //立即兑换
+    AddressAlertViewController *selectAddressVC = [[AddressAlertViewController alloc] initWithStoryboardName:@"Address"];
+    selectAddressVC.selectBlock = ^(AddressModel * _Nonnull address) {
+        [self requestExchangeGood:address.addressId];
+    };
+    //设置ViewController的模态模式，即ViewController的显示方式
+    selectAddressVC.modalPresentationStyle = UIModalPresentationCustom;
+    [self presentViewController:selectAddressVC animated:YES completion:nil];
+}
+
+#pragma mark -网络请求
+-(void)requestGoodDetail{
+    if(JMIsEmpty(self.good.goodId) == NO){
+        NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+        [params setJsonValue:self.good.ids key:@"goodsId"];
+        [self showLoading];
+        [[JMRequestManager sharedManager] POST:kUrlGoodDetail parameters:params completion:^(JMBaseResponse *response) {
+            [self dismissLoading];
+            if(response.error){
+                [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+            }else{
+                NSDictionary *dataDic = response.responseObject[@"data"];
+                self.goodDetail = [[GoodDetailModel alloc] initWithDetailDictionary:dataDic];
+                [self refreshBannelImage];
+            }
+        }];
+    }
+}
+
+-(void)requestExchangeGood:(NSString *)goodId{
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:self.good.goodId key:@"integralId"];
+    [params setJsonValue:goodId key:@"addressId"];
+    [self showLoading];
+    [[JMRequestManager sharedManager] POST:kUrlIntegralExchange parameters:params completion:^(JMBaseResponse *response) {
+        [self dismissLoading];
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            [JMProgressHelper toastInWindowWithMessage:@"兑换成功"];
+        }
+    }];
+}
+@end

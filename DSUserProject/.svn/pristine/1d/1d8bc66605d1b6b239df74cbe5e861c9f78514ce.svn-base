@@ -1,0 +1,27 @@
+//
+//  AttentionLiveCell.h
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/17.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+#import "LiveRoomModel.h"
+
+NS_ASSUME_NONNULL_BEGIN
+
+@protocol AttentionLiveCellDelegate <NSObject>
+
+-(void)didCancelAttention:(NSInteger)index;
+
+@end
+
+
+@interface AttentionLiveCell : UITableViewCell
+@property (weak, nonatomic) id<AttentionLiveCellDelegate>delegate;
+@property (assign, nonatomic) NSInteger index;
+@property (strong, nonatomic) LiveRoomModel *cellData;
+@end
+
+NS_ASSUME_NONNULL_END

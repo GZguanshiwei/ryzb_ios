@@ -1,0 +1,39 @@
+//
+//  MyShopViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/26.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "MyShopViewController.h"
+#import "ShareTipView.h"
+
+@interface MyShopViewController ()
+
+@end
+
+@implementation MyShopViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    
+}
+
+-(void)initData{
+    self.title = @"我的店铺";
+}
+
+#pragma mark - Actions
+- (IBAction)shareAction:(id)sender {
+    //分享
+    ShareTipView *shareTipView = [[ShareTipView alloc] initWithXib];
+    [shareTipView showViewWithDoneBlock:^(NSDictionary *params) {
+        
+    }];
+}
+@end

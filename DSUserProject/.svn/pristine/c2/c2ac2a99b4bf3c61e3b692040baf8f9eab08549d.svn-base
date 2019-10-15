@@ -1,0 +1,94 @@
+//
+//  MyBargaingListCell.m
+//  JMBaseProject
+//
+//  Created by 潘传标 on 2019/9/6.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "MyBargaingListCell.h"
+
+@interface MyBargaingListCell ()
+
+/** 商品图片 */
+@property (strong, nonatomic) IBOutlet UIImageView *coverImageView;
+/** 商品标题 */
+@property (strong, nonatomic) IBOutlet UILabel *shopNameLabel;
+/** 已砍金额 */
+@property (strong, nonatomic) IBOutlet UILabel *amountLabel;
+/** 时 */
+@property (strong, nonatomic) IBOutlet UILabel *hourOneLabel;
+@property (strong, nonatomic) IBOutlet UILabel *hourTwoLabel;
+/** 分 */
+@property (strong, nonatomic) IBOutlet UILabel *minOneLabel;
+@property (strong, nonatomic) IBOutlet UILabel *minTwoLabel;
+/** 秒 */
+@property (strong, nonatomic) IBOutlet UILabel *secondOneLabel;
+@property (strong, nonatomic) IBOutlet UILabel *secondTwoLabel;
+/** 砍价失败 */
+@property (strong, nonatomic) IBOutlet UIView *failView;
+@property (weak, nonatomic) IBOutlet UIView *timeView;
+@property (weak, nonatomic) IBOutlet UILabel *resultTipLabel;
+
+
+@end
+
+@implementation MyBargaingListCell
+
+- (void)awakeFromNib {
+    [super awakeFromNib];
+    ViewRadius(self.coverImageView, 5);
+}
+
+- (void)setSelected:(BOOL)selected animated:(BOOL)animated {
+    [super setSelected:selected animated:animated];
+
+    // Configure the view for the selected state
+}
+
+-(void)setCellData:(BargainModel *)cellData{
+    _cellData = cellData;
+    
+    [self.coverImageView sd_setImageWithURL:[JMCommonMethod imageUrlWithPath:self.cellData.coverImage]];
+    self.shopNameLabel.text = self.cellData.name;
+    self.amountLabel.text = [NSString stringWithFormat:@"已砍%@元",self.cellData.downMoney];
+    
+    NSString *showTime = [self.cellData showTime];
+    
+    switch (self.cellData.status.integerValue) {
+        case 0:
+        {
+            self.timeView.hidden = NO;
+            self.failView.hidden = YES;
+            
+            self.hourOneLabel.text = [showTime substringWithRange:NSMakeRange(0, 1)];
+            self.hourTwoLabel.text = [showTime substringWithRange:NSMakeRange(1, 1)];
+            self.minOneLabel.text = [showTime substringWithRange:NSMakeRange(3, 1)];
+            self.minTwoLabel.text = [showTime substringWithRange:NSMakeRange(4, 1)];
+            self.secondOneLabel.text = [showTime substringWithRange:NSMakeRange(6, 1)];
+            self.secondTwoLabel.text = [showTime substringWithRange:NSMakeRange(7, 1)];
+            break;
+        }
+        case 1:
+            self.timeView.hidden = YES;
+            self.failView.hidden = NO;
+            self.resultTipLabel.text = @"砍价成功";
+            break;
+        case 2:
+            self.timeView.hidden = YES;
+            self.failView.hidden = NO;
+            self.resultTipLabel.text = @"砍价失败";
+            break;
+        default:
+            break;
+    }
+}
+
+
+- (IBAction)bottomButtonClick:(UIButton *)sender {
+    if (self.buttonActionBlock) {
+        self.buttonActionBlock(sender.tag);
+    }
+}
+
+@end

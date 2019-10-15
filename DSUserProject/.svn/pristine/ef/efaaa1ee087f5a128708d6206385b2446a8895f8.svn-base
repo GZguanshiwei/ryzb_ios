@@ -1,0 +1,30 @@
+//
+//  MyCouponDetailController.m
+//  JMBaseProject
+//
+//  Created by 潘传标 on 2019/9/7.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "BuyCouponDetailController.h"
+
+@interface BuyCouponDetailController ()
+
+@end
+
+@implementation BuyCouponDetailController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+- (void)initControl
+{
+    self.jm_navgationBar.hidden = YES;
+    self.view.backgroundColor = [UIColor whiteColor];
+}
+- (IBAction)backButtonClick:(id)sender {
+    [self.navigationController popViewControllerAnimated:YES];
+}
+@end

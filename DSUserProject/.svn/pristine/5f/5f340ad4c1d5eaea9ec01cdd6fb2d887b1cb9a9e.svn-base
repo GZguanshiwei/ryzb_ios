@@ -1,0 +1,18 @@
+//
+//  LiveGiftGoodsCell.m
+//  JMBaseProject
+//
+//  Created by 潘传标 on 2019/9/4.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "LiveGiftGoodsCell.h"
+
+@implementation LiveGiftGoodsCell
+
+- (void)awakeFromNib {
+    [super awakeFromNib];
+    // Initialization code
+}
+
+@end

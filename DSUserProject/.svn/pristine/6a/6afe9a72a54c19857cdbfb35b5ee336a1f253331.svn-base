@@ -1,0 +1,28 @@
+//
+//  ShareTipView.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/1/4.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "ShareTipView.h"
+
+@implementation ShareTipView
+
+
+- (IBAction)shareTypeAction:(id)sender {
+    if(self.buttonClickBlock){
+        UIButton *button = (UIButton *)sender;
+        NSMutableDictionary *params = [[NSMutableDictionary alloc] init];
+        [params setJsonValue:[NSString stringWithFormat:@"%ld",(long)button.tag] key:@"ButtonIndex"];
+        self.buttonClickBlock(params);
+    }
+    [self hideWithAnmation:YES];
+}
+
+
+- (IBAction)cancelAction:(id)sender {
+    [self hideWithAnmation:YES];
+}
+@end

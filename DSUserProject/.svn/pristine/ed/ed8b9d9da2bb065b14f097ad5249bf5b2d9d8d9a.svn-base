@@ -1,0 +1,30 @@
+//
+//  NewsDetailViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/19.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "NewsDetailViewController.h"
+
+@interface NewsDetailViewController ()
+
+@end
+
+@implementation NewsDetailViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    
+}
+
+-(void)initData{
+    self.title = @"公告详情";
+}
+
+@end

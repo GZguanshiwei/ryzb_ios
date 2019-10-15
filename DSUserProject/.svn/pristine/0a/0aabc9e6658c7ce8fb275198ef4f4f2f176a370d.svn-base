@@ -1,0 +1,118 @@
+//
+//  MyCouponListViewController.m
+//  JMBaseProject
+//
+//  Created by 抽筋的灯 on 2019/9/10.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "MyCouponListViewController.h"
+#import "MyCouponListCell.h"
+#import "MyCouponDetailController.h"
+#import "MyCouponModel.h"
+
+@interface MyCouponListViewController ()<UITableViewDataSource,UITableViewDelegate>
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
+@property (nonatomic, strong) NSMutableArray *tableData;
+@property (strong, nonatomic) JMRefreshTool *refreshTool;
+
+@end
+
+@implementation MyCouponListViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+- (void)initData {
+    [self requestMyCouponList];
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return 140;
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return self.tableData.count;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    MyCouponListCell * cell = [tableView dequeueReusableCellWithIdentifier:myCouponListCellID forIndexPath:indexPath];
+    if (self.type == 0) {
+        [cell.typeButton setTitle:@"立即使用" forState:UIControlStateNormal];
+        [cell.typeButton setBackgroundImage:[UIImage imageNamed:@"wdyhq_btn_use"] forState:UIControlStateNormal];
+        cell.userInteractionEnabled = YES;
+    }else
+    {
+        [cell.typeButton setTitle:@"" forState:UIControlStateNormal];
+        [cell.typeButton setBackgroundImage:[UIImage imageNamed:@"wdyhq_tag_ysx"] forState:UIControlStateNormal];
+        cell.userInteractionEnabled = NO;
+    }
+    cell.buttonActionBlock = ^(NSInteger index) {
+        switch (index) {
+            case 0:
+                [self checkCoupondsDetail];
+                break;
+            case 1:
+                [self goToUseVc];
+                break;
+            default:
+                break;
+        }
+    };
+    return cell;
+}
+
+#pragma mark - 立即使用
+-(void)goToUseVc
+{
+    
+}
+
+#pragma mark - 查看详情
+-(void)checkCoupondsDetail
+{
+    MyCouponDetailController *detailVc = [[MyCouponDetailController alloc] initWithStoryboardName:@"Mine"];
+    [self.navigationController pushViewController:detailVc animated:YES];
+}
+
+
+#pragma mark - 网络
+-(void)requestMyCouponList{
+    if(self.refreshTool == nil){
+        MJWeakSelf;
+        self.refreshTool = [[JMRefreshTool alloc] initWithScrollView:self.tableView dataAnalysisBlock:^NSArray *(NSDictionary *responseData) {
+            NSMutableArray *array = [[NSMutableArray alloc] init];
+            NSArray *listArray = responseData[@"data"][@"list"];
+            for(NSDictionary *dict in listArray){
+                MyCouponModel *model = [[MyCouponModel alloc] initWithDictionary:dict];
+                [array addObject:model];
+            }
+            if([weakSelf.refreshTool isAddData]){
+                [weakSelf.tableData addObjectsFromArray:array];
+            }else{
+                weakSelf.tableData = array;
+            }
+            
+            [weakSelf.tableView reloadData];
+            return array;
+        }];
+        
+        self.refreshTool.requestUrl = kUrlMyCouponList;
+        NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+        if (self.type == 0) {
+            [params setValue:@"0" forKey:@"status"];
+        }else {
+            [params setValue:@"2" forKey:@"status"];
+        }
+        self.refreshTool.requestParams = params;
+    }
+    [self.tableView.mj_header beginRefreshing];
+}
+
+
+@end

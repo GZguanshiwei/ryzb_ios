@@ -1,0 +1,155 @@
+//
+//  LiveGiftViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/9/19.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "LiveGiftViewController.h"
+#import "GiftCollectionViewFlowLayout.h"
+#import "LiveGiftGoodsCell.h"
+
+@interface LiveGiftViewController ()<UICollectionViewDelegate,UICollectionViewDataSource>
+@property (strong, nonatomic) IBOutlet UIPageControl *pageControl;
+@property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
+@property (weak, nonatomic) IBOutlet UILabel *moneyLabel;
+@property (weak, nonatomic) IBOutlet UIView *bgView;
+@property (strong, nonatomic) NSMutableArray *collectionData;
+
+@property (strong, nonatomic) GiftModel *selectGift;
+@end
+
+@implementation LiveGiftViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.view.backgroundColor = [UIColor clearColor];
+    
+    GiftCollectionViewFlowLayout *layout = [[GiftCollectionViewFlowLayout alloc] initWithRowCount:2 itemCountPerRow:4];
+    [layout setColumnSpacing:0 rowSpacing:5 edgeInsets:UIEdgeInsetsZero];
+    self.collectionView.showsHorizontalScrollIndicator = FALSE; // 去掉滚动条
+    self.collectionView.alwaysBounceHorizontal = YES;
+    self.collectionView.pagingEnabled = YES;
+    self.collectionView.scrollEnabled = YES;
+    self.collectionView.collectionViewLayout = layout;
+    
+    self.collectionView.delegate = self;
+    self.collectionView.dataSource = self;
+    
+    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapToClose)];
+    [self.bgView addGestureRecognizer:tap];
+}
+
+-(void)initData{
+    JMLoginUserModel *loginUser = [JMProjectManager sharedJMProjectManager].loginUser;
+    self.moneyLabel.text = loginUser.integral;
+    
+    [self requestGiftList];
+}
+
+-(void)updatePageTotal{
+    NSInteger pageTotal = ceil((float)self.collectionData.count/8.0);
+    if(pageTotal < 2){
+        self.pageControl.hidden = YES;
+    }else{
+        self.pageControl.hidden = NO;
+    }
+    self.pageControl.numberOfPages = pageTotal;
+    self.pageControl.currentPage = 0;
+}
+
+-(void)tapToClose{
+    [self dismissViewControllerAnimated:YES completion:nil];
+}
+
+#pragma mark - UICollectionView
+-(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
+    return self.collectionData.count;
+}
+
+- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
+    LiveGiftGoodsCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"LiveGiftGoodsCell" forIndexPath:indexPath];
+    GiftModel *model = self.collectionData[indexPath.row];
+    cell.cellData = model;
+    return cell;
+}
+
+-(CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath{
+    return CGSizeMake(75.0, 85.0);
+}
+
+-(void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView{
+    NSInteger pageIndex = scrollView.contentOffset.x/scrollView.mj_w;
+    self.pageControl.currentPage = pageIndex;
+}
+
+-(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
+    GiftModel *model = self.collectionData[indexPath.row];
+    if(self.selectGift){
+        self.selectGift.isSelect = NO;
+    }
+    self.selectGift = model;
+    self.selectGift.isSelect = YES;
+    [self.collectionView reloadData];
+}
+
+#pragma mark - Actions
+- (IBAction)sendAction:(id)sender {
+    if(self.selectGift == nil){
+        [JMProgressHelper toastInView:self.view message:@"请选择要赠送的礼物"];
+        return;
+    }
+    [self requestSendGift:self.selectGift.giftId];
+}
+#pragma mark - 网络
+-(void)requestGiftList{
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:@"1" key:@"pageNumber"];
+    [params setJsonValue:@"999" key:@"pageSize"];
+    [[JMRequestManager sharedManager] POST:kUrlLiveGiftList parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            NSMutableArray *array = [[NSMutableArray alloc] init];
+            NSArray *listArray = response.responseObject[@"data"][@"list"];
+            for(NSDictionary *dic in listArray){
+                GiftModel *model = [[GiftModel alloc] initWithDictionary:dic];
+                [array addObject:model];
+            }
+            self.collectionData = array;
+            [self updatePageTotal];
+            
+            [self.collectionView reloadData];
+        }
+    }];
+}
+
+-(void)requestSendGift:(NSString *)giftId{
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:self.toAccountId key:@"toAccountId"];
+    [params setJsonValue:giftId key:@"giftId"];
+    [[JMRequestManager sharedManager] POST:kUrlLiveSendGift parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            [JMProgressHelper toastInView:self.view message:@"赠送成功"];
+            [[JMProjectManager sharedJMProjectManager] updateLoginUserInfoSuccessBlock:^{
+                JMLoginUserModel *loginUser = [JMProjectManager sharedJMProjectManager].loginUser;
+                self.moneyLabel.text = loginUser.integral;
+            } failBlock:nil];
+            if(self.successBlock){
+                NSMutableDictionary *params = [[NSMutableDictionary alloc] init];
+                [params setJsonValue:self.selectGift.image key:@"giftImage"];
+                [params setJsonValue:self.selectGift.name key:@"giftName"];
+                self.successBlock(params);
+            }
+        }
+    }];
+}
+
+@end

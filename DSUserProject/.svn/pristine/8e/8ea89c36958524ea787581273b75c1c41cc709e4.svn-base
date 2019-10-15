@@ -1,0 +1,330 @@
+//
+//  MarketLiveViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/15.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "MarketLiveViewController.h"
+#import "MarketLiveCell.h"
+#import "LiveAttentionCell.h"
+#import "SDCycleScrollView.h"
+#import "LivePlayViewController.h"
+#import "AttentionLiveViewController.h"
+#import "HomeTypeViewController.h"
+#import "TagModel.h"
+#import "BannerModel.h"
+
+@interface MarketLiveViewController ()<UITableViewDelegate,UITableViewDataSource,UICollectionViewDelegate,UICollectionViewDataSource,UICollectionViewDelegateFlowLayout,SDCycleScrollViewDelegate>
+@property (strong, nonatomic) SDCycleScrollView *cycleImageView;
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
+@property (strong, nonatomic) NSMutableArray *tableData;
+@property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
+@property (strong, nonatomic) NSMutableArray *collectionData;
+@property (weak, nonatomic) IBOutlet UIView *cycleScrollView;
+
+@property (weak, nonatomic) IBOutlet UIView *typeView;
+@property (strong, nonatomic) HomeTypeViewController *homeTypeVC;
+@property (strong, nonatomic) NSMutableArray *typesArray;
+@property (strong, nonatomic) UIButton *typeSelectButton;
+
+@property (strong, nonatomic) JMRefreshTool *refreshTool;
+@property (strong, nonatomic) NSMutableArray *bannerData;
+@end
+
+#define TagOffset   5
+
+@implementation MarketLiveViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    //轮播图
+    SDCycleScrollView *cycleImageView = [SDCycleScrollView cycleScrollViewWithFrame:CGRectZero delegate:self placeholderImage:[UIImage imageNamed:@"home_ban"]];
+    cycleImageView.pageControlStyle = SDCycleScrollViewPageContolStyleClassic;
+    cycleImageView.bannerImageViewContentMode = UIViewContentModeScaleAspectFill;
+    cycleImageView.pageDotImage = [UIImage imageNamed:@"home_ban_unsel"];
+    cycleImageView.currentPageDotImage = [UIImage imageNamed:@"home_ban_sel"];
+    self.cycleImageView = cycleImageView;
+    [self.cycleScrollView addSubview:cycleImageView];
+    [self.cycleImageView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.edges.equalTo(self.cycleScrollView);
+    }];
+    
+    self.cycleImageView.layer.cornerRadius = 7.0;
+    self.cycleImageView.layer.masksToBounds = YES;
+    
+    self.tableView.dataSource = self;
+    self.tableView.delegate = self;
+    self.tableView.rowHeight = 260;
+    
+    self.collectionView.dataSource = self;
+    self.collectionView.delegate = self;
+    
+    
+    //计算tableview的头高度 轮播图宽高比345:175
+    CGFloat cycleWidth = kScreenWidth - 15.0*2;
+    CGFloat cycleHeight = cycleWidth*175.0/345.0;
+    self.tableView.tableHeaderView.mj_h = 50+8+cycleHeight+8+44+kScreenWidth/4.0+10+44;
+}
+
+-(void)initData{
+    
+    [self requestBanner];
+    [self requestAttentionList];
+    [self requestTypeList];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(requestAttentionList) name:kNotificationLiveAttentionChange object:nil];
+}
+
+-(HomeTypeViewController *)homeTypeVC{
+    if(_homeTypeVC == nil){
+        _homeTypeVC = [[HomeTypeViewController alloc] initWithStoryboardName:@"Market"];
+        JMWeak(self);
+        _homeTypeVC.selectBlock = ^(NSInteger index) {
+            [weakself updateSelectType:index];
+        };
+    }
+    return _homeTypeVC;
+}
+
+-(void)initTypes{
+    UIView *leftItem;
+    for(int i=0;i<self.typesArray.count;i++){
+        UIButton *button = [self typeButton];
+        button.tag = i+TagOffset;
+        TagModel *model = self.typesArray[i];
+        [button setTitle:model.tagText forState:UIControlStateNormal];
+        [self.typeView addSubview:button];
+        [button mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.centerY.equalTo(self.typeView);
+            if(leftItem){
+                make.left.equalTo(leftItem.mas_right).offset(15.0);
+            }else{
+                make.left.equalTo(self.typeView.mas_left);
+            }
+        }];
+        if(model.isSelect == YES){
+            button.selected = YES;
+            self.typeSelectButton = button;
+        }
+        leftItem = button;
+        [self.typeView layoutIfNeeded];
+        if(button.mj_x+button.mj_w > self.typeView.mj_w){
+            [button removeFromSuperview];
+            break;
+        }
+    }
+}
+
+-(UIButton *)typeButton{
+    UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
+    button.titleLabel.font = [UIFont systemFontOfSize:13.0 weight:UIFontWeightRegular];
+    [button setTitleColor:[UIColor colorWithHexString:@"#666666"] forState:UIControlStateNormal];
+    [button setTitleColor:[UIColor whiteColor] forState:UIControlStateSelected];
+    [button setBackgroundImage:[UIImage imageNamed:@"home_a03"] forState:UIControlStateNormal];
+    [button setBackgroundImage:[UIImage imageNamed:@"add_a01"] forState:UIControlStateSelected];
+    [button setContentEdgeInsets:UIEdgeInsetsMake(5, 13, 5, 13)];
+    [button addTarget:self action:@selector(typeAction:) forControlEvents:UIControlEventTouchUpInside];
+    return button;
+}
+
+-(void)updateSelectType:(NSInteger)index{
+    if(self.typeSelectButton){
+        self.typeSelectButton.selected = NO;
+        TagModel *model = self.typesArray[self.typeSelectButton.tag-TagOffset];
+        model.isSelect = NO;
+    }
+    NSInteger tag = index+TagOffset;
+    UIButton *newButton = (UIButton *)[self.typeView viewWithTag:tag];
+    self.typeSelectButton = newButton;
+    self.typeSelectButton.selected = YES;
+    TagModel *newSelect = self.typesArray[index];
+    newSelect.isSelect = YES;
+    //刷新数据
+    [self requestRoomListWithTypeId:newSelect.tagId];
+}
+
+-(void)typeAction:(UIButton *)sender{
+    UIButton *button = (UIButton *)sender;
+    NSInteger index = button.tag - TagOffset;
+    [self updateSelectType:index];
+}
+
+#pragma mark - UITableView
+-(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
+    return self.tableData.count;
+}
+
+-(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+    MarketLiveCell *cell = [tableView dequeueReusableCellWithIdentifier:@"MarketLiveCell"];
+    cell.cellData = self.tableData[indexPath.row];
+    return cell;
+}
+
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
+    LiveRoomModel *model = self.tableData[indexPath.row];
+    [self enterLiveRoom:model.roomNo];
+}
+
+#pragma mark - UICollectionView
+-(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
+    NSInteger rtn = MIN(self.collectionData.count, 4);
+    return rtn;
+}
+
+- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
+    LiveAttentionCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"LiveAttentionCell" forIndexPath:indexPath];
+    cell.cellData = self.collectionData[indexPath.row];
+    return cell;
+}
+
+-(CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath{
+    CGSize rtn = CGSizeZero;
+    rtn.width = kScreenWidth/4.0;
+    rtn.height = kScreenWidth/4.0;
+    return rtn;
+}
+
+-(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
+    LiveRoomModel *model = self.collectionData[indexPath.row];
+    [self enterLiveRoom:model.roomId];
+}
+
+#pragma mark - Actions
+- (IBAction)attentionMoreAction:(id)sender {
+    //我的关注更多
+    [self goAttentionLiveVC];
+}
+
+- (IBAction)showAllTypeAction:(id)sender {
+    [self.view addSubview:self.homeTypeVC.view];
+    self.homeTypeVC.typesArray = self.typesArray;
+    [self.homeTypeVC.view mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.edges.equalTo(self.view);
+    }];
+}
+
+#pragma mark - SDCycleScrollViewDelegate
+- (void)cycleScrollView:(SDCycleScrollView *)cycleScrollView didSelectItemAtIndex:(NSInteger)index {
+    //轮播图点击
+    if(index < self.bannerData.count){
+        BannerModel *model = self.bannerData[index];
+        if(model.goUrl.length == 0){
+            return;
+        }
+        NSURL *url = [ [ NSURL alloc ] initWithString:model.goUrl];
+        [[UIApplication sharedApplication] openURL:url];
+    }
+}
+
+#pragma mark - 跳转
+-(void)enterLiveRoom:(NSString *)roomId{
+    LivePlayViewController *livePlayVC = [[LivePlayViewController alloc] initWithStoryboardName:@"LivePlay"];
+    livePlayVC.roomId = roomId;
+    JMNavigationController *nav = [[JMNavigationController alloc] initWithRootViewController:livePlayVC];
+    [self presentViewController:nav animated:YES completion:nil];
+}
+
+-(void)goAttentionLiveVC{
+    AttentionLiveViewController *attentionVC = [[AttentionLiveViewController alloc] initWithStoryboardName:@"Market"];
+    [self.navigationController pushViewController:attentionVC animated:YES];
+}
+
+#pragma mark - 网络
+-(void)requestTypeList{
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:@"5" key:@"type"];
+    [[JMRequestManager sharedManager] POST:kUrlTypeList parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            NSArray *dataList = response.responseObject[@"data"];
+            NSMutableArray *array = [[NSMutableArray alloc] init];
+            for(NSDictionary *dic in dataList){
+                TagModel *model = [[TagModel alloc] initWithDictionary:dic];
+                [array addObject:model];
+            }
+            self.typesArray = array;
+            TagModel *firstItem = self.typesArray.firstObject;
+            firstItem.isSelect = YES;
+            [self initTypes];
+            [self requestRoomListWithTypeId:firstItem.tagId];
+        }
+    }];
+}
+
+-(void)requestRoomListWithTypeId:(NSString *)typeId{
+    if(self.refreshTool == nil){
+        JMWeak(self);
+        self.refreshTool = [[JMRefreshTool alloc] initWithScrollView:self.tableView dataAnalysisBlock:^NSArray *(NSDictionary *responseData) {
+            NSMutableArray *array = [[NSMutableArray alloc] init];
+            NSArray *listArray = responseData[@"data"][@"list"];
+            for(NSDictionary *dic in listArray){
+                LiveRoomModel *model = [[LiveRoomModel alloc] initWithDictionary:dic];
+                [array addObject:model];
+            }
+            if([weakself.refreshTool isAddData]){
+                [weakself.tableData addObjectsFromArray:array];
+            }else{
+                weakself.tableData = array;
+            }
+            [weakself.tableView reloadData];
+            return array;
+        }];
+        self.refreshTool.requestUrl = kUrlLiveList;
+//        self.refreshTool.isRefreshHeader = NO;
+    }
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:typeId key:@"labelId"];
+    [params setJsonValue:@"0" key:@"isRecommend"];
+    self.refreshTool.requestParams = params;
+    [self.refreshTool loadMore:NO];
+}
+
+-(void)requestBanner{
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:@"4" key:@"type"];
+    [[JMRequestManager sharedManager] POST:kUrlBanner parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            NSArray *dataArray = response.responseObject[@"data"];
+            NSMutableArray *array = [[NSMutableArray alloc] init];
+            NSMutableArray *imageArray = [[NSMutableArray alloc] init];
+            for(NSDictionary *dic in dataArray){
+                BannerModel *model = [[BannerModel alloc] initWithDictionary:dic];
+                [array addObject:model];
+                [imageArray addObject:model.imageUrl];
+            }
+            self.cycleImageView.imageURLStringsGroup = imageArray;
+            self.bannerData = array;
+        }
+    }];
+}
+
+-(void)requestAttentionList{
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:@"4" key:@"pageSize"];
+    [params setJsonValue:@"1" key:@"pageNumber"];
+    [[JMRequestManager sharedManager] POST:kUrlLiveAttentionList parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            NSDictionary *dataDic = response.responseObject[@"data"];
+            NSArray *listArray = dataDic[@"list"];
+            NSMutableArray *array = [[NSMutableArray alloc] init];
+            for(NSDictionary *dic in listArray){
+                LiveRoomModel *model = [[LiveRoomModel alloc] initWithDictionary:dic];
+                [array addObject:model];
+            }
+            self.collectionData = array;
+            [self.collectionView reloadData];
+        }
+    }];
+}
+@end

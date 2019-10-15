@@ -1,0 +1,81 @@
+//
+//  RCDCustomerServiceViewController.m
+//  RCloudMessage
+//
+//  Created by litao on 16/2/23.
+//  Copyright © 2016年 RongCloud. All rights reserved.
+//
+
+#import "RCDCustomerServiceViewController.h"
+
+
+@interface RCDCustomerServiceViewController ()
+
+@end
+
+#define RongCloud_SERVICE_ID @"KEFU154838563913238" //客服ID
+
+
+@implementation RCDCustomerServiceViewController
+
+-(instancetype)initCustomerService{
+    self = [super init];
+    if(self){
+        self.conversationType = ConversationType_CUSTOMERSERVICE;
+        self.targetId = RongCloud_SERVICE_ID;
+    }
+    return self;
+}
+
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    [self notifyUpdateUnreadMessageCount];
+    self.navigationItem.rightBarButtonItem = nil;
+    self.title = @"在线客服";
+    [self setNavigationBar];
+}
+
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    self.navigationController.navigationBar.hidden = NO;
+    [IQKeyboardManager sharedManager].enableAutoToolbar = NO;
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    [super viewWillDisappear:animated];
+    self.navigationController.navigationBar.hidden = YES;
+    [IQKeyboardManager sharedManager].enableAutoToolbar = YES;
+}
+
+- (void)didReceiveMemoryWarning {
+  [super didReceiveMemoryWarning];
+  // Dispose of any resources that can be recreated.
+}
+
+//客服VC左按键注册的selector是customerServiceLeftCurrentViewController，
+//这个函数是基类的函数，他会根据当前服务时间来决定是否弹出评价，根据服务的类型来决定弹出评价类型。
+//弹出评价的函数是commentCustomerServiceAndQuit，应用可以根据这个函数内的注释来自定义评价界面。
+//等待用户评价结束后调用如下函数离开当前VC。
+- (void)leftBarButtonItemPressed:(id)sender {
+  //需要调用super的实现
+  [super leftBarButtonItemPressed:sender];
+}
+
+- (void)setNavigationBar {
+    if (self.navigationController.viewControllers.count>1) {
+        UIButton *leftButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        [leftButton setImage:[UIImage imageNamed:@"NavigationBack"] forState:UIControlStateNormal];
+        [leftButton addTarget:self action:@selector(back) forControlEvents:UIControlEventTouchUpInside];
+        leftButton.frame = CGRectMake(0, 0, 25, 40);
+        UIBarButtonItem *leftMesBtnItem = [[UIBarButtonItem alloc] initWithCustomView:leftButton];
+        
+        self.navigationItem.leftBarButtonItems = @[leftMesBtnItem];
+    }
+}
+
+- (void)back {
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
+@end

@@ -1,0 +1,13 @@
+//
+//  AfterSaleModel.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/7/11.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "AfterSaleModel.h"
+
+@implementation AfterSaleModel
+
+@end

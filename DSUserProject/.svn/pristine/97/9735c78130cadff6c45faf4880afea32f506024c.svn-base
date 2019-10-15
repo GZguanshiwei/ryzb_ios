@@ -1,0 +1,104 @@
+//
+//  LiveGiftView.m
+//  JMBaseProject
+//
+//  Created by 潘传标 on 2019/9/4.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "LiveGiftView.h"
+#import "LiveGiftGoodsCell.h"
+
+@interface LiveGiftView()<UICollectionViewDataSource,UICollectionViewDelegate>
+
+
+@property (weak, nonatomic) IBOutlet UILabel *moneyLable;
+@property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
+@property (weak, nonatomic) IBOutlet UICollectionViewFlowLayout *flowLayOut;
+@property(nonatomic,strong)NSMutableArray *dataArray;
+@property (weak, nonatomic) IBOutlet UIPageControl *pageContro;
+@property(nonatomic,strong)NSIndexPath *slectIndex;
+@end
+
+@implementation LiveGiftView
+
+- (void)awakeFromNib
+{
+    [super awakeFromNib];
+    [self initControl];
+}
+
+-(void)initControl
+{
+    
+    [self.collectionView registerNib:[UINib nibWithNibName:@"LiveGiftGoodsCell" bundle:nil] forCellWithReuseIdentifier:@"LiveGiftGoodsCell"];
+    CGFloat wideth = kScreenWidth / 4.0;
+    self.flowLayOut.minimumLineSpacing = 0;
+    self.flowLayOut.minimumInteritemSpacing = 0;
+    self.flowLayOut.itemSize = CGSizeMake(wideth, 110);
+    self.collectionView.dataSource = self;
+    self.collectionView.delegate = self;
+    self.collectionView.pagingEnabled = YES;
+    
+    
+}
+
+- (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section
+{
+    return self.dataArray.count * 3;
+}
+
+- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
+{
+    
+    LiveGiftGoodsCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"LiveGiftGoodsCell" forIndexPath:indexPath];
+    cell.goodsImage.image = [UIImage imageNamed:self.dataArray[indexPath.item % 8]];
+    return cell;
+}
+
+
+- (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
+{
+    if (JMIsEmpty(self.slectIndex)) {
+        self.slectIndex = indexPath;
+        UICollectionViewCell *cell = [collectionView cellForItemAtIndexPath:indexPath];
+        cell.backgroundColor = [UIColor colorWithHexString:@"#FAFAFA"];
+    }else
+    {
+        UICollectionViewCell *lastCell = [collectionView cellForItemAtIndexPath:self.slectIndex];
+        lastCell.backgroundColor = [UIColor orangeColor];
+        
+        UICollectionViewCell *currentCell = [collectionView cellForItemAtIndexPath:indexPath];
+        currentCell.backgroundColor = [UIColor colorWithHexString:@"#FAFAFA"];
+        self.slectIndex = indexPath;
+
+    }
+    
+}
+
+- (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
+{
+    CGFloat offSetX = scrollView.contentOffset.x;
+    NSInteger index = offSetX /kScreenWidth;
+    self.pageContro.currentPage = index;
+}
+- (IBAction)remove:(id)sender {
+    [self removeFromSuperview];
+}
+
+- (IBAction)giveButtonClick:(id)sender {
+    self.hidden = YES;
+}
+
+-(NSMutableArray *)dataArray
+{
+    if (!_dataArray) {
+        _dataArray = [NSMutableArray array];
+        for (NSInteger i = 0; i < 8; i++) {
+            NSString *imageStr = [NSString stringWithFormat:@"live_gift_0%ld",i+1];
+            [_dataArray addObject:imageStr];
+        }
+   }
+    return _dataArray;
+}
+@end

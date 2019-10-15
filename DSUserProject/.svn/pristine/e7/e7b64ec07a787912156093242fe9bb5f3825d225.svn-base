@@ -1,0 +1,371 @@
+//
+//  JMRongCloudManager.m
+//  RCTest
+//
+//  Created by liuny on 2018/5/9.
+//  Copyright © 2018年 liuny. All rights reserved.
+//
+
+#import "JMRongCloudManager.h"
+#import "RCDRCIMDataSource.h"
+#import "MLVBLiveRoom.h"
+#import "WebSocketManager.h"
+
+//注册得到的 App Key
+//测试 sfci50a7s3j4i
+//正式 y745wfm8yqd1v
+static NSString *appKey = @"82hegw5u8xbmx";
+@interface JMRongCloudManager()
+
+@end
+
+@implementation JMRongCloudManager
+
++(instancetype)shareInstance{
+    static JMRongCloudManager *instance = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        instance = [[super allocWithZone:nil] init];
+        //初始化 SDK
+        [[RCIM sharedRCIM] initWithAppKey:appKey];
+        [instance registerCustomMessage];
+        [instance setRongCloudDelegate];
+        [instance someSetting];
+    });
+    return instance;
+}
+
++(id)allocWithZone:(struct _NSZone *)zone{
+    return [self shareInstance];
+}
+
+-(id)copyWithZone:(NSZone *)zone{
+    return self;
+}
+
+/**
+ 登录融云服务器
+
+ @param loginUser App Sever 登录的用户
+ @param successBlock 成功回调
+ @param errorBlock 失败回调
+ */
+-(void)loginRongCloud:(JMLoginUserModel *)loginUser
+              success:(void (^)(NSString *userId))successBlock
+                error:(void (^)(NSString *error))errorBlock{
+    if(loginUser == nil || loginUser.ryToken.length == 0){
+        return;
+    }
+    if([RCIM sharedRCIM].getConnectionStatus == ConnectionStatus_Connected){
+        [self logoutRongCloud];
+    }
+    [[RCIM sharedRCIM] connectWithToken:loginUser.ryToken success:^(NSString *userId) {
+        RCUserInfo *user = [[RCUserInfo alloc] initWithUserId:userId name:loginUser.nickName portrait:[JMCommonMethod pinImagePath:loginUser.headUrl]];
+        if (!user.portraitUri || user.portraitUri.length <= 0) {
+            //默认头像
+        }
+        [[RCIM sharedRCIM] refreshUserInfoCache:user withUserId:userId];
+        [RCIM sharedRCIM].currentUserInfo = user;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if(successBlock){
+                successBlock(userId);
+            }
+        });
+    } error:^(RCConnectErrorCode status) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (status == RC_CONN_REDIRECTED) {
+                if(successBlock){
+                    successBlock(nil);
+                }
+            }else{
+                if(errorBlock){
+                    errorBlock(nil);
+                }
+            }
+        });
+        JMLog(@"======LoginError:%ld=====",(long)status);
+    } tokenIncorrect:^{
+        JMLog(@"tokenIncorrect");
+        //重新获取token
+        //TODO
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if(errorBlock){
+                errorBlock(nil);
+            }
+        });
+    }];
+}
+
+/**
+ 断开与融云服务器的连接，并不再接收远程推送
+ */
+-(void)logoutRongCloud{
+    [[RCIM sharedRCIM] logout];
+}
+
+
+/**
+ 更新用户的头像、昵称
+
+ @param userId 用户id
+ @param headUrl 用户头像
+ @param name 用户昵称
+ */
+-(void)updateUserWithUserId:(NSString *)userId head:(NSString *)headUrl name:(NSString *)name{
+    RCUserInfo *user =
+    [[RCUserInfo alloc] initWithUserId:userId name:name portrait:[JMCommonMethod pinImagePath:headUrl]];
+    if (!user.portraitUri || user.portraitUri.length <= 0) {
+        //默认头像
+        NSURL *pathUrl = [[NSBundle mainBundle] URLForResource:@"zz08@3x" withExtension:@"png" subdirectory:nil];
+        user.portraitUri = [pathUrl absoluteString];
+    }
+    [[RCIM sharedRCIM] refreshUserInfoCache:user withUserId:userId];
+    [RCIM sharedRCIM].currentUserInfo = user;
+}
+
+
+/**
+ 打印融云推送服务的扩展字段
+
+ @param launchOptions App的启动附加信息
+ */
+-(void)printRemoteNotificationExtra:(NSDictionary *)launchOptions{
+    //获取融云推送服务扩展字段1
+    NSDictionary *pushServiceData = [[RCIMClient sharedRCIMClient] getPushExtraFromRemoteNotification:launchOptions];
+    if (pushServiceData) {
+        JMLog(@"该启动事件包含来自融云的推送服务");
+        for (id key in [pushServiceData allKeys]) {
+            JMLog(@"%@", pushServiceData[key]);
+        }
+    } else {
+        JMLog(@"该启动事件不包含来自融云的推送服务");
+    }
+}
+
+/**
+ 注册自定义消息
+ */
+-(void)registerCustomMessage{
+    NSNotificationCenter *nc = [NSNotificationCenter defaultCenter];
+    [nc addObserver:self selector:@selector(loginUserChangeHeadAndName) name:kNotificationUserUpdateHead object:nil];
+    [nc addObserver:self selector:@selector(loginUserChangeHeadAndName) name:kNotificationUserUpdateName object:nil];
+//    [[RCIM sharedRCIM] registerMessageType:[ChatTransformMessage class]];
+}
+
+-(void)loginUserChangeHeadAndName{
+    [[JMProjectManager sharedJMProjectManager] updateLoginUserInfoSuccessBlock:^{
+        JMLoginUserModel *loginUser = [JMProjectManager sharedJMProjectManager].loginUser;
+        [self updateUserWithUserId:loginUser.userId head:loginUser.headUrl name:loginUser.nickName];
+    } failBlock:^(NSString *errorMsg) {
+       //do nothing
+    }];
+}
+
+/**
+ 设置delegate
+ */
+-(void)setRongCloudDelegate{
+    [[RCIM sharedRCIM] setConnectionStatusDelegate:self];
+    //设置用户信息源和群组信息源
+    [RCIM sharedRCIM].userInfoDataSource = RCDDataSource;
+    [RCIM sharedRCIM].groupInfoDataSource = RCDDataSource;
+    //设置接收消息代理
+    [RCIM sharedRCIM].receiveMessageDelegate = self;
+    NSNotificationCenter *nc = [NSNotificationCenter defaultCenter];
+    [nc addObserver:self selector:@selector(didReceiveMessageNotification:) name:RCKitDispatchMessageNotification object:nil];
+    //群成员数据源
+    [RCIM sharedRCIM].groupMemberDataSource = RCDDataSource;
+}
+
+
+/**
+ 其他一些设置
+ */
+-(void)someSetting{
+    //头像大小
+    [RCIM sharedRCIM].globalConversationPortraitSize = CGSizeMake(50, 50);
+    //设置圆角
+    [RCIM sharedRCIM].portraitImageViewCornerRadius = 2;
+    //设置头像为圆形
+    [RCIM sharedRCIM].globalMessageAvatarStyle = RC_USER_AVATAR_CYCLE;
+    [RCIM sharedRCIM].globalConversationAvatarStyle = RC_USER_AVATAR_CYCLE;
+    //开启用户信息和群组信息的持久化
+    [RCIM sharedRCIM].enablePersistentUserInfoCache = YES;
+    //开启输入状态监听
+    [RCIM sharedRCIM].enableTypingStatus = YES;
+    /*
+    //开启发送已读回执
+    [RCIM sharedRCIM].enabledReadReceiptConversationTypeList =
+    @[ @(ConversationType_PRIVATE), @(ConversationType_DISCUSSION), @(ConversationType_GROUP) ];
+     */
+    //开启多端未读状态同步
+    [RCIM sharedRCIM].enableSyncReadStatus = YES;
+    //设置显示未注册的消息
+    //如：新版本增加了某种自定义消息，但是老版本不能识别，开发者可以在旧版本中预先自定义这种未识别的消息的显示
+    [RCIM sharedRCIM].showUnkownMessage = YES;
+    [RCIM sharedRCIM].showUnkownMessageNotificaiton = YES;
+    //开启消息@功能（只支持群聊和讨论组, App需要实现群成员数据源groupMemberDataSource）
+    [RCIM sharedRCIM].enableMessageMentioned = YES;
+    //开启消息撤回功能
+    [RCIM sharedRCIM].enableMessageRecall = YES;
+    //在每次发送消息中携带发送者的用户信息
+    [RCIM sharedRCIM].enableMessageAttachUserInfo = YES;
+}
+
+
+/**
+ 弹框提示
+
+ @param message 提示消息
+ */
+-(void)alertWithMessage:(NSString *)message{
+    [JXTAlertController jm_showAlertWithTitle:@"提示" message:message appearanceProcess:^(JXTAlertController * _Nonnull alertMaker) {
+        alertMaker.addActionDestructiveTitle(@"知道了");
+    } actionsBlock:^(NSInteger buttonIndex, UIAlertAction * _Nonnull action, JXTAlertController * _Nonnull alertSelf) {
+        //do nothing
+    }];
+}
+
+#pragma mark - NSNotification
+- (void)didReceiveMessageNotification:(NSNotification *)notification {
+    
+    NSNumber *left = [notification.userInfo objectForKey:@"left"];
+    if ([RCIMClient sharedRCIMClient].sdkRunningMode == RCSDKRunningMode_Background && 0 == left.integerValue) {
+        int unreadMsgCount = [[RCIMClient sharedRCIMClient] getUnreadCount:@[
+                                                                             @(ConversationType_PRIVATE), @(ConversationType_DISCUSSION), @(ConversationType_APPSERVICE),
+                                                                             @(ConversationType_PUBLICSERVICE), @(ConversationType_GROUP)
+                                                                             ]];
+        dispatch_async(dispatch_get_main_queue(),^{
+            //更新未读消息数
+            [UIApplication sharedApplication].applicationIconBadgeNumber = unreadMsgCount;
+        });
+    }
+}
+
+#pragma mark - RCIMConnectionStatusDelegate
+/**
+ *  网络状态变化。
+ *
+ *  @param status 网络状态。
+ */
+- (void)onRCIMConnectionStatusChanged:(RCConnectionStatus)status {
+    switch (status) {
+        case ConnectionStatus_KICKED_OFFLINE_BY_OTHER_CLIENT:
+        {
+            [[NSNotificationCenter defaultCenter] postNotificationName:kNotificationLoginOtherDevice object:nil];
+            [[MLVBLiveRoom sharedInstance] logout];
+            [[WebSocketManager sharedInstance] sendLogout];
+            [JMProjectManager sharedJMProjectManager].loginUser = nil;
+            [self logoutRongCloud];
+            
+            [[JMProjectManager sharedJMProjectManager] showLoginViewController];
+            [self alertWithMessage:@"您的帐号在别的设备上登录，您被迫下线！"];
+            break;
+        }
+        case ConnectionStatus_DISCONN_EXCEPTION:
+        {
+            [[JMProjectManager sharedJMProjectManager] logoutWithSuccessBlock:^{
+                [[JMProjectManager sharedJMProjectManager] showLoginViewController];
+            } failBlock:^(NSString *errorMsg) {
+                [[JMProjectManager sharedJMProjectManager] showLoginViewController];
+            }];
+            [self alertWithMessage:@"您的帐号被封禁"];
+            [self logoutRongCloud];
+            break;
+        }
+        case ConnectionStatus_TOKEN_INCORRECT:
+            //toke失效
+            break;
+        case ConnectionStatus_SignUp:
+            //需要登录
+            break;
+        default:
+            break;
+    }
+}
+
+#pragma mark - RCIMReceiveMessageDelegate
+
+/**
+ 接收消息的回调方法
+
+ @param message 当前接收到的消息
+ @param left 还剩余的未接收的消息数，left>=0
+ */
+- (void)onRCIMReceiveMessage:(RCMessage *)message left:(int)left{
+    if ([message.content isMemberOfClass:[RCInformationNotificationMessage class]]) {
+        //通知消息类
+        RCInformationNotificationMessage *msg = (RCInformationNotificationMessage *)message.content;
+        if ([msg.message rangeOfString:@"你已添加了"].location != NSNotFound) {
+            //更新好友列表
+        }
+    } else if ([message.content isMemberOfClass:[RCContactNotificationMessage class]]) {
+        //好友请求消息类
+        RCContactNotificationMessage *msg = (RCContactNotificationMessage *)message.content;
+        if ([msg.operation isEqualToString:ContactNotificationMessage_ContactOperationAcceptResponse]) {
+            //同意添加好友的请求
+            
+        }
+    } else if ([message.content isMemberOfClass:[RCGroupNotificationMessage class]]) {
+        //群组通知消息类
+        RCGroupNotificationMessage *msg = (RCGroupNotificationMessage *)message.content;
+        if ([msg.operation isEqualToString:@"Dismiss"] &&
+            [msg.operatorUserId isEqualToString:[RCIM sharedRCIM].currentUserInfo.userId]) {
+            [[RCIMClient sharedRCIMClient]clearRemoteHistoryMessages:ConversationType_GROUP
+                                                            targetId:message.targetId
+                                                          recordTime:message.sentTime
+                                                             success:^{
+                                                                 [[RCIMClient sharedRCIMClient] clearMessages:ConversationType_GROUP targetId:message.targetId];
+                                                             }
+                                                               error:nil
+             ];
+            [[RCIMClient sharedRCIMClient] removeConversation:ConversationType_GROUP targetId:message.targetId];
+        } else if ([msg.operation isEqualToString:@"Quit"] || [msg.operation isEqualToString:@"Add"] ||
+                   [msg.operation isEqualToString:@"Kicked"] || [msg.operation isEqualToString:@"Rename"]) {
+            //群组操作
+            if (![msg.operation isEqualToString:@"Rename"]) {
+                
+            }
+            
+        }
+    }
+}
+
+
+/**
+ 当App处于后台时，接收到消息并弹出本地通知的回调方法
+
+ @param message 接收到的消息
+ @param senderName 消息发送者的用户名称
+ @return 当返回值为NO时，SDK会弹出默认的本地通知提示；当返回值为YES时，SDK针对此消息不再弹本地通知提示
+ */
+- (BOOL)onRCIMCustomLocalNotification:(RCMessage *)message withSenderName:(NSString *)senderName {
+    //群组通知不弹本地通知
+    if ([message.content isKindOfClass:[RCGroupNotificationMessage class]]) {
+        return YES;
+    }
+    if ([[message.content.class getObjectName] isEqualToString:@"RCJrmf:RpOpendMsg"]) {
+        return YES;
+    }
+    return NO;
+}
+
+/**
+ 当App处于前台时，接收到消息并播放提示音的回调方法
+
+ @param message 接收到的消息
+ @return 当返回值为NO时，SDK会播放默认的提示音；当返回值为YES时，SDK针对此消息不再播放提示音
+ */
+- (BOOL)onRCIMCustomAlertSound:(RCMessage *)message {
+    return NO;
+    /*
+    //设置群组通知消息没有提示音
+    if([message.content isMemberOfClass:[RCGroupNotificationMessage class]]){
+        return YES;
+    }else{
+        return NO;
+    }
+     */
+}
+
+@end

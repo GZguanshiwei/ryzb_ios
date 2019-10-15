@@ -1,0 +1,295 @@
+//
+//  OrderListViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2018/12/28.
+//  Copyright © 2018 liuny. All rights reserved.
+//
+
+#import "OrderListViewController.h"
+#import "OrderCell.h"
+#import "OrderDetailViewController.h"
+#import "RefundAndGoodViewController.h"
+#import "RefundViewController.h"
+#import "EvaluateViewController.h"
+#import "PayViewController.h"
+#import "LogisticsViewController.h"
+#import "EvaluateListViewController.h"
+#import "PayManyTimesViewController.h"
+
+
+@interface OrderListViewController ()<UITableViewDataSource,UITableViewDelegate,OrderCellDelegate>
+@property (weak, nonatomic) IBOutlet UIView *noDataView;
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
+@property (strong, nonatomic) NSMutableArray *tableData;
+
+@property (strong, nonatomic) JMRefreshTool *refreshTool;
+
+@end
+
+@implementation OrderListViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+}
+
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    [self requestOrderList];
+}
+
+
+-(void)initControl{
+    self.tableView.dataSource = self;
+    self.tableView.delegate = self;
+    self.tableView.rowHeight = 240;
+}
+
+-(void)initData{
+//    [self requestOrderList];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(requestOrderList) name:kNotificationOrderRefresh object:nil];
+}
+
+-(void)checkDataEmpty{
+    if(self.tableData.count == 0){
+        self.tableView.hidden = YES;
+        self.noDataView.hidden = NO;
+    }else{
+        self.tableView.hidden = NO;
+        self.noDataView.hidden = YES;
+    }
+}
+
+#pragma mark - UITableView
+-(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
+    return self.tableData.count;
+}
+
+-(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+    OrderCell *cell = [tableView dequeueReusableCellWithIdentifier:@"OrderCell"];
+    cell.delegate = self;
+    cell.index = indexPath.row;
+    cell.cellData = self.tableData[indexPath.row];
+    return cell;
+}
+
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
+    OrderModel *order = self.tableData[indexPath.row];
+    [self goDetailVC:order.orderId];
+}
+
+#pragma mark - OrderCellDelegate
+-(void)clickOperationButton:(NSInteger)index title:(NSString *)buttonTitle{
+    if([buttonTitle isEqualToString:@"付款"]){
+        [self payOrder:index];
+    }else if([buttonTitle isEqualToString:@"申请退款"]){
+        [self refundOrder:index];
+    }else if([buttonTitle isEqualToString:@"确认收货"]){
+        [self confirmShouHuo:index];
+    }else if([buttonTitle isEqualToString:@"查看物流"]){
+        OrderModel *order = self.tableData[index];
+        [self goLogisticsVC:order.orderNo];
+    }else if([buttonTitle isEqualToString:@"评价"]){
+        OrderModel *order = self.tableData[index];
+        [self goEvaluateVC:order];
+    }else if([buttonTitle isEqualToString:@"删除订单"]){
+        [self deleteOrder:index];
+    }else if([buttonTitle isEqualToString:@"查看评价"]){
+        OrderModel *order = self.tableData[index];
+        [self goEvaluateInfoVC:order.orderId];
+    }
+}
+
+-(void)deleteOrder:(NSInteger)index{
+    ScreenCenterTipView *tipView = [[ScreenCenterTipView alloc] initWithXib];
+    tipView.message = @"确定要删除订单？";
+    tipView.buttonTitles = @[@"取消",@"确定"];
+    [tipView showViewWithDoneBlock:^(NSDictionary * _Nonnull params) {
+        NSInteger buttonIndex = [params getJsonValue:@"ButtonIndex"].integerValue;
+        if(buttonIndex == 1){
+            [self requestDeleteOrder:index];
+        }
+    }];
+}
+
+-(void)confirmShouHuo:(NSInteger)index{
+    ScreenCenterTipView *tipView = [[ScreenCenterTipView alloc] initWithXib];
+    tipView.message = @"确认收货之后将不能进行退款/退货，是否确认收货？";
+    tipView.buttonTitles = @[@"取消",@"确定"];
+    [tipView showViewWithDoneBlock:^(NSDictionary * _Nonnull params) {
+        NSInteger buttonIndex = [params getJsonValue:@"ButtonIndex"].integerValue;
+        if(buttonIndex == 1){
+            [self requestConfirmShouHuo:index];
+        }
+    }];
+}
+
+-(void)refundOrder:(NSInteger)index{
+    ScreenCenterTipView *tipView = [[ScreenCenterTipView alloc] initWithXib];
+    tipView.message = @"每个订单只能申请一次退款，未避免审核不通过，请先联系客服协商一致后再申请退款！";
+    tipView.buttonTitles = @[@"取消",@"确定"];
+    [tipView showViewWithDoneBlock:^(NSDictionary * _Nonnull params) {
+        NSInteger buttonIndex = [params getJsonValue:@"ButtonIndex"].integerValue;
+        if(buttonIndex == 1){
+            OrderModel *order = self.tableData[index];
+            if(order.state == JMOrderState_WaitFaHuo){
+                [self goRefundVC:order];
+            }else if(order.state == JMOrderState_WaitShouHuo){
+                [self goRefundAndGoodVC:order];
+            }
+        }
+    }];
+}
+
+-(void)payOrder:(NSInteger)index{
+    OrderModel *order = self.tableData[index];
+    if(order.address.phone.length == 0){
+        [self goDetailVC:order.orderId];
+    }else{
+        [self goPayVC:order];
+    }
+}
+#pragma mark - 跳转
+-(void)goDetailVC:(NSString *)orderId{
+    OrderDetailViewController *detailVC = [[OrderDetailViewController alloc] initWithStoryboardName:@"Order"];
+    detailVC.orderId = orderId;
+    [self.navigationController pushViewController:detailVC animated:YES];
+}
+
+-(void)goRefundVC:(OrderModel *)order{
+    //仅退款
+    RefundViewController *refundVC = [[RefundViewController alloc] initWithStoryboardName:@"Order"];
+    refundVC.order = order;
+    [self.navigationController pushViewController:refundVC animated:YES];
+}
+
+-(void)goRefundAndGoodVC:(OrderModel *)order{
+    //退货退款
+    RefundAndGoodViewController *refundAndGoodVC = [[RefundAndGoodViewController alloc] initWithStoryboardName:@"Order"];
+    refundAndGoodVC.order = order;
+    [self.navigationController pushViewController:refundAndGoodVC animated:YES];
+}
+
+-(void)goEvaluateVC:(OrderModel *)order{
+    EvaluateViewController *evaluateVC = [[EvaluateViewController alloc] initWithStoryboardName:@"Order"];
+    evaluateVC.good = order.good;
+    evaluateVC.orderId = order.orderId;
+    [self.navigationController pushViewController:evaluateVC animated:YES];
+}
+
+-(void)goPayVC:(OrderModel *)order{
+    if(order.payType.intValue == 5){
+        //分次支付
+        PayManyTimesViewController *payVC = [[PayManyTimesViewController alloc] initWithStoryboardName:@"Pay"];
+        payVC.orderNo = order.orderNo;
+        payVC.orderId = order.orderId;
+        payVC.totalPrice = order.totalPay.doubleValue - order.hasPayMoney.doubleValue;
+        [self.navigationController pushViewController:payVC animated:YES];
+    }else{
+        PayViewController *payVC = [[PayViewController alloc] initWithStoryboardName:@"Pay"];
+        payVC.orderNo = order.orderNo;
+        payVC.orderId = order.orderId;
+        payVC.totalPrice = order.totalPay.doubleValue;
+        [self.navigationController pushViewController:payVC animated:YES];
+    }
+}
+
+-(void)goLogisticsVC:(NSString *)orderNo{
+    LogisticsViewController *logisticsVC = [[LogisticsViewController alloc] initWithStoryboardName:@"Logistics"];
+    logisticsVC.orderNo = orderNo;
+    [self.navigationController pushViewController:logisticsVC animated:YES];
+}
+
+- (void)goEvaluateInfoVC:(NSString *)orderId{
+    //查看评价详情
+    EvaluateListViewController *evaluateListVC = [[EvaluateListViewController alloc] initWithStoryboardName:@"Order"];
+    evaluateListVC.orderId = orderId;
+    [self.navigationController pushViewController:evaluateListVC animated:YES];
+}
+
+#pragma mark - 网络
+-(void)requestOrderList{
+    //订单列表
+    if(self.refreshTool == nil){
+        JMWeak(self);
+        self.refreshTool = [[JMRefreshTool alloc] initWithScrollView:self.tableView dataAnalysisBlock:^NSArray *(NSDictionary *responseData) {
+            NSMutableArray *array = [[NSMutableArray alloc] init];
+            NSDictionary *dataDic = responseData[@"data"];
+            NSArray *listArray = dataDic[@"list"];
+            for(NSDictionary *dic in listArray){
+                OrderModel *model = [[OrderModel alloc] initWithOrderListDictionary:dic];
+                [array addObject:model];
+            }
+            if([weakself.refreshTool isAddData] == YES){
+                [weakself.tableData addObjectsFromArray:array];
+            }else{
+                weakself.tableData = array;
+            }
+            
+            [weakself.tableView reloadData];
+            return array;
+        }];
+        self.refreshTool.requestUrl = kUrlOrderList;
+        NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+        NSString *state;
+        switch (self.type) {
+            case 0:
+                state = @"-1";
+                break;
+            case 1:
+                state = @"0";
+                break;
+            case 2:
+                state = @"2";
+                break;
+            case 3:
+                state = @"7";
+                break;
+            case 4:
+                state = @"8";
+                break;
+            default:
+                break;
+        }
+        [params setJsonValue:state key:@"state"];
+        self.refreshTool.requestParams = params;
+    }
+    [self.refreshTool loadMore:NO];
+}
+
+-(void)requestDeleteOrder:(NSInteger)index{
+    //删除订单
+    OrderModel *order = self.tableData[index];
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:order.orderId key:@"orderId"];
+    [self showLoading];
+    [[JMRequestManager sharedManager] POST:kUrlDeleteOrder parameters:params completion:^(JMBaseResponse *response) {
+        [self dismissLoading];
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            [JMProgressHelper toastInWindowWithMessage:response.responseObject[@"desc"]];
+            [self.tableData removeObjectAtIndex:index];
+            [self.tableView reloadData];
+            [[NSNotificationCenter defaultCenter] postNotificationName:kNotificationOrderRefresh object:nil];
+        }
+    }];
+}
+
+-(void)requestConfirmShouHuo:(NSInteger)index{
+    //确认收货
+    OrderModel *order = self.tableData[index];
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:order.orderId key:@"orderId"];
+    [self showLoading];
+    [[JMRequestManager sharedManager] POST:kUrlConfirmShouHuo parameters:params completion:^(JMBaseResponse *response) {
+        [self dismissLoading];
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            [JMProgressHelper toastInWindowWithMessage:response.responseObject[@"desc"]];
+            [[NSNotificationCenter defaultCenter] postNotificationName:kNotificationOrderRefresh object:nil];
+        }
+    }];
+}
+@end

@@ -1,0 +1,153 @@
+//
+//  AddressAddOrEditViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/1/4.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "AddressAddOrEditViewController.h"
+
+@interface AddressAddOrEditViewController ()
+@property (weak, nonatomic) IBOutlet UITextField *nameTextField;
+@property (weak, nonatomic) IBOutlet UITextField *phoneTextField;
+@property (weak, nonatomic) IBOutlet UITextField *cityTextField;
+@property (weak, nonatomic) IBOutlet UITextView *addressInfoTextView;
+@property (weak, nonatomic) IBOutlet UISwitch *isDefaultSwitch;
+
+@property (weak, nonatomic) IBOutlet UIButton *bottomButton;
+@property (strong, nonatomic) NSString *selectSheng;
+@property (strong, nonatomic) NSString *selectShi;
+@property (strong, nonatomic) NSString *selectQu;
+@property (strong, nonatomic) NSString *selectQuId;
+@end
+
+@implementation AddressAddOrEditViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    if(self.editAddress){
+        self.title = @"编辑地址";
+        [self.bottomButton setTitle:@"保存" forState:UIControlStateNormal];
+    }else{
+        self.title = @"添加地址";
+        [self.bottomButton setTitle:@"添加" forState:UIControlStateNormal];
+    }
+}
+
+-(void)initData{
+    if(self.editAddress){
+        self.nameTextField.text = self.editAddress.name;
+        self.phoneTextField.text = self.editAddress.phone;
+        self.cityTextField.text = [NSString stringWithFormat:@"%@ %@ %@",self.editAddress.sheng,self.editAddress.shi,self.editAddress.qu];
+        self.addressInfoTextView.text = self.editAddress.address;
+        self.isDefaultSwitch.on = self.editAddress.isDefault;
+    }
+}
+
+#pragma mark - Actions
+- (IBAction)cityAction:(id)sender {
+    //所在地区
+    CityView *cityView = [[CityView alloc] initWithXib];
+    [cityView showViewWithDoneBlock:^(NSDictionary *params) {
+        self.cityTextField.text = [params getJsonValue:@"showText"];
+        self.selectSheng = [params getJsonValue:@"shengName"];
+        self.selectShi = [params getJsonValue:@"shiName"];
+        self.selectQu = [params getJsonValue:@"quName"];
+        self.selectQuId = [params getJsonValue:@"areaId"];
+    }];
+}
+
+- (IBAction)bottomButtonAction:(id)sender {
+    NSString *name = self.nameTextField.text;
+    if(name.length == 0){
+        [JMProgressHelper toastInWindowWithMessage:self.nameTextField.placeholder];
+        return;
+    }
+    NSString *mobile = self.phoneTextField.text;
+    if(mobile.length == 0){
+        [JMProgressHelper toastInWindowWithMessage:self.phoneTextField.placeholder];
+        return;
+    }
+    NSString *city = self.cityTextField.text;
+    if(city.length == 0){
+        [JMProgressHelper toastInWindowWithMessage:self.cityTextField.placeholder];
+        return;
+    }
+    NSString *address = self.addressInfoTextView.text;
+    if(address.length == 0){
+        [JMProgressHelper toastInWindowWithMessage:self.addressInfoTextView.placeholder];
+        return;
+    }
+    
+    UIButton *button = (UIButton *)sender;
+    NSString *buttonTitle = button.currentTitle;
+    if([buttonTitle isEqualToString:@"添加"]){
+        [self requestAddAddress:self.isDefaultAdd];
+    }else if([buttonTitle isEqualToString:@"保存"]){
+        [self requestEditAddress];
+    }
+}
+
+
+#pragma mark - 网络
+-(void)requestAddAddress:(BOOL)isDefault{
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    NSString *name = self.nameTextField.text;
+    NSString *mobile = self.phoneTextField.text;
+    NSString *address = self.addressInfoTextView.text;
+    [params setJsonValue:name key:@"name"];
+    [params setJsonValue:mobile key:@"mobile"];
+    [params setJsonValue:address key:@"address"];
+    [params setJsonValue:self.selectSheng key:@"sheng"];
+    [params setJsonValue:self.selectShi key:@"shi"];
+    [params setJsonValue:self.selectQu key:@"qu"];
+    [params setJsonValue:self.selectQuId key:@"areaId"];
+    NSString *isChoice = isDefault?@"1":@"0";
+    [params setJsonValue:isChoice key:@"isChoice"];
+    [self showLoading];
+    [[JMRequestManager sharedManager] POST:kUrlAddressAdd parameters:params completion:^(JMBaseResponse *response) {
+        [self dismissLoading];
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            [JMProgressHelper toastInWindowWithMessage:response.responseObject[@"desc"]];
+            [[NSNotificationCenter defaultCenter] postNotificationName:kNotificationAddressAddSuccess object:nil];
+            [self.navigationController popViewControllerAnimated:YES];
+        }
+    }];
+}
+
+-(void)requestEditAddress{
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    NSString *name = self.nameTextField.text;
+    NSString *mobile = self.phoneTextField.text;
+    NSString *address = self.addressInfoTextView.text;
+    [params setJsonValue:self.editAddress.addressId key:@"id"];
+    [params setJsonValue:name key:@"name"];
+    [params setJsonValue:mobile key:@"mobile"];
+    [params setJsonValue:address key:@"address"];
+    [params setJsonValue:self.selectSheng key:@"sheng"];
+    [params setJsonValue:self.selectShi key:@"shi"];
+    [params setJsonValue:self.selectQu key:@"qu"];
+    
+    NSString *isChoice = self.editAddress.isDefault?@"1":@"0";
+    [params setJsonValue:isChoice key:@"isChoice"];
+    [self showLoading];
+    [[JMRequestManager sharedManager] POST:kUrlAddressEdit parameters:params completion:^(JMBaseResponse *response) {
+        [self dismissLoading];
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            [JMProgressHelper toastInWindowWithMessage:response.responseObject[@"desc"]];
+            [[NSNotificationCenter defaultCenter] postNotificationName:kNotificationAddressEditSuccess object:nil];
+            [self.navigationController popViewControllerAnimated:YES];
+        }
+    }];
+}
+
+@end

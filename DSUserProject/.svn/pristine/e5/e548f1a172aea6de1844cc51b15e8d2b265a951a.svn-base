@@ -1,0 +1,154 @@
+//
+//  AddressManagerViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/1/5.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "AddressManagerViewController.h"
+#import "AddressAddOrEditViewController.h"
+#import "AddressManagerCell.h"
+
+@interface AddressManagerViewController ()<UITableViewDelegate,UITableViewDataSource,AddressManagerCellDelegate>
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
+@property (strong, nonatomic) NSMutableArray *tableData;
+@end
+
+@implementation AddressManagerViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    NSNotificationCenter *nc = [NSNotificationCenter defaultCenter];
+    [nc addObserver:self selector:@selector(requestAddressList) name:kNotificationAddressEditSuccess object:nil];
+    [nc addObserver:self selector:@selector(requestAddressList) name:kNotificationAddressAddSuccess object:nil];
+}
+
+-(void)initControl{
+    self.tableView.dataSource = self;
+    self.tableView.delegate = self;
+    self.tableView.rowHeight = 160.0;
+}
+
+-(void)initData{
+    self.title = @"地址管理";
+    [self requestAddressList];
+//    self.tableData = [[NSMutableArray alloc] init];
+//    AddressModel *model = [[AddressModel alloc] initWithTest];
+//    [self.tableData addObject:model];
+}
+
+#pragma mark - UITableView
+-(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
+    return self.tableData.count;
+}
+
+-(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+    AddressManagerCell *cell = [tableView dequeueReusableCellWithIdentifier:@"AddressManagerCell"];
+    cell.cellData = self.tableData[indexPath.row];
+    cell.index = indexPath.row;
+    cell.delegate = self;
+    return cell;
+}
+
+#pragma mark - AddressManagerCellDelegate
+-(void)addressDidEdit:(NSInteger)index{
+    [self goEditAddressVC:index];
+}
+
+-(void)addressDidDelete:(NSInteger)index{
+    ScreenCenterTipView *tipView = [[ScreenCenterTipView alloc] initWithXib];
+    tipView.message = @"确认删除该收货地址吗？";
+    tipView.buttonTitles = @[@"取消",@"确定"];
+    [tipView showViewWithDoneBlock:^(NSDictionary * _Nonnull params) {
+        NSInteger buttonIndex = [params getJsonValue:@"ButtonIndex"].integerValue;
+        if(buttonIndex == 1){
+            AddressModel *model = self.tableData[index];
+            [self requestAddressDelete:model.addressId];
+        }
+    }];
+}
+
+-(void)addressDidChangeDefault:(NSInteger)index{
+    AddressModel *model = self.tableData[index];
+    if(model.isDefault == YES){
+        return;
+    }
+    [self requestAddressSetDefault:model.addressId];
+}
+
+#pragma mark - Actions
+- (IBAction)addAddressAction:(id)sender {
+    //添加地址
+    [self goAddAddressVC];
+}
+
+#pragma mark - 跳转
+-(void)goAddAddressVC{
+    AddressAddOrEditViewController *addAddressVC = [[AddressAddOrEditViewController alloc] initWithStoryboardName:@"Address"];
+    addAddressVC.isDefaultAdd = self.tableData.count>0?NO:YES;
+    [self.navigationController pushViewController:addAddressVC animated:YES];
+}
+
+-(void)goEditAddressVC:(NSInteger)index{
+    AddressAddOrEditViewController *editAddressVC = [[AddressAddOrEditViewController alloc] initWithStoryboardName:@"Address"];
+    editAddressVC.editAddress = self.tableData[index];
+    [self.navigationController pushViewController:editAddressVC animated:YES];
+}
+
+#pragma mark - 网络
+-(void)requestAddressList{
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [self showLoading];
+    [[JMRequestManager sharedManager] POST:kUrlAddressList parameters:params completion:^(JMBaseResponse *response) {
+        [self dismissLoading];
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            NSArray *dataArray = response.responseObject[@"data"];
+            NSMutableArray *array = [[NSMutableArray alloc] init];
+            for(NSDictionary *dic in dataArray){
+                AddressModel *model = [[AddressModel alloc] initWithDictionary:dic];
+                [array addObject:model];
+            }
+            self.tableData = array;
+            [self.tableView reloadData];
+        }
+    }];
+}
+
+-(void)requestAddressDelete:(NSString *)addressId{
+    //删除地址
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:addressId key:@"id"];
+    [self showLoading];
+    [[JMRequestManager sharedManager] POST:kUrlAddressDelte parameters:params completion:^(JMBaseResponse *response) {
+        [self dismissLoading];
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            [JMProgressHelper toastInWindowWithMessage:response.responseObject[@"desc"]];
+            [self requestAddressList];
+        }
+    }];
+}
+
+-(void)requestAddressSetDefault:(NSString *)addressId{
+    //把地址设置为默认地址
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:addressId key:@"id"];
+    [params setJsonValue:@"1" key:@"isChoice"];
+    [self showLoading];
+    [[JMRequestManager sharedManager] POST:kUrlAddressEdit parameters:params completion:^(JMBaseResponse *response) {
+        [self dismissLoading];
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            [JMProgressHelper toastInWindowWithMessage:response.responseObject[@"desc"]];
+            [self requestAddressList];
+        }
+    }];
+}
+
+
+@end

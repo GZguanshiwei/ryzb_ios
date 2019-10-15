@@ -1,0 +1,88 @@
+//
+//  MarketViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/15.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "MarketViewController.h"
+#import "GoodTypeViewController.h"
+#import "NewsViewController.h"
+
+@interface MarketViewController ()
+@property (weak, nonatomic) IBOutlet UIView *unreadNumView;
+@property (weak, nonatomic) IBOutlet UIButton *typeLiveButton;
+@property (weak, nonatomic) IBOutlet UIButton *typeShopButton;
+@property (strong, nonatomic) UIView *selectFlagView;
+
+@property (weak, nonatomic) IBOutlet UIView *LiveView;
+@property (weak, nonatomic) IBOutlet UIView *ShopView;
+@end
+
+@implementation MarketViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.unreadNumView.layer.cornerRadius = self.unreadNumView.mj_h/2.0;
+    self.selectFlagView.layer.cornerRadius = self.selectFlagView.mj_h/2.0;
+}
+
+-(UIView *)selectFlagView{
+    if(_selectFlagView == nil){
+        _selectFlagView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 15, 2)];
+        [self.typeLiveButton.superview addSubview:_selectFlagView];
+        _selectFlagView.centerX = self.typeLiveButton.centerX;
+        _selectFlagView.centerY = self.typeLiveButton.superview.mj_h - 5;
+        _selectFlagView.backgroundColor = [UIColor whiteColor];
+    }
+    return _selectFlagView;
+}
+
+
+#pragma mark - Navigation
+-(BOOL)navUIBaseViewControllerIsNeedNavBar:(JMNavUIBaseViewController *)navUIBaseViewController{
+    return NO;
+}
+
+#pragma mark - Actions
+- (IBAction)typeChangeAction:(id)sender {
+    UIButton *button = (UIButton *)sender;
+    if(button.selected == YES){
+        return;
+    }
+    UIFont *normalFont = [UIFont systemFontOfSize:15];
+    UIFont *selectFont = [UIFont systemFontOfSize:17];
+    self.typeLiveButton.selected = NO;
+    self.typeLiveButton.titleLabel.font = normalFont;
+    self.typeShopButton.selected = NO;
+    self.typeShopButton.titleLabel.font = normalFont;
+    button.selected = YES;
+    button.titleLabel.font = selectFont;
+    if(button == self.typeLiveButton){
+        [self.LiveView.superview bringSubviewToFront:self.LiveView];
+    }else{
+        [self.ShopView.superview bringSubviewToFront:self.ShopView];
+    }
+    
+    [UIView animateWithDuration:0.3 animations:^{
+        self.selectFlagView.centerX = button.centerX;
+    }];
+}
+
+- (IBAction)searchAction:(id)sender {
+    //搜索
+    GoodTypeViewController *goodTypeVC = [[GoodTypeViewController alloc] initWithStoryboardName:@"GoodType"];
+    [self.navigationController pushViewController:goodTypeVC animated:YES];
+}
+
+- (IBAction)messageAction:(id)sender {
+    //消息
+    NewsViewController *newsVC = [[NewsViewController alloc] initWithStoryboardName:@"News"];
+    [self.navigationController pushViewController:newsVC animated:YES];
+}
+@end

@@ -1,0 +1,64 @@
+//
+//  GoodEvalutionModel.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2018/12/27.
+//  Copyright © 2018 liuny. All rights reserved.
+//
+
+#import "GoodEvalutionModel.h"
+
+@implementation GoodEvalutionModel
+-(instancetype)initWithGoodDetailDictionary:(NSDictionary *)dict{
+    self = [super init];
+    if(self){
+        self.userName = [dict getJsonValue:@"nick"];
+        self.userHeadUrl = [dict getJsonValue:@"avatar"];
+        self.content = [dict getJsonValue:@"content"];
+        self.time = [dict getJsonValue:@"createTime"];
+    }
+    return self;
+}
+
+-(instancetype)initWithEvalutionListDictionary:(NSDictionary *)dict{
+    self = [super init];
+    if(self){
+        NSDictionary *userInfo = dict[@"userInfo"];
+        self.userName = [userInfo getJsonValue:@"nick"];
+        self.userHeadUrl = [userInfo getJsonValue:@"avatar"];
+        self.content = [dict getJsonValue:@"content"];
+        self.time = [dict getJsonValue:@"createTime"];
+        self.starLevel = [dict getJsonValue:@"starNum"];
+        self.spec = [dict getJsonValue:@"skuCode"];
+        
+        NSMutableArray *images = [[NSMutableArray alloc] init];
+        NSString *image1 = [dict getJsonValue:@"img1"];
+        if(image1.length > 0){
+            [images addObject:image1];
+        }
+        NSString *image2 = [dict getJsonValue:@"img2"];
+        if(image2.length > 0){
+            [images addObject:image2];
+        }
+        NSString *image3 = [dict getJsonValue:@"img3"];
+        if(image3.length > 0){
+            [images addObject:image3];
+        }
+        NSString *image4 = [dict getJsonValue:@"img4"];
+        if(image4.length > 0){
+            [images addObject:image4];
+        }
+        NSString *image5 = [dict getJsonValue:@"img5"];
+        if(image5.length > 0){
+            [images addObject:image5];
+        }
+        NSString *image6 = [dict getJsonValue:@"img6"];
+        if(image6.length > 0){
+            [images addObject:image6];
+        }
+        self.pictureArray = images;
+    }
+    return self;
+}
+
+@end

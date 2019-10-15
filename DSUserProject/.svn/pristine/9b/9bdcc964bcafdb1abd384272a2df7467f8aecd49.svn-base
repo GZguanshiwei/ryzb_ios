@@ -1,0 +1,38 @@
+//
+//  LiveLevelRecordModel.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/9/16.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "LiveLevelRecordModel.h"
+
+@implementation LiveLevelRecordModel
+-(instancetype)initWithDictionary:(NSDictionary *)dict{
+    self = [super init];
+    if(self){
+        self.type = [dict getJsonValue:@"type"];
+        self.title = [dict getJsonValue:@"message"];
+        self.value = [dict getJsonValue:@"ironValue"];
+        self.time = [dict getJsonValue:@""];
+    }
+    return self;
+}
+
+-(NSString *)iconImageName{
+    NSString *rtn;
+    switch (self.type.intValue) {
+        case 0:
+            
+            break;
+        case 1:
+        case 2:
+            break;
+        default:
+            break;
+    }
+    return rtn;
+}
+
+@end

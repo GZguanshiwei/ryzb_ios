@@ -1,0 +1,48 @@
+//
+//  JMHttpUrl.h
+//  JMBaseProject
+//
+//  Created by liuny on 2018/7/14.
+//  Copyright © 2018年 liuny. All rights reserved.
+//
+
+/*
+ *此处存放项目中接口请求url
+ */
+
+#ifndef JMHttpUrl_h
+#define JMHttpUrl_h
+
+//demo时候使用设为YES，接入接口后设置为NO
+static BOOL kUseTestData = NO;
+
+#if DEBUG
+#define BaseUrl @"http://10.0.0.160:8082/shop-webcast"
+#define ImageBaseUrl @"http://10.0.0.160:8082/shop-webcast"
+#else
+#define BaseUrl @"http://10.0.0.158:8080/base"
+#define ImageBaseUrl @""
+#endif
+
+#define fPinUrl(url) [NSString stringWithFormat:@"%@/%@",BaseUrl,url]
+
+#define kUrlAppVersion              fPinUrl(@"api/app/selectAppVersion")
+
+#pragma mark ------登录注册------
+#define kUrlLogin                   fPinUrl(@"api/account/login")//登录
+#define kUrlLoginUserInfo           fPinUrl(@"api/account/expand/getUserInfo")//获取登录用户信息
+#define kUrlSendCode                fPinUrl(@"api/account/codeByMobile")//发送验证码
+#define kUrlRegister                fPinUrl(@"api/account/registerByMobile")//注册
+#define kUrlLogout                  fPinUrl(@"api/account/logout")//登出
+#define kUrlFindPassword            fPinUrl(@"api/account/findPasswordByMobile")//找回密码
+#define kUrlChangePassword          fPinUrl(@"api/account/updatePwd")//修改密码
+#define kUrlLoginAuthorize          fPinUrl(@"api/account/authorize")//第三方授权登录
+#define kUrlThirdLoginBindPhone     fPinUrl(@"api/account/authorize")//第三方登录绑定手机号
+
+#define kUrlTXUserSig               fPinUrl(@"api/account/genUserSig")//云通信的userSig
+#define kUrlTypeList                fPinUrl(@"api/label/listColumnByType")//获取栏目列表
+#define kUrlLiveList                fPinUrl(@"api/room/selectRoomPage")//首页直播间列表
+#define kUrlGoodList                fPinUrl(@"api/goods/pageByColumnId")//根据栏目id获取商品列表
+
+#define kUrlEnd @""
+#endif /* JMHttpUrl_h */

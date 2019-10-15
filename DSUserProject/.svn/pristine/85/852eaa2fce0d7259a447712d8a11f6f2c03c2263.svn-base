@@ -1,0 +1,47 @@
+//
+//  OrderDetailViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/26.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "OrderDetailViewController.h"
+
+@interface OrderDetailViewController ()
+@property (weak, nonatomic) IBOutlet UILabel *statusTipLabel;
+@property (weak, nonatomic) IBOutlet UILabel *timeTipLabel;
+
+//收货地址
+@property (weak, nonatomic) IBOutlet UILabel *nameLabel;
+@property (weak, nonatomic) IBOutlet UILabel *phoneLabel;
+@property (weak, nonatomic) IBOutlet UILabel *addressLabel;
+
+//商品信息
+@property (weak, nonatomic) IBOutlet UIImageView *goodCoverImageView;
+@property (weak, nonatomic) IBOutlet UILabel *goodTitleLabel;
+@property (weak, nonatomic) IBOutlet UIView *afterSaleTagView;
+@property (weak, nonatomic) IBOutlet UILabel *priceLabel;
+
+@property (weak, nonatomic) IBOutlet UILabel *totalPayLabel;
+@property (weak, nonatomic) IBOutlet UIView *orderInfoView;
+@end
+
+@implementation OrderDetailViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.afterSaleTagView.layer.cornerRadius = 2.0;
+    self.afterSaleTagView.layer.borderColor = [UIColor colorWithHexString:@"#DC2C2C"].CGColor;
+    self.afterSaleTagView.layer.borderWidth = 0.8;
+}
+
+-(void)initData{
+    self.title = @"订单详情";
+}
+
+@end

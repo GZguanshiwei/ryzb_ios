@@ -1,0 +1,146 @@
+//
+//  MarketShopHeader.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/19.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "MarketShopHeader.h"
+#import "SDCycleScrollView.h"
+
+@interface MarketShopHeader ()<SDCycleScrollViewDelegate>
+@property (weak, nonatomic) IBOutlet UIView *typeView;
+@property (weak, nonatomic) IBOutlet UIView *cycleView;
+@property (strong, nonatomic) UIButton *typeSelectButton;
+@property (strong, nonatomic) SDCycleScrollView *cycleImageView;
+@end
+
+@implementation MarketShopHeader
+-(void)awakeFromNib{
+    [super awakeFromNib];
+    [self initControl];
+    [self initData];
+}
+
+-(void)initControl{
+    self.cycleView.layer.cornerRadius = 7.0;
+    self.cycleView.layer.masksToBounds = YES;
+    
+    [self.cycleView addSubview:self.cycleImageView];
+    [self.cycleImageView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.edges.equalTo(self.cycleView);
+    }];
+}
+
+-(void)initData{
+    [self requestBanner];
+}
+
+-(SDCycleScrollView *)cycleImageView{
+    //轮播图
+    if(_cycleImageView == nil){
+        SDCycleScrollView *cycleImageView = [SDCycleScrollView cycleScrollViewWithFrame:CGRectZero delegate:self placeholderImage:[UIImage imageNamed:@"home_ban"]];
+        cycleImageView.pageControlStyle = SDCycleScrollViewPageContolStyleClassic;
+        cycleImageView.bannerImageViewContentMode = UIViewContentModeScaleAspectFill;
+        cycleImageView.pageDotImage = [UIImage imageNamed:@"home_ban_unsel"];
+        cycleImageView.currentPageDotImage = [UIImage imageNamed:@"home_ban_sel"];
+        _cycleImageView = cycleImageView;
+    }
+    return _cycleImageView;
+}
+
+-(void)setTypesArray:(NSMutableArray *)typesArray{
+    _typesArray = typesArray;
+    [self updateTypes];
+}
+
+-(void)updateTypes{
+    UIView *leftItem;
+    for(int i=0;i<self.typesArray.count;i++){
+        UIButton *button = [self typeButton];
+        button.tag = i;
+        TagModel *model = self.typesArray[i];
+        [button setTitle:model.tagText forState:UIControlStateNormal];
+        [self.typeView addSubview:button];
+        [button mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.centerY.equalTo(self.typeView);
+            if(leftItem){
+                make.left.equalTo(leftItem.mas_right).offset(15.0);
+            }else{
+                make.left.equalTo(self.typeView.mas_left);
+            }
+        }];
+        if(model.isSelect == YES){
+            button.selected = YES;
+            self.typeSelectButton = button;
+        }
+        leftItem = button;
+        [self.typeView layoutIfNeeded];
+        if(button.mj_x+button.mj_w > self.typeView.mj_w){
+            [button removeFromSuperview];
+            break;
+        }
+    }
+}
+
+-(UIButton *)typeButton{
+    UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
+    button.titleLabel.font = [UIFont systemFontOfSize:13.0 weight:UIFontWeightRegular];
+    [button setTitleColor:[UIColor colorWithHexString:@"#666666"] forState:UIControlStateNormal];
+    [button setTitleColor:[UIColor whiteColor] forState:UIControlStateSelected];
+    [button setBackgroundImage:[UIImage imageNamed:@"home_a03"] forState:UIControlStateNormal];
+    [button setBackgroundImage:[UIImage imageNamed:@"add_a01"] forState:UIControlStateSelected];
+    [button setContentEdgeInsets:UIEdgeInsetsMake(5, 13, 5, 13)];
+    [button addTarget:self action:@selector(typeAction:) forControlEvents:UIControlEventTouchUpInside];
+    return button;
+}
+
+-(void)typeAction:(UIButton *)sender{
+    if(self.typeSelectButton){
+        //取消上次选中
+        self.typeSelectButton.selected = NO;
+        TagModel *model = self.typesArray[self.typeSelectButton.tag];
+        model.isSelect = NO;
+    }
+    self.typeSelectButton = sender;
+    //选中新的
+    self.typeSelectButton.selected = YES;
+    TagModel *newSelect = self.typesArray[self.typeSelectButton.tag];
+    newSelect.isSelect = YES;
+    
+    if(self.delegate && [self.delegate respondsToSelector:@selector(didChangeType:)]){
+        [self.delegate didChangeType:sender.tag];
+    }
+}
+
+#pragma mark - Actions
+- (IBAction)typeAllAction:(id)sender {
+    if(self.delegate && [self.delegate respondsToSelector:@selector(didShowAllType)]){
+        [self.delegate didShowAllType];
+    }
+}
+
+#pragma mark - SDCycleScrollViewDelegate
+-(void)cycleScrollView:(SDCycleScrollView *)cycleScrollView didSelectItemAtIndex:(NSInteger)index{
+    
+}
+
+#pragma mark - 网络
+-(void)requestBanner{
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:@"4" key:@"type"];
+    [[JMRequestManager sharedManager] POST:kUrlBanner parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            NSArray *dataArray = response.responseObject[@"data"];
+            NSMutableArray *arary = [[NSMutableArray alloc] init];
+            for(NSDictionary *dic in dataArray){
+                [arary addObject:[dic getJsonValue:@"image"]];
+            }
+            self.cycleImageView.imageURLStringsGroup = arary;
+        }
+    }];
+}
+@end

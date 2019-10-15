@@ -1,0 +1,114 @@
+//
+//  SearchDefaultViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/7/2.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "SearchDefaultViewController.h"
+#import "SearchDefaultCell.h"
+#import "TagModel.h"
+#import "HXTagCollectionViewFlowLayout.h"
+
+@interface SearchDefaultViewController ()<UICollectionViewDelegate,UICollectionViewDataSource,UICollectionViewDelegateFlowLayout>
+@property (weak, nonatomic) IBOutlet UICollectionView *hotCollectionView;
+@property (weak, nonatomic) IBOutlet UICollectionView *historyCollectionView;
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *hotCollectionHeightConstraint;
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *historyCollectionConstraint;
+@property (strong, nonatomic) HXTagCollectionViewFlowLayout *hotLayout;
+@property (strong, nonatomic) HXTagCollectionViewFlowLayout *historyLayout;
+
+@property (strong, nonatomic) NSMutableArray *hotArray;
+@property (strong, nonatomic) NSMutableArray *historyArray;
+@end
+
+@implementation SearchDefaultViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.view.backgroundColor = [UIColor whiteColor];
+    
+    self.hotCollectionView.delegate = self;
+    self.hotCollectionView.dataSource = self;
+    self.hotLayout = [[HXTagCollectionViewFlowLayout alloc] init];
+    JMWeak(self);
+    self.hotLayout.completeLayout = ^(CGFloat contentHeight) {
+        weakself.hotCollectionHeightConstraint.constant = contentHeight;
+    };
+    self.hotCollectionView.collectionViewLayout = self.hotLayout;
+    
+    self.historyCollectionView.delegate = self;
+    self.historyCollectionView.dataSource = self;
+    self.historyLayout = [[HXTagCollectionViewFlowLayout alloc] init];
+    self.historyLayout.completeLayout = ^(CGFloat contentHeight) {
+        weakself.historyCollectionConstraint.constant = contentHeight;
+    };
+    self.historyCollectionView.collectionViewLayout = self.historyLayout;
+}
+
+-(void)initData{
+    self.hotArray = [@[@"手镯",@"原石",@"佛",@"观音"] mutableCopy];
+    self.historyArray = [@[@"手镯",@"原石",@"佛",@"观音"] mutableCopy];
+}
+
+#pragma mark - UICollectionView
+-(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
+    NSInteger rtn = 0;
+    if(collectionView == self.historyCollectionView){
+        rtn = self.historyArray.count;
+    }else if(collectionView == self.hotCollectionView){
+        rtn = self.hotArray.count;
+    }
+    return rtn;
+}
+
+- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
+    SearchDefaultCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"SearchDefaultCell" forIndexPath:indexPath];
+    NSString *content = @"";
+    if(collectionView == self.historyCollectionView){
+        content = self.historyArray[indexPath.row];
+    }else if(collectionView == self.hotCollectionView){
+        content = self.hotArray[indexPath.row];
+    }
+    [cell updateContent:content];
+    return cell;
+}
+
+- (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath{
+    NSString *content = @"";
+    if(collectionView == self.historyCollectionView){
+        content = self.historyArray[indexPath.row];
+    }else if(collectionView == self.hotCollectionView){
+        content = self.hotArray[indexPath.row];
+    }
+    UIFont *font = [UIFont systemFontOfSize:13 weight:UIFontWeightRegular];
+    //没有考虑多行（单行）
+    CGFloat width = [content widthForFont:font];
+    //向上取整，解决图片边框拉伸问题
+    return CGSizeMake(ceilf(width)+13*2, 30);
+}
+
+-(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
+    //单选
+    NSString *content = @"";
+    if(collectionView == self.historyCollectionView){
+        content = self.historyArray[indexPath.row];
+    }else if(collectionView == self.hotCollectionView){
+        content = self.hotArray[indexPath.row];
+    }
+    if(self.selectBlock){
+        self.selectBlock(content);
+    }
+}
+
+#pragma mark - Actions
+
+- (IBAction)deleteHistoryAction:(id)sender {
+    
+}
+@end

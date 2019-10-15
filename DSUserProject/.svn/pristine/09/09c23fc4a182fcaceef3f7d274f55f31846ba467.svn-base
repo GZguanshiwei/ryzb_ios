@@ -1,0 +1,117 @@
+//
+//  StoreViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/19.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "StoreViewController.h"
+#import "StoreCell.h"
+#import "StoreHeader.h"
+#import "StoreInvalidCell.h"
+
+@interface StoreViewController ()<UITableViewDataSource,UITableViewDelegate>
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
+@property (strong, nonatomic) NSMutableArray *storeArray;
+@property (strong, nonatomic) NSMutableArray *storeInvaildArray;
+@end
+
+@implementation StoreViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.tableView.dataSource = self;
+    self.tableView.delegate = self;
+    UINib *header = [UINib nibWithNibName:@"StoreHeader" bundle:nil];
+    [self.tableView registerNib:header forHeaderFooterViewReuseIdentifier:@"StoreHeader"];
+}
+
+-(void)initData{
+    self.storeArray = [[NSMutableArray alloc] init];
+    self.storeInvaildArray = [[NSMutableArray alloc] init];
+    for(int i=0;i<4;i++){
+        [self.storeArray addObject:@"1"];
+        [self.storeInvaildArray addObject:@"1"];
+    }
+}
+
+#pragma mark - UITableView
+-(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
+    NSInteger rtn = 0;
+    switch (section) {
+        case 0:
+            rtn = self.storeArray.count;
+            break;
+        case 1:
+            rtn = self.storeInvaildArray.count;
+            break;
+        default:
+            break;
+    }
+    return rtn;
+}
+
+-(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView{
+    return 2;
+}
+
+-(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+    switch (indexPath.section) {
+        case 0:
+        {
+            StoreCell *cell = [tableView dequeueReusableCellWithIdentifier:@"StoreCell"];
+            return cell;
+        }
+            break;
+        case 1:
+        {
+            StoreInvalidCell *cell = [tableView dequeueReusableCellWithIdentifier:@"StoreInvalidCell"];
+            return cell;
+        }
+            break;
+        default:
+            break;
+    }
+    return nil;
+}
+
+-(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
+    CGFloat rtn = 0;
+    switch (indexPath.section) {
+        case 0:
+            rtn = 195.0;
+            break;
+        case 1:
+            rtn = 127.0;
+            break;
+        default:
+            break;
+    }
+    return rtn;
+}
+
+-(CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section{
+    CGFloat rtn = 0;
+    switch (section) {
+        case 0:
+            rtn = 0;
+            break;
+        case 1:
+            rtn = 44.0;
+            break;
+        default:
+            break;
+    }
+    return rtn;
+}
+
+-(UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section{
+    StoreHeader *header = [tableView dequeueReusableHeaderFooterViewWithIdentifier:@"StoreHeader"];
+    return header;
+}
+@end

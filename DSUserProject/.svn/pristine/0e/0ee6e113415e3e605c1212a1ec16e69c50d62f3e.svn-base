@@ -1,0 +1,92 @@
+//
+//  OrderModel.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/4/24.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "OrderModel.h"
+
+@implementation OrderModel
+
+-(instancetype)initWithOrderListDictionary:(NSDictionary *)dict{
+    self = [super init];
+    if(self){
+        AddressModel *address = [[AddressModel alloc] init];
+        address.phone = [dict getJsonValue:@"addressPhone"];
+        address.name = [dict getJsonValue:@"addressName"];
+        address.address = [dict getJsonValue:@"address"];
+        self.address = address;
+        
+        self.orderId = [dict getJsonValue:@"id"];
+        self.orderNo = [dict getJsonValue:@"orderNo"];
+        self.totalPay = [dict getJsonValue:@"money"];
+        
+        NSArray *goodList = dict[@"goodsList"];
+        NSDictionary *goodDic = goodList.firstObject;
+        GoodModel *good = [[GoodModel alloc] init];
+        good.goodId = [goodDic getJsonValue:@"goodsId"];
+        good.title = [goodDic getJsonValue:@"goodsName"];
+        good.coverImage = [goodDic getJsonValue:@"skuImg"];
+        good.price = [goodDic getJsonValue:@"price"];
+        self.good = good;
+        
+        self.state = [dict getJsonValue:@"state"].integerValue;
+        self.afterSaleState = [dict getJsonValue:@"refundState"].integerValue;
+    }
+    return self;
+}
+
+
+-(instancetype)initWithDetailDictionary:(NSDictionary *)dict{
+    self = [self initWithOrderListDictionary:dict];
+    if(self){
+        self.createTime = [dict getJsonValue:@"createTime"];
+        self.payTime = [dict getJsonValue:@"payTime"];
+        self.faHuoTime = [dict getJsonValue:@"sendTime"];
+        self.evaluateTime = [dict getJsonValue:@""];
+        self.completeTime = [dict getJsonValue:@"finishTime"];
+    }
+    return self;
+}
+
+
+//操作按钮名称
+-(NSArray *)operationButtons{
+    NSMutableArray *array = [[NSMutableArray alloc] init];
+    switch (self.state) {
+        case JMOrderState_Close:
+            
+            break;
+        case JMOrderState_WaitPay:
+            
+            break;
+        case JMOrderState_Complete:
+            
+            break;
+        case JMOrderState_WaitEvaluate:
+            
+            break;
+        default:
+            break;
+    }
+    return array;
+}
+
+-(NSArray *)afterSaleButtons{
+    NSMutableArray *array = [[NSMutableArray alloc] init];
+    switch (self.afterSaleState) {
+        case JMOrderAfterSale_Fail:
+            break;
+        case JMOrderAfterSale_Success:
+            break;
+        case JMOrderAfterSale_InAudit:
+            [array addObjectsFromArray:@[@"申请退款中"]];
+            break;
+        default:
+            break;
+    }
+    return array;
+}
+@end

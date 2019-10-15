@@ -1,0 +1,41 @@
+//
+//  ResaleSearchResultViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/7/4.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "ResaleSearchResultViewController.h"
+
+@interface ResaleSearchResultViewController ()
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
+@property (nonatomic, strong) NSMutableArray *tableData;
+@property (weak, nonatomic) IBOutlet UIView *noDataView;
+@end
+
+@implementation ResaleSearchResultViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    
+}
+
+-(void)initData{
+    
+}
+
+-(void)updateShow{
+    if(self.tableData.count == 0){
+        [self.view bringSubviewToFront:self.noDataView];
+    }else{
+        [self.view bringSubviewToFront:self.tableView];
+    }
+    [self.tableView reloadData];
+}
+
+@end

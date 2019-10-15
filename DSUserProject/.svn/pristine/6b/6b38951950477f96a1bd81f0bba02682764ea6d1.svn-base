@@ -1,0 +1,124 @@
+//
+//  MarketViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/15.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "MarketViewController.h"
+#import "GoodTypeViewController.h"
+#import "NewsViewController.h"
+
+@interface MarketViewController ()
+@property (weak, nonatomic) IBOutlet UIView *unreadNumView;
+@property (strong, nonatomic) IBOutlet UILabel *unreadNumLabel;
+@property (weak, nonatomic) IBOutlet UIButton *typeLiveButton;
+@property (weak, nonatomic) IBOutlet UIButton *typeShopButton;
+@property (strong, nonatomic) UIView *selectFlagView;
+
+@property (weak, nonatomic) IBOutlet UIView *LiveView;
+@property (weak, nonatomic) IBOutlet UIView *ShopView;
+@end
+
+@implementation MarketViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    //获取系统消息未读数
+    [self requsetUnReadCount];
+}
+
+-(void)initControl{
+    self.unreadNumView.hidden = YES;
+    self.unreadNumView.layer.cornerRadius = self.unreadNumView.mj_h/2.0;
+    self.selectFlagView.layer.cornerRadius = self.selectFlagView.mj_h/2.0;
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(requsetUnReadCount) name:kNotificationSystemNotice object:nil];
+}
+
+-(UIView *)selectFlagView{
+    if(_selectFlagView == nil){
+        _selectFlagView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 15, 2)];
+        [self.typeLiveButton.superview addSubview:_selectFlagView];
+        _selectFlagView.centerX = self.typeLiveButton.centerX;
+        _selectFlagView.centerY = self.typeLiveButton.superview.mj_h - 5;
+        _selectFlagView.backgroundColor = [UIColor whiteColor];
+    }
+    return _selectFlagView;
+}
+
+
+#pragma mark - Navigation
+-(BOOL)navUIBaseViewControllerIsNeedNavBar:(JMNavUIBaseViewController *)navUIBaseViewController{
+    return NO;
+}
+
+#pragma mark - Actions
+- (IBAction)typeChangeAction:(id)sender {
+    UIButton *button = (UIButton *)sender;
+    if(button.selected == YES){
+        return;
+    }
+    UIFont *normalFont = [UIFont systemFontOfSize:15];
+    UIFont *selectFont = [UIFont systemFontOfSize:17];
+    self.typeLiveButton.selected = NO;
+    self.typeLiveButton.titleLabel.font = normalFont;
+    self.typeShopButton.selected = NO;
+    self.typeShopButton.titleLabel.font = normalFont;
+    button.selected = YES;
+    button.titleLabel.font = selectFont;
+    if(button == self.typeLiveButton){
+        [self.LiveView.superview bringSubviewToFront:self.LiveView];
+    }else{
+        [self.ShopView.superview bringSubviewToFront:self.ShopView];
+    }
+    
+    [UIView animateWithDuration:0.3 animations:^{
+        self.selectFlagView.centerX = button.centerX;
+    }];
+}
+
+- (IBAction)searchAction:(id)sender {
+    //搜索
+    GoodTypeViewController *goodTypeVC = [[GoodTypeViewController alloc] initWithStoryboardName:@"GoodType"];
+    [self.navigationController pushViewController:goodTypeVC animated:YES];
+}
+
+- (IBAction)messageAction:(id)sender {
+    //消息
+    JMLoginUserModel *user = [JMProjectManager sharedJMProjectManager].loginUser;
+    if ([user.sessionId isEqualToString:@"sessionId"]) {
+        LoginViewController *loginVC = [[LoginViewController alloc] initWithStoryboardName:@"RegisterAndLogin"];
+        [self.navigationController pushViewController:loginVC  animated:YES];
+        return;
+    }
+    NewsViewController *newsVC = [[NewsViewController alloc] initWithStoryboardName:@"News"];
+    [self.navigationController pushViewController:newsVC animated:YES];
+}
+
+#pragma mark - 网络
+/**
+ 获取系统消息未读数
+ */
+- (void)requsetUnReadCount {
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [[JMRequestManager sharedManager] POST:kUrlUnReadCount parameters:params completion:^(JMBaseResponse *response) {
+        if (response.error) {
+            
+        }else {
+            NSString *num = [response.responseObject getJsonValue:@"data"];
+            if (num.integerValue == 0) {
+                self.unreadNumView.hidden = YES;
+            }else {
+                self.unreadNumView.hidden = NO;
+                self.unreadNumLabel.text = num;
+            }
+        }
+    }];
+}
+@end

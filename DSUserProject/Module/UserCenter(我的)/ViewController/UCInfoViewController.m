@@ -1,0 +1,61 @@
+//
+//  UCInfoViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/25.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "UCInfoViewController.h"
+#import "UCEditNameViewController.h"
+#import "AddressManagerViewController.h"
+#import "UCEditHeadViewController.h"
+
+@interface UCInfoViewController ()
+@property (weak, nonatomic) IBOutlet UILabel *nameLabel;
+@property (strong, nonatomic) IBOutlet UIImageView *headImageView;
+@end
+
+@implementation UCInfoViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.title = @"个人信息";
+}
+
+-(void)initData{
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshInfo) name:kNotificationUserUpdateHead object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshInfo) name:kNotificationUserUpdateName object:nil];
+    [self refreshInfo];
+}
+
+-(void)refreshInfo{
+    JMLoginUserModel *loginUser = [JMProjectManager sharedJMProjectManager].loginUser;
+    [self.headImageView sd_setImageWithURL:[JMCommonMethod imageUrlWithPath:loginUser.headUrl]];
+    self.nameLabel.text = loginUser.nickName;
+}
+
+#pragma mark - Actions
+
+- (IBAction)headAction:(id)sender {
+    //头像
+    UCEditHeadViewController *editHeadVC = [[UCEditHeadViewController alloc] initWithStoryboardName:@"UserCenter"];
+    [self.navigationController pushViewController:editHeadVC animated:YES];
+}
+
+- (IBAction)nameAction:(id)sender {
+    //昵称
+    UCEditNameViewController *editNameVC = [[UCEditNameViewController alloc] initWithStoryboardName:@"UserCenter"];
+    [self.navigationController pushViewController:editNameVC animated:YES];
+}
+
+- (IBAction)addressAction:(id)sender {
+    //地址
+    AddressManagerViewController *addressVC = [[AddressManagerViewController alloc] initWithStoryboardName:@"Address"];
+    [self.navigationController pushViewController:addressVC animated:YES];
+}
+@end

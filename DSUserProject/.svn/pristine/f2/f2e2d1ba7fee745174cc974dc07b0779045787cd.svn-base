@@ -1,0 +1,103 @@
+//
+//  LivePlayViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/17.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "LivePlayViewController.h"
+#import "ComplaintViewController.h"
+#import "ShareTipView.h"
+#import "LiveCommentViewController.h"
+
+@interface LivePlayViewController ()
+@property (weak, nonatomic) IBOutlet UILabel *titleLabel;
+@property (weak, nonatomic) IBOutlet UILabel *onlinePeopleLabel;
+@property (weak, nonatomic) IBOutlet UILabel *idLabel;
+@property (weak, nonatomic) IBOutlet UITextField *inputContentTF;
+@property (weak, nonatomic) IBOutlet UIButton *storeButton;
+//赞
+@property (weak, nonatomic) IBOutlet UIView *zanNumView;
+@property (weak, nonatomic) IBOutlet UILabel *zanNumLabel;
+@property (weak, nonatomic) IBOutlet UIButton *zanButton;
+//评论
+@property (weak, nonatomic) IBOutlet UIView *commentNumView;
+@property (weak, nonatomic) IBOutlet UILabel *commentNumLabel;
+
+@property (weak, nonatomic) IBOutlet UIScrollView *scrollView;
+@end
+
+@implementation LivePlayViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.fd_interactivePopDisabled = YES;
+    self.view.backgroundColor = kColorMain;
+    
+    self.zanNumView.layer.cornerRadius = self.zanNumView.mj_h/2.0;
+    self.commentNumView.layer.cornerRadius = self.commentNumView.mj_h/2.0;
+    
+    self.scrollView.contentOffset = CGPointMake(kScreenWidth, 0);
+}
+
+-(void)initData{
+    
+}
+
+#pragma mark - Navigation
+-(BOOL)navUIBaseViewControllerIsNeedNavBar:(JMNavUIBaseViewController *)navUIBaseViewController{
+    return NO;
+}
+
+#pragma mark - Actions
+
+- (IBAction)closeAction:(id)sender {
+    //关闭
+    [self.navigationController dismissViewControllerAnimated:YES completion:nil];
+}
+
+- (IBAction)complaintAction:(id)sender {
+    //投诉
+    [self goComplaintVC];
+}
+
+- (IBAction)shareAction:(id)sender {
+    //分享
+    ShareTipView *shareTipView = [[ShareTipView alloc] initWithXib];
+    [shareTipView showViewWithDoneBlock:^(NSDictionary *params) {
+        
+    }];
+}
+
+- (IBAction)storeAction:(id)sender {
+    //收藏、取消收藏
+}
+
+- (IBAction)zanAction:(id)sender {
+    //点赞
+}
+
+- (IBAction)customerServiceAction:(id)sender {
+    //客服
+}
+
+- (IBAction)commentAction:(id)sender {
+    //评论
+    LiveCommentViewController *commentVC = [[LiveCommentViewController alloc] initWithStoryboardName:@"LivePlay"];
+    //使用这种模式，后面的内容不会隐藏
+    commentVC.modalPresentationStyle = UIModalPresentationCustom;
+    [self presentViewController:commentVC animated:YES completion:nil];
+}
+
+#pragma mark - 跳转
+-(void)goComplaintVC{
+    ComplaintViewController *complaintVC = [[ComplaintViewController alloc] initWithStoryboardName:@"LivePlay"];
+    [self.navigationController pushViewController:complaintVC animated:YES];
+}
+
+@end

@@ -1,0 +1,45 @@
+//
+//  ReceiveOrderView.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/7/18.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "ReceiveOrderView.h"
+#import "OrderDetailViewController.h"
+
+@interface ReceiveOrderView ()
+@property (weak, nonatomic) IBOutlet UILabel *titleLabel;
+@end
+
+@implementation ReceiveOrderView
+
+-(void)initData{
+    [super initData];
+    NSString *showText = [NSString stringWithFormat:@"您的订单已创建成功，订单金额￥%@，请尽快完成付款",self.payMoney];
+    NSMutableAttributedString *attriStr = [[NSMutableAttributedString alloc] initWithString:showText];
+    NSRange range = NSMakeRange(14, self.payMoney.length+1);
+    [attriStr addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:14 weight:UIFontWeightBold] range:range];
+    [attriStr addAttribute:NSForegroundColorAttributeName value:[UIColor colorWithHexString:@"#FF2727"] range:range];
+    self.titleLabel.attributedText = attriStr;
+}
+
+- (IBAction)cancelAction:(id)sender {
+    [self hideView];
+}
+
+- (IBAction)payAction:(id)sender {
+    [self hideView];
+    if (self.inGroup) {
+        //正在支付中
+        [[NSNotificationCenter defaultCenter] postNotificationName:kNotificationOrderPaying object:nil];
+    }
+    OrderDetailViewController *detailVC = [[OrderDetailViewController alloc] initWithStoryboardName:@"Order"];
+    detailVC.orderId = self.orderId;
+    detailVC.inGroup = self.inGroup;
+    UIViewController *vc = [UIWindow jm_currentViewController];
+    [vc.navigationController pushViewController:detailVC animated:YES];
+}
+
+@end

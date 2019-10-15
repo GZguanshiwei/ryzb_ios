@@ -1,0 +1,119 @@
+//
+//  IntegralMallListController.m
+//  JMBaseProject
+//
+//  Created by 潘传标 on 2019/9/6.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "IntegralMallListController.h"
+#import "IntegraMallListCell.h"
+#import "MyExchangeListCell.h"
+#import "IntegralGoodsDetailController.h"
+#import "BuyCouponDetailController.h"
+@interface IntegralMallListController ()<UICollectionViewDataSource,UICollectionViewDelegate,UITableViewDataSource,UITableViewDelegate>
+@property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
+@property (weak, nonatomic) IBOutlet UICollectionViewFlowLayout *flowLayOut;
+@property (weak, nonatomic) IBOutlet UIView *selectTypeView;
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
+@property (weak, nonatomic) IBOutlet UIImageView *lineView;
+@property (weak, nonatomic) IBOutlet UIButton *intralButton;
+@property (weak, nonatomic) IBOutlet UIButton *exchangeButton;
+@end
+
+@implementation IntegralMallListController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+- (void)initControl
+{
+    self.title = @"积分商城";
+    self.view.backgroundColor = [UIColor whiteColor];
+    CGFloat wideth = (kScreenWidth - 45)* 0.5;
+    self.flowLayOut.itemSize = CGSizeMake(wideth, 260);
+    self.flowLayOut.minimumLineSpacing = 0;
+    self.flowLayOut.minimumInteritemSpacing = 0;
+
+}
+
+- (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section
+{
+    return 5;
+}
+
+- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
+{
+    IntegraMallListCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:integraMallListCellID forIndexPath:indexPath];
+    return cell;
+}
+
+
+- (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
+{
+
+    if (indexPath.row % 2 == 0) {
+          BuyCouponDetailController *detailVc = [[BuyCouponDetailController alloc] initWithStoryboardName:@"Mine"];
+        [self.navigationController pushViewController:detailVc animated:YES];
+    }else
+    {
+        IntegralGoodsDetailController *detailVc = [[IntegralGoodsDetailController alloc] initWithStoryboardName:@"Mine"];
+        [self.navigationController pushViewController:detailVc animated:YES];
+    }
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return 150;
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return 10;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    MyExchangeListCell *cell = [tableView dequeueReusableCellWithIdentifier:myExchangeListCellID forIndexPath:indexPath];
+    //物流信息
+    cell.logisticsButtonBlock = ^{
+        
+    };
+    return cell;
+}
+
+
+- (IBAction)choiceButtonClick:(id)sender {
+    self.selectTypeView.hidden = !self.selectTypeView.hidden;
+}
+
+- (IBAction)typeButtonClick:(id)sender {
+    self.selectTypeView.hidden = YES;
+}
+
+- (IBAction)selectButtonClick:(UIButton *)sender {
+    switch (sender.tag) {
+        case 0:
+            self.intralButton.selected = YES;
+            self.exchangeButton.selected = NO;
+            self.tableView.hidden = YES;
+            self.collectionView.hidden = NO;
+            break;
+        case 1:
+            self.intralButton.selected = NO;
+            self.exchangeButton.selected = YES;
+            self.tableView.hidden = NO;
+            self.collectionView.hidden = YES;
+            break;
+        default:
+            break;
+    }
+    [UIView animateWithDuration:0.3 animations:^{
+        self.lineView.frame = CGRectMake((self.intralButton.mj_w - self.lineView.mj_w) * 0.5 + self.intralButton.mj_w * sender.tag, self.lineView.mj_y, self.lineView.mj_w, self.lineView.mj_h);
+    }];
+  
+}
+
+@end

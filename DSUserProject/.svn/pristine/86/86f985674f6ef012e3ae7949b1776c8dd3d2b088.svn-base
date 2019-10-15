@@ -1,0 +1,46 @@
+//
+//  HtmlViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/7/2.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "HtmlViewController.h"
+
+@interface HtmlViewController ()
+
+@end
+
+@implementation HtmlViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    
+}
+
+-(void)initData{
+    switch (self.type) {
+        case Html_Buy:
+            self.title = @"购买攻略";
+            break;
+        case Html_Register:
+            self.title = @"用户协议";
+            break;
+        case Html_Help:
+            self.title = @"帮助中心";
+            break;
+        default:
+            break;
+    }
+}
+
+// 默认需要, 是否需要进度条
+- (BOOL)webViewController:(JMWebViewController *)webViewController webViewIsNeedProgressIndicator:(WKWebView *)webView{
+    return NO;
+}
+@end

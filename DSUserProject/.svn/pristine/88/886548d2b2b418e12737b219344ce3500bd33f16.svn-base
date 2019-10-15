@@ -1,0 +1,143 @@
+//
+//  UserCenterViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/15.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "UserCenterViewController.h"
+#import "UserCell.h"
+#import "NewsViewController.h"
+#import "UCInfoViewController.h"
+#import "UCInviteViewController.h"
+#import "SetViewController.h"
+#import "AboutUsViewController.h"
+
+@interface UserCenterViewController ()<UITableViewDataSource,UITableViewDelegate>
+@property (weak, nonatomic) IBOutlet UIView *unreadNumView;
+@property (strong, nonatomic) IBOutlet NSLayoutConstraint *statusBarHeightConstraint;
+
+@property (weak, nonatomic) IBOutlet UIImageView *headImageView;
+@property (weak, nonatomic) IBOutlet UILabel *userNameLabel;
+
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
+@property (strong, nonatomic) NSMutableArray *tableData;
+@end
+
+@implementation UserCenterViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.unreadNumView.layer.cornerRadius = self.unreadNumView.mj_h/2.0;
+    self.statusBarHeightConstraint.constant = [UIApplication sharedApplication].statusBarFrame.size.height;
+    
+    //tableView
+    self.tableView.delegate = self;
+    self.tableView.dataSource = self;
+    self.tableView.rowHeight = 60.0;
+}
+
+-(void)initData{
+    self.tableData = [[NSMutableArray alloc] init];
+    [self.tableData addObject:@{@"title":@"我的钱包",@"image":@"mine_a02"}];
+    [self.tableData addObject:@{@"title":@"我的店铺",@"image":@"mine_a03"}];
+    [self.tableData addObject:@{@"title":@"邀请好友",@"image":@"mine_a04"}];
+    [self.tableData addObject:@{@"title":@"帮助中心",@"image":@"mine_a05"}];
+    [self.tableData addObject:@{@"title":@"关于我们",@"image":@"mine_a06"}];
+    [self.tableData addObject:@{@"title":@"在线客服",@"image":@"mine_a07"}];
+    [self.tableData addObject:@{@"title":@"电话客服",@"image":@"mine_a08"}];
+}
+
+#pragma mark - Navigation
+-(BOOL)navUIBaseViewControllerIsNeedNavBar:(JMNavUIBaseViewController *)navUIBaseViewController{
+    return NO;
+}
+
+- (IBAction)setAction:(id)sender {
+    SetViewController *setVC = [[SetViewController alloc] initWithStoryboardName:@"UserCenter"];
+    [self.navigationController pushViewController:setVC animated:YES];
+}
+
+- (IBAction)messageAction:(id)sender {
+    NewsViewController *newsVC = [[NewsViewController alloc] initWithStoryboardName:@"News"];
+    [self.navigationController pushViewController:newsVC animated:YES];
+}
+
+#pragma mark - UITableView
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    return self.tableData.count;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    UserCell *cell = [tableView dequeueReusableCellWithIdentifier:@"UserCell"];
+    cell.cellData = self.tableData[indexPath.row];
+    return cell;
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    NSDictionary *dic = self.tableData[indexPath.row];
+    NSString *title = [dic getJsonValue:@"title"];
+    if([title isEqualToString:@"邀请好友"]){
+        [self goInviteVC];
+    }else if([title isEqualToString:@"关于我们"]){
+        [self goAboutUsVC];
+    }
+}
+
+#pragma mark - Actions
+//用户
+- (IBAction)userAction:(id)sender {
+    [self goUserInfoVC];
+}
+
+//订单
+- (IBAction)orderAction:(id)sender {
+//    [self goOrderVCWithType:0];
+}
+
+//待支付
+- (IBAction)paymentAction:(id)sender {
+//    [self goOrderVCWithType:1];
+}
+
+//待发货
+- (IBAction)deliveryAction:(id)sender {
+//    [self goOrderVCWithType:2];
+}
+
+//待收货
+- (IBAction)receivingAction:(id)sender {
+//    [self goOrderVCWithType:3];
+}
+
+//待评价
+- (IBAction)evaluateButton:(id)sender {
+//    [self goOrderVCWithType:4];
+}
+
+//退货/退款
+- (IBAction)refundAction:(id)sender {
+//    [self goOrderAfterSaleVC];
+}
+
+#pragma mark - 跳转
+-(void)goUserInfoVC{
+    UCInfoViewController *infoVC = [[UCInfoViewController alloc] initWithStoryboardName:@"UserCenter"];
+    [self.navigationController pushViewController:infoVC animated:YES];
+}
+
+-(void)goInviteVC{
+    UCInviteViewController *inviteVC = [[UCInviteViewController alloc] initWithStoryboardName:@"UserCenter"];
+    [self.navigationController pushViewController:inviteVC animated:YES];
+}
+
+-(void)goAboutUsVC{
+    AboutUsViewController *aboutUsVC = [[AboutUsViewController alloc] initWithStoryboardName:@"UserCenter"];
+    [self.navigationController pushViewController:aboutUsVC animated:YES];
+}
+@end

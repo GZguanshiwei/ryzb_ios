@@ -1,0 +1,136 @@
+//
+//  IntegralGoodsDetailController.m
+//  JMBaseProject
+//
+//  Created by 潘传标 on 2019/9/7.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "IntegralGoodsDetailController.h"
+#import <SDCycleScrollView.h>
+#import "GoodsParamesListCell.h"
+#import "ChoiceAddressView.h"
+@interface IntegralGoodsDetailController ()<SDCycleScrollViewDelegate,UIWebViewDelegate,UITableViewDataSource,UITableViewDelegate>
+@property (weak, nonatomic) IBOutlet UIButton *detailButton;
+@property (weak, nonatomic) IBOutlet UIButton *canShuButton;
+@property (weak, nonatomic) IBOutlet UIButton *protectButton;
+@property (weak, nonatomic) IBOutlet UIView *cycleScrollView;
+
+@property (weak, nonatomic) IBOutlet UIImageView *lineView;
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *containViewConstraint;
+
+@property (weak, nonatomic) IBOutlet UIWebView *webView;
+@property (strong, nonatomic) SDCycleScrollView *cycleImageView;
+@property (weak, nonatomic) IBOutlet UIView *contectServiceView;
+@property (weak, nonatomic) IBOutlet UIView *contectShopView;
+@property (weak, nonatomic) IBOutlet UITableView *paramterTableView;
+
+
+@end
+
+@implementation IntegralGoodsDetailController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+- (void)initControl
+{
+    self.jm_navgationBar.hidden = YES;
+    self.view.backgroundColor = [UIColor whiteColor];
+    [self refreshBannelImage];
+
+}
+- (IBAction)backButtonClick:(id)sender {
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
+- (IBAction)selectButtonClick:(UIButton *)sender {
+    switch (sender.tag) {
+        case 0:
+            self.detailButton.selected = YES;
+            self.canShuButton.selected = NO;
+             self.protectButton.selected = NO;
+            self.webView.hidden = NO;
+            self.paramterTableView.hidden = YES;
+            self.containViewConstraint.constant = 10;
+            break;
+        case 1:
+            self.detailButton.selected = NO;
+            self.canShuButton.selected = YES;
+            self.protectButton.selected = NO;
+            self.webView.hidden = YES;
+            self.paramterTableView.hidden = NO;
+                self.containViewConstraint.constant = 200;
+            break;
+        case 2:
+            self.detailButton.selected = NO;
+            self.canShuButton.selected = NO;
+            self.protectButton.selected = YES;
+            self.webView.hidden = NO;
+            self.paramterTableView.hidden = YES;
+            self.containViewConstraint.constant = 10;
+            break;
+        default:
+            break;
+    }
+    [UIView animateWithDuration:0.3 animations:^{
+        self.lineView.frame = CGRectMake((self.detailButton.mj_w - self.lineView.mj_w) * 0.5 + self.detailButton.mj_w * sender.tag, self.lineView.mj_y, self.lineView.mj_w, self.lineView.mj_h);
+    }];
+}
+
+-(void)refreshBannelImage{
+    //轮播图
+    SDCycleScrollView *cycleImageView = [SDCycleScrollView cycleScrollViewWithFrame:CGRectZero delegate:self placeholderImage:[UIImage imageNamed:@"home_ban"]];
+    cycleImageView.pageControlStyle = SDCycleScrollViewPageContolStyleClassic;
+    cycleImageView.bannerImageViewContentMode = UIViewContentModeScaleAspectFill;
+    cycleImageView.pageDotImage = [UIImage imageNamed:@"home_ban_unsel"];
+    cycleImageView.currentPageDotImage = [UIImage imageNamed:@"home_ban_sel"];
+    self.cycleImageView = cycleImageView;
+    [self.cycleScrollView addSubview:cycleImageView];
+    [self.cycleImageView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.edges.equalTo(self.cycleScrollView);
+    }];
+    self.cycleImageView.imageURLStringsGroup = @[@"home_a10",@"home_a04"];
+}
+
+- (IBAction)bottomButtonClick:(UIButton *)sender {
+    switch (sender.tag) {
+        case 0:
+            //联系客服
+            break;
+        case 1:
+            //联系商家
+            break;
+        case 2:
+            //立即兑换
+            [ChoiceAddressView showWithSelectCoyponBlock:^(AddressModel * _Nonnull model) {
+                
+            }];
+            break;
+            
+        default:
+            break;
+    }
+}
+
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return 4;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return 50;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+   GoodsParamesListCell  * cell = [tableView dequeueReusableCellWithIdentifier:goodsParamesListCellID forIndexPath:indexPath];
+    
+    return cell;
+    
+}
+@end

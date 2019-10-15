@@ -1,0 +1,86 @@
+//
+//  StoreSearchResultViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/7/4.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "StoreSearchResultViewController.h"
+#import "StoreCell.h"
+#import "StoreInvalidCell.h"
+
+@interface StoreSearchResultViewController ()<UITableViewDelegate,UITableViewDataSource,StoreCellDelegate>
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
+@property (strong, nonatomic) NSMutableArray *tableData;
+@property (weak, nonatomic) IBOutlet UIView *noDataView;
+@end
+
+@implementation StoreSearchResultViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+
+-(void)initControl{
+    self.tableView.dataSource = self;
+    self.tableView.delegate = self;
+}
+
+-(void)initData{
+    self.tableData = [[NSMutableArray alloc] init];
+    for(int i=0;i<2;i++){
+        [self.tableData addObject:@"1"];
+    }
+}
+
+-(void)updateShow{
+    if(self.tableData.count == 0){
+        [self.view bringSubviewToFront:self.noDataView];
+    }else{
+        [self.view bringSubviewToFront:self.tableView];
+    }
+    [self.tableView reloadData];
+}
+
+#pragma mark - UITableView
+-(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
+    NSInteger rtn = self.tableData.count;
+    return rtn;
+}
+
+-(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+    StoreCell *cell = [tableView dequeueReusableCellWithIdentifier:@"StoreCell"];
+    cell.delegate = self;
+    return cell;
+}
+
+-(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
+    CGFloat rtn = 195;
+    return rtn;
+}
+
+#pragma mark - StoreCellDelegate
+-(void)didBuy:(NSIndexPath *)indexPath{
+    
+}
+
+-(void)didCancelStore:(NSIndexPath *)indexPath{
+    ScreenCenterTipView *tipView = [[ScreenCenterTipView alloc] initWithXib];
+    tipView.message = @"确定要取消收藏该商品？";
+    tipView.buttonTitles = @[@"取消",@"确定"];
+    [tipView showViewWithDoneBlock:^(NSDictionary * _Nonnull params) {
+        NSInteger buttonIndex = [params getJsonValue:@"ButtonIndex"].integerValue;
+        if(buttonIndex == 1){
+            //TODO
+        }
+    }];
+}
+
+-(void)didCustomerService:(NSIndexPath *)indexPath{
+    
+}
+
+@end

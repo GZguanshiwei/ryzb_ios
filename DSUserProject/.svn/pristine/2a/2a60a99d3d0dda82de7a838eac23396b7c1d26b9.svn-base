@@ -1,0 +1,58 @@
+//
+//  MyBargaingDetailController.m
+//  JMBaseProject
+//
+//  Created by 潘传标 on 2019/9/6.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "MyBargaingDetailController.h"
+#import "MyBargingRecordCell.h"
+@interface MyBargaingDetailController ()<UITableViewDataSource,UITableViewDelegate>
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *recordConstraint;
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
+
+@end
+
+@implementation MyBargaingDetailController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl
+{
+    self.title = @"砍价详情";
+    self.jm_navgationBar.backgroundColor = [UIColor colorWithHexString:@"#FFC01C"];
+    self.view.backgroundColor = [UIColor colorWithHexString:@"#FFC01C"];
+    self.recordConstraint.constant = 550 + 44;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return 50;
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return 10;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    MyBargingRecordCell * cell = [tableView dequeueReusableCellWithIdentifier:myBargingRecordCellID forIndexPath:indexPath];
+    return cell;
+}
+//邀请好友砍价
+- (IBAction)yaoQinAction:(id)sender {
+    [DSZShareView showWithSelctButtonBlock:^(NSInteger index) {
+        
+    }];
+}
+
+//直接购买
+- (IBAction)buyAction:(id)sender {
+    
+}
+@end

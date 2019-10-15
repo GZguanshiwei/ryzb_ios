@@ -1,0 +1,27 @@
+//
+//  LiveMyLevelView.m
+//  JMBaseProject
+//
+//  Created by 潘传标 on 2019/9/4.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "LiveMyLevelView.h"
+#import "FansLevelInforController.h"
+@interface LiveMyLevelView()
+
+
+
+@end
+
+@implementation LiveMyLevelView
+- (IBAction)remove:(id)sender {
+    self.hidden = YES;
+}
+- (IBAction)fansInforAction:(id)sender {
+    FansLevelInforController *fansVc = [[FansLevelInforController alloc] initWithStoryboardName:@"LivePlay"];
+    [[UIWindow jm_currentViewController].navigationController pushViewController:fansVc animated:YES];
+}
+
+
+@end

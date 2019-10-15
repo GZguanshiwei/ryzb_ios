@@ -1,0 +1,38 @@
+//
+//  EvaluateSuccessViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/27.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "EvaluateSuccessViewController.h"
+#import "EvaluateListViewController.h"
+
+@interface EvaluateSuccessViewController ()
+
+@end
+
+@implementation EvaluateSuccessViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+/*
+#pragma mark - Navigation
+
+// In a storyboard-based application, you will often want to do a little preparation before navigation
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
+    // Get the new view controller using [segue destinationViewController].
+    // Pass the selected object to the new view controller.
+}
+*/
+- (IBAction)evaluateInfoAction:(id)sender {
+    //查看评价详情
+    EvaluateListViewController *evaluateListVC = [[EvaluateListViewController alloc] initWithStoryboardName:@"Order"];
+    [self.navigationController pushViewController:evaluateListVC animated:YES];
+}
+
+@end

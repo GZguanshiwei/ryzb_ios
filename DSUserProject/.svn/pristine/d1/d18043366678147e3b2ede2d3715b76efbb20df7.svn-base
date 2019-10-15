@@ -1,0 +1,122 @@
+//
+//  AfterSaleDetailViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/27.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "AfterSaleDetailViewController.h"
+#import "EvalutionItemCell.h"
+#import "SweepViewController.h"
+
+@interface AfterSaleDetailViewController ()<UICollectionViewDelegate,UICollectionViewDataSource,UICollectionViewDelegateFlowLayout>
+@property (weak, nonatomic) IBOutlet UILabel *statusTipLabel;
+@property (weak, nonatomic) IBOutlet UILabel *timeTipLabel;
+@property (weak, nonatomic) IBOutlet UILabel *typeLabel;
+
+//商品信息
+@property (weak, nonatomic) IBOutlet UIImageView *goodCoverImageView;
+@property (weak, nonatomic) IBOutlet UILabel *goodTitleLabel;
+@property (weak, nonatomic) IBOutlet UILabel *priceLabel;
+
+@property (weak, nonatomic) IBOutlet UILabel *totalPayLabel;
+@property (weak, nonatomic) IBOutlet UIView *orderInfoView;
+
+//申请原因
+@property (weak, nonatomic) IBOutlet UIView *reasonInfoView;
+@property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *collectionHeightConstraint;
+@property (strong, nonatomic) NSMutableArray *collectionData;
+
+//物流单号
+@property (weak, nonatomic) IBOutlet UIView *showWuLiuView;
+@property (weak, nonatomic) IBOutlet UILabel *showWuLiuNoLabel;
+@property (weak, nonatomic) IBOutlet UIView *getWuLiuView;
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *getWuLiuViewHeightConstraint;
+@property (weak, nonatomic) IBOutlet UITextField *inputWuLiuNoTF;
+
+@end
+
+@implementation AfterSaleDetailViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.collectionView.dataSource = self;
+    self.collectionView.delegate = self;
+    self.collectionView.scrollEnabled = NO;
+}
+
+-(void)initData{
+    self.title = @"售后详情";
+    
+    self.collectionData = [[NSMutableArray alloc] init];
+    for(int i=0;i<3;i++){
+        [self.collectionData addObject:@"1"];
+    }
+    [self updateCollectionHeight];
+}
+
+-(void)updateCollectionHeight{
+    if(self.collectionData.count == 0){
+        self.collectionHeightConstraint.constant = 0;
+    }else{
+        CGFloat width = (kScreenWidth - 15.0*2 - 12.0*2)/3.0;
+        NSInteger row = ceil(self.collectionData.count/3.0);
+        CGFloat needHeight = width*row + 12*(row-1) + 15.0;
+        self.collectionHeightConstraint.constant = needHeight;
+    }
+}
+
+#pragma mark - UICollectionView
+-(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
+    return self.collectionData.count;
+}
+
+- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
+    EvalutionItemCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"EvalutionItemCell" forIndexPath:indexPath];
+//    [cell.pictureImageView sd_setImageWithURL:[JMCommonMethod imageUrlWithPath:self.collectionData[indexPath.row]]];
+    return cell;
+}
+
+-(CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath{
+    CGFloat width = (kScreenWidth - 15.0*2 - 12.0*2)/3.0;
+    return CGSizeMake(width, width);
+}
+
+-(UIEdgeInsets)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section{
+    return UIEdgeInsetsMake(15, 15, 0, 15);
+}
+
+-(CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout minimumLineSpacingForSectionAtIndex:(NSInteger)section{
+    return 10.0;
+}
+
+-(CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout minimumInteritemSpacingForSectionAtIndex:(NSInteger)section{
+    return 12.0;
+}
+
+-(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
+//    NSMutableArray *array = [[NSMutableArray alloc] init];
+//    for(NSString *imageUrl in self.cellData.pictureArray){
+//        [array addObject:[JMCommonMethod pinImagePath:imageUrl]];
+//    }
+//    [JMCommonMethod largeImagePreview:array currentIndex:indexPath.row];
+}
+
+#pragma mark - Actions
+
+- (IBAction)sweepAction:(id)sender {
+    SweepViewController *sweepVC = [[SweepViewController alloc] initWithStoryboardName:@"AfterSale"];
+    [self.navigationController pushViewController:sweepVC animated:YES];
+}
+
+- (IBAction)commitWuLiuAction:(id)sender {
+    
+}
+
+@end

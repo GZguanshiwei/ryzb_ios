@@ -1,0 +1,79 @@
+//
+//  RecommendViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/20.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "RecommendViewController.h"
+#import "MarketShopCell.h"
+#import "GoodDetailViewController.h"
+
+@interface RecommendViewController ()<UICollectionViewDataSource,UICollectionViewDelegateFlowLayout,UICollectionViewDelegate>
+@property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
+@property (strong, nonatomic) NSMutableArray *collectionData;
+@end
+
+@implementation RecommendViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.collectionView.dataSource = self;
+    self.collectionView.delegate = self;
+
+}
+
+-(void)initData{
+    self.title = @"更多推荐";
+    
+    self.collectionData = [[NSMutableArray alloc] init];
+    for(int i=0;i<6;i++){
+        [self.collectionData addObject:@"1"];
+    }
+}
+
+#pragma mark - UICollectionView
+-(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
+    return self.collectionData.count;
+}
+
+- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
+    MarketShopCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"MarketShopCell" forIndexPath:indexPath];
+    return cell;
+}
+
+-(UIEdgeInsets)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section{
+    return UIEdgeInsetsMake(15, 15, 15, 15);
+}
+
+-(CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath{
+    CGSize rtn = CGSizeZero;
+    rtn.width = (kScreenWidth-15*2-5)/2.0;
+    rtn.height = rtn.width + 75;
+    return rtn;
+}
+
+-(CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout minimumLineSpacingForSectionAtIndex:(NSInteger)section{
+    return 5.0;
+}
+
+-(CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout minimumInteritemSpacingForSectionAtIndex:(NSInteger)section{
+    return 5.0;
+}
+
+-(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
+    [self goGoodDetailVC];
+}
+
+#pragma mark - 跳转
+-(void)goGoodDetailVC{
+    GoodDetailViewController *detailVC = [[GoodDetailViewController alloc] initWithStoryboardName:@"GoodDetail"];
+    [self.navigationController pushViewController:detailVC animated:YES];
+}
+
+@end

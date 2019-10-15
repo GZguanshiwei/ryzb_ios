@@ -1,0 +1,52 @@
+//
+//  MyBargaingListCell.m
+//  JMBaseProject
+//
+//  Created by 潘传标 on 2019/9/6.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "MyBargaingListCell.h"
+
+@interface MyBargaingListCell ()
+
+/** 商品图片 */
+@property (strong, nonatomic) IBOutlet UIImageView *coverImageView;
+/** 商品标题 */
+@property (strong, nonatomic) IBOutlet UILabel *shopNameLabel;
+/** 已砍金额 */
+@property (strong, nonatomic) IBOutlet UILabel *amountLabel;
+/** 时 */
+@property (strong, nonatomic) IBOutlet UILabel *hourOneLabel;
+@property (strong, nonatomic) IBOutlet UILabel *hourTwoLabel;
+/** 分 */
+@property (strong, nonatomic) IBOutlet UILabel *minOneLabel;
+@property (strong, nonatomic) IBOutlet UILabel *minTwoLabel;
+/** 秒 */
+@property (strong, nonatomic) IBOutlet UILabel *secondOneLabel;
+@property (strong, nonatomic) IBOutlet UILabel *secondTwoLabel;
+/** 砍价失败 */
+@property (strong, nonatomic) IBOutlet UIView *failView;
+
+
+@end
+
+@implementation MyBargaingListCell
+
+- (void)awakeFromNib {
+    [super awakeFromNib];
+    // Initialization code
+}
+
+- (void)setSelected:(BOOL)selected animated:(BOOL)animated {
+    [super setSelected:selected animated:animated];
+
+    // Configure the view for the selected state
+}
+- (IBAction)bottomButtonClick:(UIButton *)sender {
+    if (self.buttonActionBlock) {
+        self.buttonActionBlock(sender.tag);
+    }
+}
+
+@end

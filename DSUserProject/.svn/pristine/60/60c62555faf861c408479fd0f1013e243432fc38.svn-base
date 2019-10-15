@@ -1,0 +1,54 @@
+//
+//  DSZShareView.m
+//  JMBaseProject
+//
+//  Created by 潘传标 on 2019/9/5.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "DSZShareView.h"
+
+@interface DSZShareView()
+
+
+
+@end
+
+@implementation DSZShareView
+
++(void)showWithSelctButtonBlock:(void (^)(NSInteger index))handle
+{
+    
+    DSZShareView *alertView =   [[self alloc] init];
+    alertView.frame = [UIScreen mainScreen].bounds;
+    [[UIApplication sharedApplication].keyWindow addSubview:alertView];
+    alertView.confirmAlertBlock = ^(NSInteger index) {
+        if (handle) {
+            handle(index);
+        }
+    };
+    
+}
+
+- (IBAction)shareButtonClick:(id)sender {
+    
+    UIButton *button = (UIButton *)sender;
+    if (self.confirmAlertBlock) {
+        self.confirmAlertBlock(button.tag);
+    }
+    [self removeFromSuperview];
+}
+
+- (instancetype)init
+{
+    self = [super init];
+    if (self) {
+        self = [[[NSBundle mainBundle] loadNibNamed:@"DSZShareView" owner:nil options:nil] lastObject];
+    }
+    return self;
+}
+- (IBAction)deleteButtonClick:(id)sender {
+    [self removeFromSuperview];
+}
+
+@end

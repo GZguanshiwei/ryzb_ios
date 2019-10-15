@@ -1,0 +1,172 @@
+//
+//  MakeOrderViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/20.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "MakeOrderViewController.h"
+#import "PayViewController.h"
+#import "AddressListViewController.h"
+#import "AddressModel.h"
+#import "AddressAddOrEditViewController.h"
+#import "AlertCenterView.h"
+#import "SelectCouponView.h"
+#import "CouponModel.h"
+@interface MakeOrderViewController ()
+//地址
+@property (weak, nonatomic) IBOutlet UILabel *nameLabel;
+@property (weak, nonatomic) IBOutlet UILabel *phoneLabel;
+@property (weak, nonatomic) IBOutlet UILabel *addressLabel;
+@property (weak, nonatomic) IBOutlet UIView *hasAddressView;
+@property (weak, nonatomic) IBOutlet UIView *noAddressView;
+
+//商品信息
+@property (weak, nonatomic) IBOutlet UIImageView *goodCoverImageView;
+@property (weak, nonatomic) IBOutlet UILabel *goodTitleLabel;
+@property (weak, nonatomic) IBOutlet UILabel *goodPriceLabel;
+@property (weak, nonatomic) IBOutlet UIView *goodTipView;
+
+@property (weak, nonatomic) IBOutlet UILabel *totalPayLabel;
+@property (strong, nonatomic) AddressModel *selectAddress;
+
+@end
+
+@implementation MakeOrderViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.goodCoverImageView.layer.cornerRadius = 4.0;
+    self.goodCoverImageView.layer.masksToBounds = YES;
+    
+    self.goodTipView.layer.cornerRadius = 2.0;
+    self.goodTipView.layer.borderColor = [UIColor colorWithHexString:@"#FF701C"].CGColor;
+    self.goodTipView.layer.borderWidth = 0.8;
+}
+
+-(void)initData{
+    self.title = @"确认订单";
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(requestDefaultAddress) name:kNotificationAddressAddSuccess object:nil];
+    [self requestDefaultAddress];
+    
+    [self.goodCoverImageView sd_setImageWithURL:[JMCommonMethod imageUrlWithPath:self.good.coverImage]];
+    self.goodTitleLabel.text = self.good.title;
+    self.goodPriceLabel.text = [NSString stringWithFormat:@"￥%@",self.good.price];
+    self.totalPayLabel.text = [NSString stringWithFormat:@"￥%@",self.good.price];
+}
+
+-(void)setSelectAddress:(AddressModel *)selectAddress{
+    _selectAddress = selectAddress;
+    if(self.selectAddress){
+        self.noAddressView.hidden = YES;
+        self.hasAddressView.hidden = NO;
+        self.nameLabel.text = [NSString stringWithFormat:@"收货人：%@",self.selectAddress.name];
+        self.addressLabel.text = [NSString stringWithFormat:@"收货地址：%@",[self.selectAddress allAddress]];
+        self.phoneLabel.text = self.selectAddress.phone;
+    }else{
+        //没有地址
+        self.noAddressView.hidden = NO;
+        self.hasAddressView.hidden = YES;
+    }
+}
+
+#pragma mark - Actions
+- (IBAction)payAction:(id)sender {
+    if(self.selectAddress == nil){
+        [JMProgressHelper toastInWindowWithMessage:@"请选择收货地址"];
+        return;
+    }
+    [self requestDownOrder];
+}
+
+- (IBAction)addressAction:(id)sender {
+    if(self.selectAddress){
+        AddressListViewController *addressListVC = [[AddressListViewController alloc] initWithStoryboardName:@"Address"];
+        addressListVC.selectBlock = ^(AddressModel * _Nonnull address) {
+            self.selectAddress = address;
+        };
+        [self.navigationController pushViewController:addressListVC animated:YES];
+    }else{
+        AddressAddOrEditViewController *addAddressVC = [[AddressAddOrEditViewController alloc] initWithStoryboardName:@"Address"];
+        [self.navigationController pushViewController:addAddressVC animated:YES];
+    }
+}
+
+#pragma mark - 网络
+-(void)requestDefaultAddress{
+    //获取地址
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [[JMRequestManager sharedManager] POST:kUrlAddressList parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            NSArray *dataArray = response.responseObject[@"data"];
+            if(dataArray.count > 0){
+                self.selectAddress = [[AddressModel alloc] initWithDictionary:dataArray.firstObject];
+            }else{
+                self.selectAddress = nil;
+            }
+        }
+    }];
+}
+
+-(void)requestDownOrder{
+    
+//
+//    PayViewController *payVC = [[PayViewController alloc] initWithStoryboardName:@"Pay"];
+//    payVC.totalPrice = self.good.price.doubleValue;
+//    payVC.orderNo = @"23438249324839242389";
+//    [self.navigationController pushViewController:payVC animated:YES];
+    //创建订单
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:self.good.goodId key:@"goodsId"];
+    [params setJsonValue:self.selectAddress.addressId key:@"addressId"];
+    [[JMRequestManager sharedManager] POST:kUrlDownOrder parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+
+            PayViewController *payVC = [[PayViewController alloc] initWithStoryboardName:@"Pay"];
+            payVC.totalPrice = self.good.price.doubleValue;
+            payVC.orderNo = response.responseObject[@"data"];
+            [self.navigationController pushViewController:payVC animated:YES];
+        }
+    }];
+}
+- (IBAction)selectButtonClick:(UIButton *)sender {
+    if (sender.selected) {
+        [AlertCenterView showWithMessage:@"取消购买鉴宝服务，平台将不另配证书，继续购 买鉴定宝服务吗" andLeftBlock:^{
+            //不购买
+            sender.selected = NO;
+            
+        } andRightBlock:^{
+            //继续购买
+            sender.selected = YES;
+            
+        }];
+    }else
+    {
+        sender.selected = YES;
+    }
+
+    
+}
+- (IBAction)questionButtonClick:(id)sender {
+}
+
+#pragma mark - 优惠劵抵扣
+- (IBAction)youhuiJuanAction:(id)sender {
+    
+    [SelectCouponView showWithSelectCoyponBlock:^(CouponModel * _Nonnull model) {
+        
+    }];
+    
+}
+
+@end

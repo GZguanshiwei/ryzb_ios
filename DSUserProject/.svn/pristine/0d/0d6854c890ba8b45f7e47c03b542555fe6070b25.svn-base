@@ -1,0 +1,142 @@
+//
+//  MemberCenterController.m
+//  JMBaseProject
+//
+//  Created by 潘传标 on 2019/9/6.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "MemberCenterController.h"
+#import "IntegralRecordListController.h"
+#import "MemberModel.h"
+
+@interface MemberCenterController ()
+
+/** 当前等级 */
+@property (strong, nonatomic) IBOutlet UIImageView *leftLevelImageView;
+/** 下一级等级 */
+@property (strong, nonatomic) IBOutlet UIImageView *rightLevelImageView;
+/** 等级进度 */
+@property (strong, nonatomic) IBOutlet UIProgressView *progressView;
+/** 总积分说明 */
+@property (strong, nonatomic) IBOutlet UIButton *descButton;
+/** 邀请返利1% */
+@property (strong, nonatomic) IBOutlet UIImageView *inviteOneImageView;
+/** 邀请返利2% */
+@property (strong, nonatomic) IBOutlet UIImageView *inviteTwoImageView;
+/** 邀请返利3% */
+@property (strong, nonatomic) IBOutlet UIImageView *inviteThreeImageView;
+/** 每月优惠券10元 */
+@property (strong, nonatomic) IBOutlet UIImageView *couponOneImageView;
+/** 每月优惠券50元 */
+@property (strong, nonatomic) IBOutlet UIImageView *couponTwoImageView;
+/** 每月优惠券100元 */
+@property (strong, nonatomic) IBOutlet UIImageView *couponThreeImageView;
+/** 免鉴宝费 */
+@property (strong, nonatomic) IBOutlet UIImageView *freeImageView;
+@property (strong, nonatomic) IBOutletCollection(UILabel) NSArray *goldOpenLabels;
+@property (strong, nonatomic) IBOutletCollection(UILabel) NSArray *diamondOpenLabels;
+
+
+@property (nonatomic, strong) MemberModel *model;
+
+@end
+
+@implementation MemberCenterController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+- (void)initControl
+{
+    self.jm_navgationBar.hidden = YES;
+    self.view.backgroundColor = [UIColor whiteColor];
+    ViewRadius(self.progressView, 5);
+}
+
+- (void)initData {
+    [self requestMyMember];
+}
+
+- (void)setModel:(MemberModel *)model {
+    _model = model;
+    NSString *leftLevel = [NSString stringWithFormat:@"vip_level%d",self.model.grade.intValue+1];
+    self.leftLevelImageView.image = [UIImage imageNamed:leftLevel];
+    NSString *rightLevel = [NSString stringWithFormat:@"vip_level%d",self.model.nextGrade.intValue+1];
+    self.rightLevelImageView.image = [UIImage imageNamed:rightLevel];
+    CGFloat percent = self.model.experience.floatValue/self.model.nextIntegral.floatValue;
+    self.progressView.progress = percent;
+    int count = self.model.nextIntegral.intValue - self.model.experience.intValue;
+    [self.descButton setTitle:[NSString stringWithFormat:@"总积分%d，还差%d分升级%@会员",self.model.experience.intValue,count,self.model.nextGradeName] forState:UIControlStateNormal];
+    
+    switch (self.model.grade.intValue) {
+        case 0:
+            self.inviteOneImageView.image = [UIImage imageNamed:@"vip_equity_01"];
+            self.couponOneImageView.image = [UIImage imageNamed:@"vip_equity_02"];
+            break;
+        case 1:
+            self.inviteOneImageView.image = [UIImage imageNamed:@"vip_equity_01"];
+            self.couponOneImageView.image = [UIImage imageNamed:@"vip_equity_02"];
+            self.inviteTwoImageView.image = [UIImage imageNamed:@"vip_equity_03"];
+            self.couponTwoImageView.image = [UIImage imageNamed:@"vip_equity_04"];
+            for (UILabel *label in self.goldOpenLabels) {
+                label.hidden = YES;
+            }
+            break;
+        case 2:
+            self.inviteOneImageView.image = [UIImage imageNamed:@"vip_equity_01"];
+            self.couponOneImageView.image = [UIImage imageNamed:@"vip_equity_02"];
+            self.inviteTwoImageView.image = [UIImage imageNamed:@"vip_equity_03"];
+            self.couponTwoImageView.image = [UIImage imageNamed:@"vip_equity_04"];
+            self.inviteThreeImageView.image = [UIImage imageNamed:@"vip_equity_05"];
+            self.couponThreeImageView.image = [UIImage imageNamed:@"vip_equity_06"];
+            self.freeImageView.image = [UIImage imageNamed:@"vip_equity_07"];
+            for (UILabel *label in self.goldOpenLabels) {
+                label.hidden = YES;
+            }
+            for (UILabel *label in self.diamondOpenLabels) {
+                label.hidden = YES;
+            }
+            break;
+        default:
+            break;
+    }
+}
+
+#pragma mark - Actions
+- (IBAction)backButtonClick:(id)sender {
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
+- (IBAction)fansInforAction:(id)sender {
+    HtmlViewController *htmlVC = [[HtmlViewController alloc] init];
+    htmlVC.type = Html_VipLevel;
+    [self.navigationController pushViewController:htmlVC animated:YES];
+}
+
+//积分记录
+- (IBAction)recordButtonClick:(UIButton *)sender {
+    IntegralRecordListController *recordVc = [[IntegralRecordListController alloc] initWithStoryboardName:@"Mine"];
+    [self.navigationController pushViewController:recordVc animated:YES];
+}
+
+#pragma mark - 网络
+/**
+ 获取我的会员等级信息
+ */
+- (void)requestMyMember {
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [[JMRequestManager sharedManager] POST:kUrlMyMember parameters:params completion:^(JMBaseResponse *response) {
+        if (response.error) {
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else {
+            NSDictionary *dict = response.responseObject[@"data"];
+            MemberModel *model = [[MemberModel alloc] initWithDictionary:dict];
+            self.model = model;
+        }
+    }];
+}
+
+@end

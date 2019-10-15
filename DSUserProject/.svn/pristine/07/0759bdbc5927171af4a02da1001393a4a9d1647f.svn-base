@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="14490.70" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+    <device id="retina6_1" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14490.49"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <collectionViewCell opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" restorationIdentifier="LiveGiftGoodsCell" reuseIdentifier="LiveGiftGoodsCell" id="gTV-IL-0wX" customClass="LiveGiftGoodsCell">
+            <rect key="frame" x="0.0" y="0.0" width="82" height="105"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
+                <rect key="frame" x="0.0" y="0.0" width="82" height="105"/>
+                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                <subviews>
+                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="live_gift_01" translatesAutoresizingMaskIntoConstraints="NO" id="oUx-eo-JFK">
+                        <rect key="frame" x="24" y="14" width="34" height="40"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="40" id="v4o-Zp-Vhy"/>
+                        </constraints>
+                    </imageView>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="礼物名" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="kka-A6-yoH">
+                        <rect key="frame" x="24" y="60" width="34" height="13.5"/>
+                        <fontDescription key="fontDescription" type="system" weight="medium" pointSize="11"/>
+                        <color key="textColor" red="0.20000000000000001" green="0.20000000000000001" blue="0.20000000000000001" alpha="1" colorSpace="calibratedRGB"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="100积分" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="kkg-a9-2W1">
+                        <rect key="frame" x="20" y="79.5" width="42.5" height="13.5"/>
+                        <fontDescription key="fontDescription" type="system" weight="medium" pointSize="11"/>
+                        <color key="textColor" red="0.53333333333333333" green="0.53333333333333333" blue="0.53333333333333333" alpha="1" colorSpace="calibratedRGB"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                </subviews>
+            </view>
+            <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+            <constraints>
+                <constraint firstItem="oUx-eo-JFK" firstAttribute="centerX" secondItem="SEy-5g-ep8" secondAttribute="centerX" id="4fh-ol-U0R"/>
+                <constraint firstItem="oUx-eo-JFK" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" constant="14" id="9h1-Pf-yjd"/>
+                <constraint firstItem="kka-A6-yoH" firstAttribute="centerX" secondItem="oUx-eo-JFK" secondAttribute="centerX" id="OLX-Ov-9WA"/>
+                <constraint firstItem="kkg-a9-2W1" firstAttribute="top" secondItem="kka-A6-yoH" secondAttribute="bottom" constant="6" id="ObG-WR-k5F"/>
+                <constraint firstItem="kka-A6-yoH" firstAttribute="top" secondItem="oUx-eo-JFK" secondAttribute="bottom" constant="6" id="cxn-au-qUd"/>
+                <constraint firstItem="kkg-a9-2W1" firstAttribute="centerX" secondItem="kka-A6-yoH" secondAttribute="centerX" id="uv9-sv-ha2"/>
+            </constraints>
+            <viewLayoutGuide key="safeArea" id="SEy-5g-ep8"/>
+            <size key="customSize" width="82" height="105"/>
+            <connections>
+                <outlet property="imageView" destination="oUx-eo-JFK" id="FgI-CV-hae"/>
+                <outlet property="moneyLabel" destination="kkg-a9-2W1" id="1ni-Tv-hLc"/>
+                <outlet property="nameLabel" destination="kka-A6-yoH" id="3Wc-fC-y4b"/>
+            </connections>
+            <point key="canvasLocation" x="57.971014492753625" y="53.236607142857139"/>
+        </collectionViewCell>
+    </objects>
+    <resources>
+        <image name="live_gift_01" width="34" height="38.5"/>
+    </resources>
+</document>

@@ -1,0 +1,61 @@
+//
+//  AfterSaleViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/27.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "AfterSaleViewController.h"
+#import "AfterSaleCell.h"
+#import "AfterSaleDetailViewController.h"
+
+@interface AfterSaleViewController ()<UITableViewDataSource,UITableViewDelegate,AfterSaleCellDelegate>
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
+@property (strong, nonatomic) NSMutableArray *tableData;
+@end
+
+@implementation AfterSaleViewController
+-(void)initControl{
+    self.tableView.dataSource = self;
+    self.tableView.delegate = self;
+    self.tableView.rowHeight = 240;
+}
+
+-(void)initData{
+    self.title = @"退款";
+    self.tableData = [[NSMutableArray alloc] init];
+    for(int i=0;i<3;i++){
+        [self.tableData addObject:@"1"];
+    }
+}
+
+#pragma mark - UITableView
+-(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
+    return self.tableData.count;
+}
+
+-(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+    AfterSaleCell *cell = [tableView dequeueReusableCellWithIdentifier:@"AfterSaleCell"];
+    cell.delegate = self;
+    cell.index = indexPath.row;
+    return cell;
+}
+
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
+    [self goDetailVC];
+}
+
+#pragma mark - AfterSaleCellDelegate
+-(void)clickOperationButton:(NSInteger)index title:(NSString *)buttonTitle{
+    if([buttonTitle isEqualToString:@"查看详情"]){
+        [self goDetailVC];
+    }
+}
+
+#pragma mark - 跳转
+-(void)goDetailVC{
+    AfterSaleDetailViewController *detailVC = [[AfterSaleDetailViewController alloc] initWithStoryboardName:@"AfterSale"];
+    [self.navigationController pushViewController:detailVC animated:YES];
+}
+@end

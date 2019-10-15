@@ -1,0 +1,285 @@
+//
+//  WebSocketManager.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2018/12/15.
+//  Copyright © 2018 liuny. All rights reserved.
+//
+
+#import "WebSocketManager.h"
+#import "ReceiveOrderView.h"
+
+@interface WebSocketManager ()<SRWebSocketDelegate>
+
+@property(nonatomic, strong) SRWebSocket *webSocket;
+
+@property(nonatomic, weak) NSTimer *timer;
+
+@property(nonatomic, strong) NSTimer *pingTimer;  //每10秒钟发送一次ping消息
+
+@property(nonatomic, strong) NSString *urlString;
+
+@property(nonatomic, assign) NSUInteger currentCount;  //当前重连次数
+
+@end
+//正式服
+//114.55.167.83
+//测试服
+//120.79.3.175
+//友林本地
+//10.0.0.160
+static NSString *socketIp = @"114.55.167.83";
+static NSString *socketPort = @"9326";
+
+typedef enum{
+    WS_Heart = -1,//心跳
+    WS_Login = 0,//登录
+    WS_Logout = 1,//退出登录
+}WS_Type;
+
+@implementation WebSocketManager
+
++ (instancetype)sharedInstance {
+    static dispatch_once_t onceToken;
+    static WebSocketManager *instance = nil;
+    dispatch_once(&onceToken,^{
+        instance = [[super allocWithZone:NULL] init];
+        instance.overtime = 3;
+        instance.reconnectCount = NSUIntegerMax;
+        instance.urlString = [NSString stringWithFormat:@"ws://%@:%@/?sessionId=%@",socketIp,socketPort,[JMProjectManager sharedJMProjectManager].loginUser.sessionId];
+        
+        // 开启ping定时器
+        instance.pingTimer = [NSTimer scheduledTimerWithTimeInterval:10 target:instance selector:@selector(sendPingMessage) userInfo:nil repeats:YES];
+        [[NSRunLoop currentRunLoop] addTimer:instance.pingTimer forMode:NSRunLoopCommonModes];
+    });
+    return instance;
+}
+
++ (id)allocWithZone:(struct _NSZone *)zone{
+    return [self sharedInstance];
+}
+
+/**
+ 开始连接
+ */
+- (void)connect {
+    //先关闭
+    [self.webSocket close];
+    self.webSocket.delegate = nil;
+    
+    //后开启
+    self.urlString = [NSString stringWithFormat:@"ws://%@:%@/?sessionId=%@",socketIp,socketPort,[JMProjectManager sharedJMProjectManager].loginUser.sessionId];
+    self.webSocket = [[SRWebSocket alloc] initWithURLRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:self.urlString]]];
+    self.webSocket.delegate = self;
+    
+    self.status = HXSocketStatusConnecting;
+    
+    [self.webSocket open];
+}
+
+/**
+ 关闭连接
+ */
+- (void)close {
+    [self.webSocket close];
+    self.webSocket = nil;
+    
+    [self.timer invalidate];
+    self.timer = nil;
+}
+
+/**
+ 重新连接
+ */
+- (void)reconnect {
+    
+    if (self.currentCount < self.reconnectCount) {
+        
+        //计数器+1
+        self.currentCount ++;
+        
+        JMLog(@"%lf秒后进行第%zd次重试连接……",self.overtime,self.currentCount);
+        
+        // 开启定时器
+        NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:self.overtime target:self selector:@selector(connect) userInfo:nil repeats:NO];
+        [[NSRunLoop currentRunLoop] addTimer:timer forMode:NSRunLoopCommonModes];
+        self.timer = timer;
+    }
+    else{
+        JMLog(@"重连次数已用完……");
+        
+        if (self.timer) {
+            [self.timer invalidate];
+            self.timer = nil;
+        }
+    }
+}
+
+/**
+ 发送一条消息
+ @param message 消息体
+ */
+- (void)sendMessage:(NSString *)message {
+    if (self.status == HXSocketStatusConnected && message) {
+        [self.webSocket send:message];
+    }
+}
+
+/**
+ 发送ping消息
+ */
+- (void)sendPingMessage {
+    if(self.status == HXSocketStatusConnected){
+        //发送心跳包
+        NSMutableDictionary *params = [[NSMutableDictionary alloc] init];
+        params[@"type"] = [NSString stringWithFormat:@"%d",WS_Heart];
+        [self.webSocket send:params.mj_JSONString];
+    }
+}
+
+#pragma mark - Methods
+-(void)sendLogin{
+    NSMutableDictionary *dic = [[NSMutableDictionary alloc] init];
+    NSString *userId = [JMProjectManager sharedJMProjectManager].loginUser.userId;
+    [dic setJsonValue:userId key:@"accountId"];
+    NSMutableDictionary *params = [[NSMutableDictionary alloc] init];
+    params[@"data"] = dic;
+    params[@"type"] = [NSString stringWithFormat:@"%d",WS_Login];
+    [[WebSocketManager sharedInstance] sendMessage:params.mj_JSONString];
+}
+
+-(void)sendLogout{
+    NSMutableDictionary *dic = [[NSMutableDictionary alloc] init];
+    NSString *userId = [JMProjectManager sharedJMProjectManager].loginUser.userId;
+    [dic setJsonValue:userId key:@"accountId"];
+    NSMutableDictionary *params = [[NSMutableDictionary alloc] init];
+    params[@"data"] = dic;
+    params[@"type"] = [NSString stringWithFormat:@"%d",WS_Logout];
+    [[WebSocketManager sharedInstance] sendMessage:params.mj_JSONString];
+}
+
+#pragma mark - SRWebSocketDelegate
+-(void)webSocket:(SRWebSocket *)webSocket didReceiveMessage:(id)message{
+    JMLog(@"收到信息：%@",message);
+    
+    NSDictionary *messageDic = [(NSString *)message mj_JSONObject];
+    NSString *code = [messageDic getJsonValue:@"code"];
+    NSDictionary *dataDic = messageDic[@"data"];
+    switch (code.integerValue) {
+        case 9:
+            //直播间人数变更
+            if(dataDic){
+                NSString *number = [dataDic getJsonValue:@"roomNumber"];
+                [[NSNotificationCenter defaultCenter] postNotificationName:kNotificationLiveOnlinePeopleChange object:number];
+            }
+            break;
+        case 6:
+            //房管或主播发送订单给用户
+        {
+            if(dataDic){
+                ReceiveOrderView *orderView = [[ReceiveOrderView alloc] initWithXib];
+                orderView.orderId = [dataDic getJsonValue:@"orderId"];
+                orderView.payMoney = [dataDic getJsonValue:@"money"];
+                orderView.inGroup = [dataDic getJsonValue:@"inGroup"].boolValue;
+                [orderView showViewWithDoneBlock:^(NSDictionary * _Nonnull params) {
+                    //do nothing
+                }];
+            }
+            break;
+        }
+        case 11:
+            //系统新消息
+            [[NSNotificationCenter defaultCenter] postNotificationName:kNotificationSystemNotice object:nil];
+            break;
+        case 12:
+            //禁言消息
+        {
+            NSString *desc = [messageDic getJsonValue:@"desc"];
+            [[NSNotificationCenter defaultCenter] postNotificationName:kNotificationLiveRoomBanned object:desc];
+        }
+            break;
+        default:
+            break;
+    }
+}
+
+
+/**
+ Called when a given web socket was open and authenticated.
+ 
+ @param webSocket An instance of `SRWebSocket` that was open.
+ */
+- (void)webSocketDidOpen:(SRWebSocket *)webSocket {
+    
+    JMLog(@"已链接服务器：%@",webSocket.url);
+    
+    //重置计数器
+    self.currentCount = 0;
+    
+    self.status = HXSocketStatusConnected;
+    [self sendLogin];
+    [self.pingTimer fire];
+}
+
+/**
+ Called when a given web socket encountered an error.
+ 
+ @param webSocket An instance of `SRWebSocket` that failed with an error.
+ @param error     An instance of `NSError`.
+ */
+- (void)webSocket:(SRWebSocket *)webSocket didFailWithError:(NSError *)error {
+    
+    JMLog(@"链接失败：%@",error.localizedDescription);
+    
+    self.status = HXSocketStatusFailed;
+    
+    //尝试重新连接
+    [self reconnect];
+}
+
+/**
+ Called when a given web socket was closed.
+ 
+ @param webSocket An instance of `SRWebSocket` that was closed.
+ @param code      Code reported by the server.
+ @param reason    Reason in a form of a String that was reported by the server or `nil`.
+ @param wasClean  Boolean value indicating whether a socket was closed in a clean state.
+ */
+- (void)webSocket:(SRWebSocket *)webSocket didCloseWithCode:(NSInteger)code reason:(nullable NSString *)reason wasClean:(BOOL)wasClean {
+    
+    JMLog(@"链接已关闭：code:%zd   reason:%@",code,reason);
+    
+    if (code == SRStatusCodeNormal) {
+        self.status = HXSocketStatusClosedByUser;
+    }else
+    {
+        self.status = HXSocketStatusClosedByServer;
+        
+        //尝试重新连接
+        [self reconnect];
+    }
+}
+
+/**
+ Called on receive of a ping message from the server.
+ 
+ @param webSocket An instance of `SRWebSocket` that received a ping frame.
+ @param data      Payload that was received or `nil` if there was no payload.
+ */
+- (void)webSocket:(SRWebSocket *)webSocket didReceivePingWithData:(nullable NSData *)data {
+    
+    JMLog(@"收到 Ping");
+}
+
+/**
+ Called when a pong data was received in response to ping.
+ 
+ @param webSocket An instance of `SRWebSocket` that received a pong frame.
+ @param pongData  Payload that was received or `nil` if there was no payload.
+ */
+- (void)webSocket:(SRWebSocket *)webSocket didReceivePong:(nullable NSData *)pongData {
+    
+    JMLog(@"收到 Pong");
+}
+
+@end

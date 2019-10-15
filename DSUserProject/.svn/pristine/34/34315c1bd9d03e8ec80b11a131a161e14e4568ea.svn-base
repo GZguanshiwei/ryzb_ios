@@ -1,0 +1,113 @@
+//
+//  NewsViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/19.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "NewsViewController.h"
+#import "NewsCell.h"
+#import "NewsDetailViewController.h"
+
+
+@interface NewsViewController ()<UITableViewDataSource,UITableViewDelegate>
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
+@property (strong, nonatomic) NSMutableArray *tableData;
+@property (strong, nonatomic) JMRefreshTool *refreshTool;
+@end
+
+@implementation NewsViewController
+
+-(void)initControl{
+    self.tableView.dataSource = self;
+    self.tableView.delegate = self;
+    //图片宽高比315:177
+    CGFloat pictureWidth = kScreenWidth - 30.0*2;
+    CGFloat pictureHeight = pictureWidth*177.0/315.0;
+    self.tableView.rowHeight = pictureHeight +10+60+8+40+15;
+    self.tableView.tableFooterView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, kScreenWidth, 10)];
+}
+
+-(void)initData{
+    self.title = @"消息";
+    
+    [self requestMessageList];
+}
+
+#pragma mark - UITableView
+-(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
+    return self.tableData.count;
+}
+
+-(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+    NewsCell *cell = [tableView dequeueReusableCellWithIdentifier:@"NewsCell"];
+    cell.cellData = self.tableData[indexPath.row];
+    return cell;
+}
+
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
+    [self goDetailVC:indexPath.row];
+}
+
+#pragma mark - Actions
+- (IBAction)customerServiceAction:(id)sender {
+    JMLoginUserModel *user = [JMProjectManager sharedJMProjectManager].loginUser;
+    if ([user.sessionId isEqualToString:@"sessionId"]) {
+        LoginViewController *loginVC = [[LoginViewController alloc] initWithStoryboardName:@"RegisterAndLogin"];
+        [self.navigationController pushViewController:loginVC  animated:YES];
+        return;
+    }
+    //客服
+    [self goCustomerServiceVC];
+}
+
+#pragma mark - 跳转
+-(void)goDetailVC:(NSInteger)index{
+    NewsDetailViewController *detailVC = [[NewsDetailViewController alloc] initWithStoryboardName:@"News"];
+    detailVC.notice = self.tableData[index];
+    [self.navigationController pushViewController:detailVC animated:YES];
+}
+
+-(void)goCustomerServiceVC{
+    JMLoginUserModel *loginUser = [JMProjectManager sharedJMProjectManager].loginUser;
+    //联系客服
+    QYSource *source = [[QYSource alloc] init];
+    source.title = loginUser.nickName;
+    source.urlString = loginUser.headUrl;
+    QiYuCustomServiceController *sessionViewController = [[QiYuCustomServiceController alloc] init];
+    sessionViewController.sessionTitle = @"客服";
+    sessionViewController.source = source;
+    [self.navigationController pushViewController:sessionViewController animated:YES];
+
+}
+
+#pragma mark - 网络
+-(void)requestMessageList{
+    if(self.refreshTool == nil){
+        JMWeak(self);
+        self.refreshTool = [[JMRefreshTool alloc] initWithScrollView:self.tableView dataAnalysisBlock:^NSArray *(NSDictionary *responseData) {
+            NSMutableArray *array = [[NSMutableArray alloc] init];
+            NSDictionary *dataDic = responseData[@"data"];
+            NSArray *listArray = dataDic[@"list"];
+            for(NSDictionary *dic in listArray){
+                NewsModel *model = [[NewsModel alloc] initWithDictionary:dic];
+                [array addObject:model];
+            }
+            if([weakself.refreshTool isAddData] == YES){
+                [weakself.tableData addObjectsFromArray:array];
+            }else{
+                weakself.tableData = array;
+            }
+            [weakself.tableView reloadData];
+            return array;
+        }];
+        self.refreshTool.requestUrl = kUrlSystemMessage;
+        NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+        [params setJsonValue:@"-1" key:@"state"];
+        self.refreshTool.requestParams = params;
+    }
+    
+    [self.tableView.mj_header beginRefreshing];
+}
+@end

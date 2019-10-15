@@ -1,0 +1,61 @@
+//
+//  IntegralRecordListController.m
+//  JMBaseProject
+//
+//  Created by 潘传标 on 2019/9/6.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "IntegralRecordListController.h"
+#import "LiveIronRecordListCell.h"
+@interface IntegralRecordListController ()
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
+@property (strong, nonatomic) NSMutableArray *tableData;
+@property (strong, nonatomic) JMRefreshTool *refreshTool;
+@end
+
+@implementation IntegralRecordListController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+- (void)initControl
+{
+    self.title = @"积分记录";
+    self.view.backgroundColor = [UIColor whiteColor];
+    self.tableView.rowHeight = 55.0;
+}
+
+-(void)initData{
+    [self requestRecordList];
+}
+
+#pragma mark - UITableView
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return self.tableData.count;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    LiveIronRecordListCell *listCell = [tableView dequeueReusableCellWithIdentifier:@"LiveIronRecordListCell"];
+    return listCell;
+}
+
+#pragma mark - 网络
+-(void)requestRecordList{
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [[JMRequestManager sharedManager] POST:kUrlVipLevelRecord parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            NSArray *dataArray = response.responseObject[@"data"];
+            for(NSDictionary *dic in dataArray){
+                
+            }
+        }
+    }];
+}
+@end

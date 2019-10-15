@@ -1,0 +1,86 @@
+//
+//  OrderListViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2018/12/28.
+//  Copyright © 2018 liuny. All rights reserved.
+//
+
+#import "OrderListViewController.h"
+#import "OrderCell.h"
+#import "OrderDetailViewController.h"
+
+@interface OrderListViewController ()<UITableViewDataSource,UITableViewDelegate,OrderCellDelegate>
+@property (weak, nonatomic) IBOutlet UIView *noDataView;
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
+@property (strong, nonatomic) NSMutableArray *tableData;
+
+@end
+
+@implementation OrderListViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+}
+
+-(void)initControl{
+    self.tableView.dataSource = self;
+    self.tableView.delegate = self;
+    self.tableView.rowHeight = 240;
+}
+
+-(void)initData{
+    self.tableData = [[NSMutableArray alloc] init];
+    for(int i=0;i<3;i++){
+        [self.tableData addObject:@"1"];
+    }
+}
+
+-(void)checkDataEmpty{
+    if(self.tableData.count == 0){
+        self.tableView.hidden = YES;
+        self.noDataView.hidden = NO;
+    }else{
+        self.tableView.hidden = NO;
+        self.noDataView.hidden = YES;
+    }
+}
+
+#pragma mark - UITableView
+-(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
+    return self.tableData.count;
+}
+
+-(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+    OrderCell *cell = [tableView dequeueReusableCellWithIdentifier:@"OrderCell"];
+    
+    return cell;
+}
+
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
+    [self goDetailVC];
+}
+
+#pragma mark - OrderCellDelegate
+-(void)clickOperationButton:(NSInteger)index title:(NSString *)buttonTitle{
+    if([buttonTitle isEqualToString:@"付款"]){
+        
+    }else if([buttonTitle isEqualToString:@"申请退款"]){
+        
+    }else if([buttonTitle isEqualToString:@"确认收货"]){
+        
+    }else if([buttonTitle isEqualToString:@"查看物流"]){
+        
+    }else if([buttonTitle isEqualToString:@"评价"]){
+        
+    }else if([buttonTitle isEqualToString:@"删除订单"]){
+        
+    }
+}
+
+#pragma mark - 跳转
+-(void)goDetailVC{
+    OrderDetailViewController *detailVC = [[OrderDetailViewController alloc] initWithStoryboardName:@"Order"];
+    [self.navigationController pushViewController:detailVC animated:YES];
+}
+@end

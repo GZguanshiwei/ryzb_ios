@@ -1,0 +1,142 @@
+//
+//  SelectCouponView.m
+//  JMBaseProject
+//
+//  Created by 潘传标 on 2019/9/5.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "SelectCouponView.h"
+#import "CouponModel.h"
+#import "CouponListCell.h"
+@interface SelectCouponView()<UITableViewDataSource,UITableViewDelegate>
+
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
+@property (weak, nonatomic) IBOutlet UIButton *useButton;
+
+@property (weak, nonatomic) IBOutlet UIButton *unUseButton;
+@property (weak, nonatomic) IBOutlet UIImageView *lineImageView;
+@property(nonatomic,strong)NSIndexPath *selectIndexPath;
+@end
+@implementation SelectCouponView
+
+- (void)awakeFromNib
+{
+    [super awakeFromNib];
+}
+
+-(void)initControl
+{
+    
+
+    
+}
+
++(void)showWithSelectCoyponBlock:(void(^)(CouponModel *model))selectModel
+{
+    SelectCouponView *alertView =   [[self alloc] init];
+    alertView.frame = [UIScreen mainScreen].bounds;
+    [[UIApplication sharedApplication].keyWindow addSubview:alertView];
+    alertView.confirmAlertBlock = ^(CouponModel * _Nonnull model) {
+        if (selectModel) {
+            selectModel(model);
+        }
+    };
+    alertView.tableView.dataSource = alertView;
+    alertView.tableView.delegate = alertView;
+    [alertView.tableView registerNib:[UINib nibWithNibName:@"CouponListCell" bundle:nil] forCellReuseIdentifier:@"CouponListCell"];
+    
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
+{
+    return 20;
+}
+
+- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
+{
+    UIView *headView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, kScreenWidth, 20)];
+    headView.backgroundColor = [UIColor whiteColor];
+    return headView;
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return 3;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return 110;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    CouponListCell *cell = [tableView dequeueReusableCellWithIdentifier:@"CouponListCell" forIndexPath:indexPath];
+    
+    return cell;
+    
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    if (!JMIsEmpty(self.selectIndexPath)) {
+        if (self.selectIndexPath == indexPath) {
+            CouponListCell *lastcell = [tableView cellForRowAtIndexPath:self.selectIndexPath];
+            lastcell.selectButton.selected = NO;
+            self.selectIndexPath = nil;
+            return;
+            
+        }
+        CouponListCell *lastcell = [tableView cellForRowAtIndexPath:self.selectIndexPath];
+        lastcell.selectButton.selected = NO;
+        CouponListCell *currentell = [tableView cellForRowAtIndexPath:indexPath];
+        currentell.selectButton.selected = YES;
+        self.selectIndexPath = indexPath;
+
+   
+     }else
+     {
+     
+         CouponListCell *cell = [tableView cellForRowAtIndexPath:indexPath];
+         cell.selectButton.selected = YES;
+         self.selectIndexPath = indexPath;
+         
+}
+    
+}
+- (IBAction)typeButtonClick:(UIButton *)sender {
+    if (sender.tag == 0) {
+        self.useButton.titleLabel.font = [UIFont systemFontOfSize:13 weight:UIFontWeightBold];
+         self.unUseButton.titleLabel.font = [UIFont systemFontOfSize:13 weight:UIFontWeightRegular];
+    }else
+    {
+        self.unUseButton.titleLabel.font = [UIFont systemFontOfSize:13 weight:UIFontWeightBold];
+        self.useButton.titleLabel.font = [UIFont systemFontOfSize:13 weight:UIFontWeightRegular];
+    }
+    [UIView animateWithDuration:0.3 animations:^{
+        self.lineImageView.frame = CGRectMake((self.useButton.mj_w - self.lineImageView.mj_w) * 0.5 + self.unUseButton.mj_w * sender.tag, self.lineImageView.mj_y, self.lineImageView.mj_w, self.lineImageView.mj_h);
+    }];
+    
+}
+
+- (IBAction)selectButtonClick:(UIButton *)sender {
+    if (sender.tag == 1) {
+        if (self.confirmAlertBlock) {
+            self.confirmAlertBlock([CouponModel new]);
+        }
+    }
+    [self removeFromSuperview];
+    
+}
+
+- (instancetype)init
+{
+    self = [super init];
+    if (self) {
+        self = [[[NSBundle mainBundle] loadNibNamed:@"SelectCouponView" owner:nil options:nil] lastObject];
+    }
+    return self;
+}
+
+@end

@@ -1,0 +1,19 @@
+//
+//  GoodModel.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/7/9.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "GoodModel.h"
+
+@implementation GoodModel
+-(instancetype)initWithDictionary:(NSDictionary *)dict{
+    self = [super init];
+    if(self){
+        
+    }
+    return self;
+}
+@end

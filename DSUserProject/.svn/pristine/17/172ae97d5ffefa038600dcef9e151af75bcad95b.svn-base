@@ -1,0 +1,229 @@
+//
+//  LiveHeader.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/28.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "LiveHeader.h"
+#import "LiveAttentionCell.h"
+#import "SDCycleScrollView.h"
+#import "BannerModel.h"
+#import "GoodDetailViewController.h"
+@interface LiveHeader()<UICollectionViewDelegateFlowLayout,UICollectionViewDataSource,UICollectionViewDelegate,SDCycleScrollViewDelegate>
+@property (weak, nonatomic) IBOutlet UIView *typeView;
+@property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
+@property (weak, nonatomic) IBOutlet UIView *cycleView;
+@property (strong, nonatomic) NSMutableArray *collectionData;
+//@property (strong, nonatomic) NSMutableArray *typesArray;
+@property (strong, nonatomic) UIButton *typeSelectButton;
+@property (strong, nonatomic) SDCycleScrollView *cycleImageView;
+@property (strong, nonatomic) NSMutableArray *bannerData;
+@end
+
+@implementation LiveHeader
+
+-(void)awakeFromNib{
+    [super awakeFromNib];
+    [self initControl];
+    [self initData];
+}
+
+-(void)initControl{
+    self.collectionView.delegate = self;
+    self.collectionView.dataSource = self;
+    
+    [self.cycleView addSubview:self.cycleImageView];
+    [self.cycleImageView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.edges.equalTo(self.cycleView);
+    }];
+}
+
+-(void)initData{
+    [self requestBanner];
+    [self requestAttentionList];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(requestAttentionList) name:kNotificationLiveAttentionChange object:nil];
+}
+
+-(SDCycleScrollView *)cycleImageView{
+    //轮播图
+    if(_cycleImageView == nil){
+        SDCycleScrollView *cycleImageView = [SDCycleScrollView cycleScrollViewWithFrame:CGRectZero delegate:self placeholderImage:[UIImage imageNamed:@"home_ban"]];
+        cycleImageView.pageControlStyle = SDCycleScrollViewPageContolStyleClassic;
+        cycleImageView.bannerImageViewContentMode = UIViewContentModeScaleAspectFill;
+        cycleImageView.pageDotImage = [UIImage imageNamed:@"home_ban_unsel"];
+        cycleImageView.currentPageDotImage = [UIImage imageNamed:@"home_ban_sel"];
+        _cycleImageView = cycleImageView;
+    }
+    return _cycleImageView;
+}
+
+-(void)setTypesArray:(NSMutableArray *)typesArray{
+    _typesArray = typesArray;
+    [self updateTypes];
+}
+
+-(void)updateTypes{
+    UIView *leftItem;
+    for(int i=0;i<self.typesArray.count;i++){
+        UIButton *button = [self typeButton];
+        button.tag = i;
+        TagModel *model = self.typesArray[i];
+        [button setTitle:model.tagText forState:UIControlStateNormal];
+        [self.typeView addSubview:button];
+        [button mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.centerY.equalTo(self.typeView);
+            if(leftItem){
+                make.left.equalTo(leftItem.mas_right).offset(15.0);
+            }else{
+                make.left.equalTo(self.typeView.mas_left);
+            }
+        }];
+        if(model.isSelect == YES){
+            button.selected = YES;
+            self.typeSelectButton = button;
+        }
+        leftItem = button;
+        [self.typeView layoutIfNeeded];
+        if(button.mj_x+button.mj_w > self.typeView.mj_w){
+            [button removeFromSuperview];
+            break;
+        }
+    }
+}
+
+-(UIButton *)typeButton{
+    UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
+    button.titleLabel.font = [UIFont systemFontOfSize:13.0 weight:UIFontWeightRegular];
+    [button setTitleColor:[UIColor colorWithHexString:@"#666666"] forState:UIControlStateNormal];
+    [button setTitleColor:[UIColor whiteColor] forState:UIControlStateSelected];
+    [button setBackgroundImage:[UIImage imageNamed:@"home_a03"] forState:UIControlStateNormal];
+    [button setBackgroundImage:[UIImage imageNamed:@"add_a01"] forState:UIControlStateSelected];
+    [button setContentEdgeInsets:UIEdgeInsetsMake(5, 13, 5, 13)];
+    [button addTarget:self action:@selector(typeAction:) forControlEvents:UIControlEventTouchUpInside];
+    return button;
+}
+
+-(void)typeAction:(UIButton *)sender{
+    if(self.typeSelectButton){
+        self.typeSelectButton.selected = NO;
+        TagModel *model = self.typesArray[self.typeSelectButton.tag];
+        model.isSelect = NO;
+    }
+    self.typeSelectButton = sender;
+    self.typeSelectButton.selected = YES;
+    TagModel *newSelect = self.typesArray[self.typeSelectButton.tag];
+    newSelect.isSelect = YES;
+    
+    if(self.delegate && [self.delegate respondsToSelector:@selector(didChangeType:)]){
+        [self.delegate didChangeType:sender.tag];
+    }
+}
+
+#pragma mark - UICollectionView
+-(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
+    NSInteger rtn = MIN(self.collectionData.count, 4);
+    return rtn;
+}
+
+- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
+    LiveAttentionCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"LiveAttentionCell" forIndexPath:indexPath];
+    cell.cellData = self.collectionData[indexPath.row];
+    return cell;
+}
+
+-(CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath{
+    CGSize rtn = CGSizeZero;
+    rtn.width = kScreenWidth/4.0;
+    rtn.height = kScreenWidth/4.0;
+    return rtn;
+}
+
+-(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
+    if(self.delegate && [self.delegate respondsToSelector:@selector(didEnterLiveRoom:)]){
+        LiveRoomModel *room = self.collectionData[indexPath.row];
+        [self.delegate didEnterLiveRoom:room.roomId];
+    }
+}
+
+#pragma mark - Actions
+- (IBAction)typeAllAction:(id)sender {
+    if(self.delegate && [self.delegate respondsToSelector:@selector(didShowAllType)]){
+        [self.delegate didShowAllType];
+    }
+}
+
+- (IBAction)attentionAllAction:(id)sender {
+    if(self.delegate && [self.delegate respondsToSelector:@selector(didShowAllAttention)]){
+        [self.delegate didShowAllAttention];
+    }
+}
+
+#pragma mark - SDCycleScrollViewDelegate
+-(void)cycleScrollView:(SDCycleScrollView *)cycleScrollView didSelectItemAtIndex:(NSInteger)index{
+    //轮播图点击
+    //轮播图点击
+    if(index < self.bannerData.count){
+        BannerModel *model = self.bannerData[index];
+        if (model.type.integerValue == 1) {
+            GoodDetailViewController *detailVC = [[GoodDetailViewController alloc] initWithStoryboardName:@"GoodDetail"];
+            detailVC.goodId = model.ids;
+            [[UIWindow jm_currentViewController].navigationController pushViewController:detailVC animated:YES];
+        }else if(model.type.integerValue == 2)
+        {
+            if(model.goUrl.length == 0){
+                return;
+            }
+            NSURL *url = [ [ NSURL alloc ] initWithString:model.goUrl];
+            [[UIApplication sharedApplication] openURL:url];
+        }
+        
+        
+    }
+}
+
+#pragma mark - 网络
+-(void)requestBanner{
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:@"4" key:@"type"];
+    [[JMRequestManager sharedManager] POST:kUrlBanner parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            NSArray *dataArray = response.responseObject[@"data"];
+            NSMutableArray *array = [[NSMutableArray alloc] init];
+            NSMutableArray *imageArray = [[NSMutableArray alloc] init];
+            for(NSDictionary *dic in dataArray){
+                BannerModel *model = [[BannerModel alloc] initWithDictionary:dic];
+                [array addObject:model];
+                [imageArray addObject:model.imageUrl];
+            }
+            self.cycleImageView.imageURLStringsGroup = imageArray;
+            self.bannerData = array;
+        }
+    }];
+}
+
+
+-(void)requestAttentionList{
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:@"4" key:@"pageSize"];
+    [params setJsonValue:@"1" key:@"pageNumber"];
+    [[JMRequestManager sharedManager] POST:kUrlLiveAttentionList parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            NSDictionary *dataDic = response.responseObject[@"data"];
+            NSArray *listArray = dataDic[@"list"];
+            NSMutableArray *array = [[NSMutableArray alloc] init];
+            for(NSDictionary *dic in listArray){
+                LiveRoomModel *model = [[LiveRoomModel alloc] initWithDictionary:dic];
+                [array addObject:model];
+            }
+            self.collectionData = array;
+            [self.collectionView reloadData];
+        }
+    }];
+}
+@end

@@ -1,0 +1,83 @@
+//
+//  SetViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/25.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "SetViewController.h"
+#import "UCBindPhoneViewController.h"
+#import "UCChangePasswordViewController.h"
+
+@interface SetViewController ()<UITableViewDelegate,UITableViewDataSource>
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
+@property (strong, nonatomic) NSMutableArray *tableData;
+@end
+
+@implementation SetViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.tableView.dataSource = self;
+    self.tableView.delegate = self;
+    self.tableView.rowHeight = 60.0;
+    self.tableView.tableFooterView = [UIView new];
+}
+
+-(void)initData{
+    self.title = @"设置";
+    
+    self.tableData = [[NSMutableArray alloc] init];
+    [self.tableData addObject:@"密码设置"];
+    [self.tableData addObject:@"绑定手机设置"];
+    //TODO 缓存大小
+    [self.tableData addObject:@"清除缓存"];
+    [self.tableData addObject:@"注销"];
+}
+
+#pragma mark - UITableView
+-(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
+    return self.tableData.count;
+}
+
+-(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"Cell"];
+    NSString *title = self.tableData[indexPath.row];
+    cell.textLabel.text = title;
+    return cell;
+}
+
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    switch (indexPath.row) {
+        case 0:
+            [self goChangePasswordVC];
+            break;
+        case 1:
+            [self goBindPhoneVC];
+            break;
+        case 2:
+            break;
+        case 3:
+            break;
+        default:
+            break;
+    }
+}
+
+#pragma mark - 跳转
+-(void)goChangePasswordVC{
+    UCChangePasswordViewController *changePasswordVC = [[UCChangePasswordViewController alloc] initWithStoryboardName:@"UserCenter"];
+    [self.navigationController pushViewController:changePasswordVC animated:YES];
+}
+
+-(void)goBindPhoneVC{
+    UCBindPhoneViewController *bindPhoneVC = [[UCBindPhoneViewController alloc] initWithStoryboardName:@"UserCenter"];
+    [self.navigationController pushViewController:bindPhoneVC animated:YES];
+}
+@end

@@ -1,0 +1,37 @@
+//
+//  DSCounpAlerView.m
+//  JMBaseProject
+//
+//  Created by 潘传标 on 2019/9/3.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "DSCounpAlerView.h"
+@interface DSCounpAlerView()
+
+@property (weak, nonatomic) IBOutlet UILabel *moneyLable;
+@property (weak, nonatomic) IBOutlet UILabel *coditionLable;
+@property (weak, nonatomic) IBOutlet UILabel *titleLable;
+@property (weak, nonatomic) IBOutlet UILabel *timeLable;
+
+
+@end
+@implementation DSCounpAlerView
+
+
+-(void)show
+{
+    [[UIApplication sharedApplication].keyWindow addSubview:self];
+    self.frame = [UIScreen mainScreen].bounds;
+}
+- (IBAction)checkButtonClick:(id)sender {
+    [self removeFromSuperview];
+    if (self.checkButtonBlock) {
+        self.checkButtonBlock();
+    }
+}
+- (IBAction)deleteButtonClick:(id)sender {
+    [self removeFromSuperview];
+}
+
+@end

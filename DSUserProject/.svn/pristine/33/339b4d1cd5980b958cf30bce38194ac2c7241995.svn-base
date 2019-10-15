@@ -1,0 +1,70 @@
+//
+//  UCEditNameViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/25.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "UCEditNameViewController.h"
+
+@interface UCEditNameViewController ()
+@property (weak, nonatomic) IBOutlet UITextField *nameTextField;
+@end
+
+@implementation UCEditNameViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.title = @"编辑昵称";
+    self.view.backgroundColor = [UIColor whiteColor];
+}
+
+-(void)initData{
+    JMLoginUserModel *loginUser = [JMProjectManager sharedJMProjectManager].loginUser;
+    self.nameTextField.text = loginUser.nickName;
+}
+
+#pragma mark - Navigation
+-(UIImage *)jmNavigationBarRightButtonImage:(UIButton *)rightButton navigationBar:(JMNavigationBar *)navigationBar{
+    [JMCommonMethod navigationItemSet:rightButton fontColor:[UIColor whiteColor]];
+    [rightButton setTitle:@"确定" forState:UIControlStateNormal];
+    return nil;
+}
+
+-(void)rightButtonEvent:(UIButton *)sender navigationBar:(JMNavigationBar *)navigationBar{
+    if (self.nameTextField.text.length == 0) {
+        [JMProgressHelper toastInWindowWithMessage:self.nameTextField.placeholder];
+        return;
+    }
+    if (self.nameTextField.text.length > 10) {
+        [JMProgressHelper toastInWindowWithMessage:@"昵称长度不能超过10位"];
+        return;
+    }
+    [self requestUpdateName];
+}
+
+#pragma mark - 网络
+-(void)requestUpdateName{
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:self.nameTextField.text key:@"nick"];
+    [[JMRequestManager sharedManager] upload:kUrlUploadHead parameters:params formDataBlock:^NSDictionary<NSData *,JMDataName *> *(id<AFMultipartFormData> formData, NSMutableDictionary<NSData *,JMDataName *> *needFillDataDict) {
+        return needFillDataDict;
+    } progress:nil completion:^(JMBaseResponse *response) {
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            [[JMProjectManager sharedJMProjectManager] updateLoginUserInfoSuccessBlock:^{
+                [JMProgressHelper toastInWindowWithMessage:@"修改昵称成功"];
+                [[NSNotificationCenter defaultCenter] postNotificationName:kNotificationUserUpdateName object:nil];
+                [self.navigationController popViewControllerAnimated:YES];
+            } failBlock:nil];
+        }
+    }];
+}
+
+@end

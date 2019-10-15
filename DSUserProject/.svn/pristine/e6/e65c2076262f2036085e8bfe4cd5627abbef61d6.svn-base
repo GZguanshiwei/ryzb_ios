@@ -1,0 +1,34 @@
+//
+//  SearchLiveCell.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/7/3.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "SearchLiveCell.h"
+
+@interface SearchLiveCell ()
+@property (weak, nonatomic) IBOutlet UIImageView *coverImageView;
+@property (weak, nonatomic) IBOutlet UIImageView *statusImageView;
+@property (weak, nonatomic) IBOutlet UILabel *statusLabel;
+@property (weak, nonatomic) IBOutlet UILabel *titleLabel;
+@property (weak, nonatomic) IBOutlet UILabel *infoLabel;
+@property (weak, nonatomic) IBOutlet UIButton *enterButton;
+@end
+
+@implementation SearchLiveCell
+
+-(void)awakeFromNib{
+    [super awakeFromNib];
+    [self initControl];
+}
+
+-(void)initControl{
+    self.coverImageView.layer.cornerRadius = 7.0;
+    self.enterButton.layer.cornerRadius = 7.0;
+}
+
+- (IBAction)enterAction:(id)sender {
+}
+@end

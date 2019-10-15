@@ -1,0 +1,147 @@
+//
+//  EditResaleGoodViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/21.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "EditResaleGoodViewController.h"
+#import "EditGoodCell.h"
+#import "EidtGoodAddCell.h"
+#import "PickImageTipView.h"
+
+@interface EditResaleGoodViewController ()<UICollectionViewDelegate,UICollectionViewDataSource,UICollectionViewDelegateFlowLayout>
+@property (weak, nonatomic) IBOutlet UITextView *contentTextView;
+@property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *collectionHeightConstraint;
+@property (weak, nonatomic) IBOutlet UILabel *pictureNumTipLabel;
+
+@property (strong, nonatomic) NSMutableArray *collectionData;
+@end
+
+
+#define AddItem @"Add"
+
+@implementation EditResaleGoodViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.collectionView.dataSource = self;
+    self.collectionView.delegate = self;
+    self.collectionView.scrollEnabled = NO;
+}
+
+-(void)initData{
+    self.title = @"修改";
+    //初始化
+    self.collectionData = [[NSMutableArray alloc] init];
+    [self.collectionData addObject:AddItem];
+    [self updateCollectionView];
+}
+
+-(void)updateCollectionView{
+    //更新数据源
+    id lastObject = self.collectionData.lastObject;
+    if(self.collectionData.count > 12){
+        if([lastObject isEqual:AddItem]){
+            [self.collectionData removeObject:AddItem];
+        }
+    }else if(self.collectionData.count < 12){
+        if([lastObject isEqual:AddItem] == NO){
+            [self.collectionData addObject:AddItem];
+        }
+    }
+    [self.collectionView reloadData];
+    //更新高度
+    CGFloat width = (kScreenWidth - 15.0*2 - 12.0*2)/3.0;
+    NSInteger row = ceil(self.collectionData.count/3.0);
+    CGFloat needHeight = width*row + 12*(row-1);
+    self.collectionHeightConstraint.constant = needHeight;
+    //更新图片数量提示
+    lastObject = self.collectionData.lastObject;
+    if([lastObject isEqual:AddItem]){
+        self.pictureNumTipLabel.text = [NSString stringWithFormat:@"最多上传12张照片 (%d/12)",(int)self.collectionData.count-1];
+    }else{
+        self.pictureNumTipLabel.text = [NSString stringWithFormat:@"最多上传12张照片 (%d/12)",(int)self.collectionData.count];
+    }
+}
+
+#pragma mark - UICollection
+
+-(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
+    return self.collectionData.count;
+}
+
+- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
+    id model = self.collectionData[indexPath.row];
+    if([model isEqual:AddItem]){
+        //添加
+        EidtGoodAddCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"EidtGoodAddCell" forIndexPath:indexPath];
+        return cell;
+    }else{
+        EditGoodCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"EditGoodCell" forIndexPath:indexPath];
+        JMWeak(self);
+        cell.deleteBlock = ^{
+            [weakself.collectionData removeObjectAtIndex:indexPath.row];
+            [weakself updateCollectionView];
+        };
+        return cell;
+    }
+}
+
+-(CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath{
+    CGFloat width = (kScreenWidth - 15.0*2 - 12.0*2)/3.0;
+    return CGSizeMake(width, width);
+}
+
+-(UIEdgeInsets)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section{
+    return UIEdgeInsetsZero;
+}
+
+-(CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout minimumLineSpacingForSectionAtIndex:(NSInteger)section{
+    return 10.0;
+}
+
+-(CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout minimumInteritemSpacingForSectionAtIndex:(NSInteger)section{
+    return 12.0;
+}
+
+-(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
+    id model = self.collectionData[indexPath.row];
+    if([model isEqual:AddItem]){
+        //添加
+        [self addImage];
+        
+    }else{
+        
+    }
+}
+
+-(void)addImage{
+    PickImageTipView *pickImageTip = [[PickImageTipView alloc] initWithXib];
+    [pickImageTip showViewWithDoneBlock:^(NSDictionary *params) {
+        NSString *buttonIndex = [params getJsonValue:@"ButtonIndex"];
+        switch (buttonIndex.integerValue) {
+            case 0:
+                //拍照
+                break;
+            case 1:
+                //从相册中选择
+                [self.collectionData insertObject:@"1" atIndex:self.collectionData.count-1];
+                [self updateCollectionView];
+                break;
+            default:
+                break;
+        }
+    }];
+}
+
+#pragma mark - Actions
+- (IBAction)commitAction:(id)sender {
+}
+@end

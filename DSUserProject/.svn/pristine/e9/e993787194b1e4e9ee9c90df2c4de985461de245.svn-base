@@ -1,0 +1,34 @@
+//
+//  SearchViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/7/2.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "SearchViewController.h"
+
+@interface SearchViewController ()
+@property (weak, nonatomic) IBOutlet UIView *unreadNumView;
+@end
+
+@implementation SearchViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.unreadNumView.layer.cornerRadius = self.unreadNumView.mj_h/2.0;
+}
+
+#pragma mark - Navigation
+-(BOOL)navUIBaseViewControllerIsNeedNavBar:(JMNavUIBaseViewController *)navUIBaseViewController{
+    return NO;
+}
+
+- (IBAction)backAction:(id)sender {
+    [self.navigationController popViewControllerAnimated:NO];
+}
+@end

@@ -1,0 +1,311 @@
+//
+//  AfterSaleDetailViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/27.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "AfterSaleDetailViewController.h"
+#import "EvalutionItemCell.h"
+#import "SweepViewController.h"
+#import "AfterSaleModel.h"
+
+@interface AfterSaleDetailViewController ()<UICollectionViewDelegate,UICollectionViewDataSource,UICollectionViewDelegateFlowLayout>
+@property (weak, nonatomic) IBOutlet UILabel *statusTipLabel;
+@property (weak, nonatomic) IBOutlet UILabel *timeTipLabel;
+@property (weak, nonatomic) IBOutlet UILabel *typeLabel;
+
+//商品信息
+@property (weak, nonatomic) IBOutlet UIImageView *goodCoverImageView;
+@property (weak, nonatomic) IBOutlet UILabel *goodTitleLabel;
+@property (weak, nonatomic) IBOutlet UILabel *priceLabel;
+
+@property (weak, nonatomic) IBOutlet UILabel *totalPayLabel;
+@property (weak, nonatomic) IBOutlet UILabel *orderNoLabel;
+@property (weak, nonatomic) IBOutlet UILabel *timeOneLabel;
+@property (weak, nonatomic) IBOutlet UILabel *timeTwoLabel;
+
+//申请原因
+@property (weak, nonatomic) IBOutlet UILabel *applyReasonLabel;
+@property (weak, nonatomic) IBOutlet UILabel *refuseReasonLabel;
+@property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *collectionHeightConstraint;
+@property (strong, nonatomic) NSMutableArray *collectionData;
+
+//物流单号
+@property (weak, nonatomic) IBOutlet UIView *showWuLiuView;
+@property (weak, nonatomic) IBOutlet UILabel *showWuLiuNoLabel;
+@property (weak, nonatomic) IBOutlet UIView *getWuLiuView;
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *getWuLiuViewHeightConstraint;
+@property (weak, nonatomic) IBOutlet UITextField *inputWuLiuNoTF;
+
+@property (weak, nonatomic) IBOutlet UIButton *closeButton;
+
+@property (nonatomic, strong) AfterSaleModel *order;
+
+@end
+
+@implementation AfterSaleDetailViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.collectionView.dataSource = self;
+    self.collectionView.delegate = self;
+    self.collectionView.scrollEnabled = NO;
+}
+
+-(void)initData{
+    self.title = @"售后详情";
+    
+    [self requestAfterSaleDetail];
+}
+
+
+-(void)refreshDetail{
+    if(self.order){
+        //刷新状态
+        [self refreshState];
+        //商品信息
+        [self.goodCoverImageView sd_setImageWithURL:[JMCommonMethod imageUrlWithPath:self.order.good.coverImage]];
+        self.goodTitleLabel.text = self.order.good.title;
+        self.priceLabel.text = [NSString stringWithFormat:@"￥%@",self.order.good.price];
+        self.totalPayLabel.text = [NSString stringWithFormat:@"￥%@",self.order.money];
+        //时间
+        self.orderNoLabel.text = [NSString stringWithFormat:@"售后单号：%@",self.order.afterSaleNo];
+        self.timeOneLabel.text = [NSString stringWithFormat:@"申请时间：%@",self.order.applyTime];
+        if(self.order.closeTime.length > 0){
+            self.timeTwoLabel.text = [NSString stringWithFormat:@"关闭时间：%@",self.order.closeTime];
+        }else if(self.order.shenHeTime.length > 0){
+            self.timeTwoLabel.text = [NSString stringWithFormat:@"审核时间：%@",self.order.shenHeTime];
+        }else{
+            self.timeTwoLabel.hidden = YES;
+        }
+        //原因
+        self.applyReasonLabel.text = [NSString stringWithFormat:@"售后原因：%@",self.order.applyReason];
+        if(self.order.refuseReason.length > 0 && self.order.state == AfterSaleState_AuditFail){
+            NSString *reason = [NSString stringWithFormat:@"拒绝原因：%@",self.order.refuseReason];
+            NSMutableAttributedString *attriStr = [[NSMutableAttributedString alloc] initWithString:reason];
+            [attriStr addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:13 weight:UIFontWeightBold] range:NSMakeRange(0, 5)];
+            [attriStr addAttribute:NSForegroundColorAttributeName value:[UIColor colorWithHexString:@"#ED1731"] range:NSMakeRange(0, 5)];
+            self.refuseReasonLabel.attributedText = attriStr;
+        }else{
+            self.refuseReasonLabel.hidden = YES;
+        }
+        //图片
+        if(self.order.applyPicturesArray.count == 0){
+            self.collectionHeightConstraint.constant = 0;
+            self.collectionView.hidden = YES;
+        }else{
+            self.collectionData = [self.order.applyPicturesArray mutableCopy];
+            [self.collectionView reloadData];
+            [self updateCollectionHeight];
+        }
+        
+        //物流
+        [self refreshWuLiu];
+        
+        //底部按钮
+        if(self.order.state == AfterSaleState_InAudit){
+            self.closeButton.hidden = NO;
+        }else{
+            self.closeButton.hidden = YES;
+        }
+    }
+}
+
+-(void)refreshState{
+    self.timeTipLabel.text = nil;
+    self.timeTipLabel.attributedText = nil;
+    NSString *typeTip = @"";
+    switch (self.order.type.integerValue) {
+        case 0:
+            typeTip = @"未发货，仅退款";
+            break;
+        case 1:
+            typeTip = @"退货退款，已收到货";
+            break;
+        case 2:
+            typeTip = @"退货退款，未收到货";
+            break;
+        default:
+            break;
+    }
+    self.typeLabel.text = typeTip;
+    NSString *stateTip = @"";
+    switch (self.order.state) {
+        case AfterSaleState_Close:
+            stateTip = @"申请已关闭";
+            break;
+        case AfterSaleState_InAudit:
+            stateTip = @"审核中";
+            //TODO 2天 23小时后系统自动为您退款
+            break;
+        case AfterSaleState_Complete:
+            if(self.order.type.integerValue == 0){
+                stateTip = @"退款成功";
+            }else{
+                stateTip = @"退货退款成功";
+            }
+            break;
+        case AfterSaleState_AuditFail:
+            stateTip = @"退款被拒绝";
+            break;
+        case AfterSaleState_AuditSuccess:
+            if(self.order.logisticsNo.length == 0){
+                stateTip = @"审核通过";
+            }else{
+                stateTip = @"待商家收货";
+            }
+            break;
+        default:
+            break;
+    }
+    self.statusTipLabel.text = stateTip;
+}
+
+-(void)refreshWuLiu{
+    self.showWuLiuView.hidden = YES;
+    self.getWuLiuView.hidden = YES;
+    if(self.order.state == AfterSaleState_AuditSuccess){
+        if(self.order.logisticsNo.length > 0){
+            self.showWuLiuView.hidden = NO;
+            self.getWuLiuView.hidden = YES;
+            self.showWuLiuNoLabel.text = [NSString stringWithFormat:@"退货物流单号：%@",self.order.logisticsNo];
+        }else{
+            self.showWuLiuView.hidden = YES;
+            self.getWuLiuView.hidden = NO;
+            self.inputWuLiuNoTF.text = nil;
+        }
+    }
+}
+
+-(void)updateCollectionHeight{
+    if(self.collectionData.count == 0){
+        self.collectionHeightConstraint.constant = 0;
+    }else{
+        CGFloat width = (kScreenWidth - 15.0*2 - 12.0*2)/3.0;
+        NSInteger row = ceil(self.collectionData.count/3.0);
+        CGFloat needHeight = width*row + 12*(row-1) + 15.0;
+        self.collectionHeightConstraint.constant = needHeight;
+    }
+}
+
+#pragma mark - UICollectionView
+-(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
+    return self.collectionData.count;
+}
+
+- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
+    EvalutionItemCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"EvalutionItemCell" forIndexPath:indexPath];
+    [cell.pictureImageView sd_setImageWithURL:[JMCommonMethod imageUrlWithPath:self.collectionData[indexPath.row]]];
+    return cell;
+}
+
+-(CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath{
+    CGFloat width = (kScreenWidth - 15.0*2 - 12.0*2)/3.0;
+    return CGSizeMake(width, width);
+}
+
+-(UIEdgeInsets)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section{
+    return UIEdgeInsetsMake(15, 15, 0, 15);
+}
+
+-(CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout minimumLineSpacingForSectionAtIndex:(NSInteger)section{
+    return 10.0;
+}
+
+-(CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout minimumInteritemSpacingForSectionAtIndex:(NSInteger)section{
+    return 12.0;
+}
+
+-(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
+//    NSMutableArray *array = [[NSMutableArray alloc] init];
+//    for(NSString *imageUrl in self.cellData.pictureArray){
+//        [array addObject:[JMCommonMethod pinImagePath:imageUrl]];
+//    }
+//    [JMCommonMethod largeImagePreview:array currentIndex:indexPath.row];
+}
+
+#pragma mark - Actions
+
+- (IBAction)sweepAction:(id)sender {
+    SweepViewController *sweepVC = [[SweepViewController alloc] initWithStoryboardName:@"AfterSale"];
+    sweepVC.finishBlock = ^(NSString * _Nonnull result) {
+        self.inputWuLiuNoTF.text = result;
+    };
+    [self.navigationController pushViewController:sweepVC animated:YES];
+}
+
+- (IBAction)commitWuLiuAction:(id)sender {
+    NSString *content = self.inputWuLiuNoTF.text;
+    if(content.length == 0){
+        [JMProgressHelper toastInWindowWithMessage:self.inputWuLiuNoTF.placeholder];
+        return;
+    }
+    [self requestCommitLogistics];
+}
+
+- (IBAction)closeAction:(id)sender {
+    ScreenCenterTipView *tipView = [[ScreenCenterTipView alloc] initWithXib];
+    tipView.message = @"每个订单只有一次申请售后的机会，确认关闭申请？";
+    tipView.buttonTitles = @[@"取消",@"确定"];
+    [tipView showViewWithDoneBlock:^(NSDictionary * _Nonnull params) {
+        NSString *buttonIndex = [params getJsonValue:@"ButtonIndex"];
+        if(buttonIndex.integerValue == 1){
+            [self requestClose];
+        }
+    }];
+}
+
+#pragma mark - 网络
+-(void)requestAfterSaleDetail{
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:self.afterSaleId key:@"id"];
+    [[JMRequestManager sharedManager] POST:kUrlAfterSaleDetail parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            NSDictionary *dataDic = response.responseObject[@"data"];
+            self.order = [[AfterSaleModel alloc] initWithDictionary:dataDic];
+            [self refreshDetail];
+        }
+    }];
+}
+
+-(void)requestCommitLogistics{
+    //提交物流单号
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:self.order.afterSaleId key:@"refundOrderId"];
+    [params setJsonValue:self.inputWuLiuNoTF.text key:@"logisticsNo"];
+    [self showLoading];
+    [[JMRequestManager sharedManager] POST:kUrlAfterSaleLogistics parameters:params completion:^(JMBaseResponse *response) {
+        [self dismissLoading];
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            [JMProgressHelper toastInWindowWithMessage:response.responseObject[@"desc"]];
+            self.order.logisticsNo = self.inputWuLiuNoTF.text;
+            [self refreshWuLiu];
+        }
+    }];
+}
+
+-(void)requestClose{
+    //关闭售后
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:self.order.afterSaleId key:@"refundOrderId"];
+    [[JMRequestManager sharedManager] POST:kUrlAfterSaleClose parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            [JMProgressHelper toastInWindowWithMessage:@"取消售后成功"];
+            [self.navigationController popViewControllerAnimated:YES];
+        }
+    }];
+}
+@end

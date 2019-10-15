@@ -1,0 +1,28 @@
+//
+//  GoodDepictViewController.m
+//  JMBaseProject
+//
+//  Created by 抽筋的灯 on 2019/9/18.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "GoodDepictViewController.h"
+
+@interface GoodDepictViewController ()
+
+@property (weak, nonatomic) IBOutlet UIScrollView *scrollView;
+@property (weak, nonatomic) IBOutlet UILabel *detailedLabel;
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *detailedLabelHeight;
+@property (weak, nonatomic) IBOutlet UIStackView *imageStackView;
+
+@end
+
+@implementation GoodDepictViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    
+}
+
+
+@end

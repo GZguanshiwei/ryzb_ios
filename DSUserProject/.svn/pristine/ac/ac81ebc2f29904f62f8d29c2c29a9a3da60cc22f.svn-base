@@ -1,0 +1,275 @@
+//
+//  LiveViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/15.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "LiveViewController.h"
+#import "LiveCell.h"
+#import "GoodTypeViewController.h"
+#import "NewsViewController.h"
+#import "LiveHeader.h"
+#import "HomeTypeViewController.h"
+#import "LiveRoomModel.h"
+#import "AttentionLiveViewController.h"
+#import "LivePlayViewController.h"
+
+@interface LiveViewController ()<UICollectionViewDelegate,UICollectionViewDataSource,UICollectionViewDelegateFlowLayout,LiveHeaderDelegate>
+@property (weak, nonatomic) IBOutlet UIView *unreadNumView;
+@property (strong, nonatomic) IBOutlet UILabel *unreadNumLabel;
+
+@property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
+@property (strong, nonatomic) NSMutableArray *collectionData;
+@property (strong, nonatomic) LiveHeader *collectionHeader;
+@property (strong, nonatomic) HomeTypeViewController *homeTypeVC;
+@property (strong, nonatomic) NSMutableArray *typesArray;
+
+@property (strong, nonatomic) JMRefreshTool *refreshTool;
+//是否是游客
+@property(nonatomic,assign)BOOL isTourists;
+@end
+
+@implementation LiveViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    //获取系统消息未读数
+    [self requsetUnReadCount];
+}
+
+-(void)initControl{
+    self.unreadNumView.hidden = YES;
+    self.unreadNumView.layer.cornerRadius = self.unreadNumView.mj_h/2.0;
+    
+    self.collectionView.dataSource = self;
+    self.collectionView.delegate = self;
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(requsetUnReadCount) name:kNotificationSystemNotice object:nil];
+}
+
+-(void)initData{
+    [self requestTypeList];
+    JMLoginUserModel *user =  [JMProjectManager sharedJMProjectManager].loginUser;
+    if ([user.sessionId isEqualToString:@"sessionId"]) {
+        self.isTourists = YES;
+    }else
+    {
+        self.isTourists = NO;
+    }
+}
+
+-(LiveHeader *)collectionHeader{
+    if(_collectionHeader == nil){
+        _collectionHeader = [self.collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:@"LiveHeader" forIndexPath:[NSIndexPath indexPathForRow:0 inSection:0]];
+        _collectionHeader.delegate = self;
+    }
+    return _collectionHeader;
+}
+
+#pragma mark - Navigation
+-(BOOL)navUIBaseViewControllerIsNeedNavBar:(JMNavUIBaseViewController *)navUIBaseViewController{
+    return NO;
+}
+
+#pragma mark - UICollectionView
+-(NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView{
+    return 1;
+}
+
+-(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
+    return self.collectionData.count;
+}
+
+- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
+    LiveCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"LiveCell" forIndexPath:indexPath];
+    LiveRoomModel *room = self.collectionData[indexPath.row];
+    cell.cellData = room;
+    return cell;
+}
+
+-(UIEdgeInsets)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section{
+    return UIEdgeInsetsMake(0, 15, 0, 15);
+}
+
+-(CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath{
+    CGSize rtn = CGSizeZero;
+    rtn.width = (kScreenWidth-15*2-5)/2.0;
+    rtn.height = rtn.width;
+    return rtn;
+}
+
+-(CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout minimumLineSpacingForSectionAtIndex:(NSInteger)section{
+    return 5.0;
+}
+
+-(CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout minimumInteritemSpacingForSectionAtIndex:(NSInteger)section{
+    return 5.0;
+}
+
+- (UICollectionReusableView *)collectionView:(UICollectionView *)collectionView viewForSupplementaryElementOfKind:(NSString *)kind atIndexPath:(NSIndexPath *)indexPath{
+    if([kind isEqualToString:UICollectionElementKindSectionHeader]){
+        return self.collectionHeader;
+    }
+    return nil;
+}
+
+-(CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout referenceSizeForHeaderInSection:(NSInteger)section{
+    //轮播图宽高比为375:175
+    CGFloat width = kScreenWidth;
+    CGFloat height = width*175.0/375.0;
+    CGFloat needHeight = 50+8+height+60+width/4.0+10+60;
+    return CGSizeMake(kScreenWidth, needHeight);
+}
+
+-(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
+    LivePlayViewController *livePlayVC = [[LivePlayViewController alloc] initWithStoryboardName:@"LivePlay"];
+    LiveRoomModel *room = self.collectionData[indexPath.row];
+    livePlayVC.roomId = room.roomId;
+    JMNavigationController *nav = [[JMNavigationController alloc] initWithRootViewController:livePlayVC];
+    [self presentViewController:nav animated:YES completion:nil];
+}
+
+#pragma mark - LiveHeaderDelegate
+-(void)didChangeType:(NSInteger)index{
+    [self updateSelectType:index];
+}
+
+-(void)updateSelectType:(NSInteger)index{
+    self.collectionHeader.typesArray = self.typesArray;
+    TagModel *model = self.typesArray[index];
+    [self requestRoomListWithTypeId:model.tagId];
+}
+
+-(void)didEnterLiveRoom:(NSString *)roomId{
+    LivePlayViewController *livePlayVC = [[LivePlayViewController alloc] initWithStoryboardName:@"LivePlay"];
+    livePlayVC.roomId = roomId;
+    JMNavigationController *nav = [[JMNavigationController alloc] initWithRootViewController:livePlayVC];
+    [self presentViewController:nav animated:YES completion:nil];
+}
+
+-(void)didShowAllAttention{
+    if (self.isTourists) {
+        LoginViewController *loginVC = [[LoginViewController alloc] initWithStoryboardName:@"RegisterAndLogin"];
+        [self.navigationController pushViewController:loginVC  animated:YES];
+        return;
+    }
+    AttentionLiveViewController *attentionVC = [[AttentionLiveViewController alloc] initWithStoryboardName:@"Market"];
+    [self.navigationController pushViewController:attentionVC animated:YES];
+}
+
+-(void)didShowAllType{
+    if(self.homeTypeVC == nil){
+        self.homeTypeVC = [[HomeTypeViewController alloc] initWithStoryboardName:@"Market"];
+        JMWeak(self);
+        self.homeTypeVC.selectBlock = ^(NSInteger index) {
+            [weakself updateSelectType:index];
+        };
+    }
+    self.homeTypeVC.typesArray = self.typesArray;
+    [self.view addSubview:self.homeTypeVC.view];
+    [self.homeTypeVC.view mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.equalTo(self.jm_navgationBar.mas_bottom);
+        make.left.equalTo(self.view.mas_left);
+        make.right.equalTo(self.view.mas_right);
+        make.bottom.equalTo(self.view.mas_bottom);
+    }];
+}
+
+#pragma mark - Actions
+- (IBAction)searchAction:(id)sender {
+    //搜索
+    GoodTypeViewController *goodTypeVC = [[GoodTypeViewController alloc] initWithStoryboardName:@"GoodType"];
+    [self.navigationController pushViewController:goodTypeVC animated:YES];
+}
+
+- (IBAction)messageAction:(id)sender {
+    JMLoginUserModel *user = [JMProjectManager sharedJMProjectManager].loginUser;
+    if ([user.sessionId isEqualToString:@"sessionId"]) {
+        LoginViewController *loginVC = [[LoginViewController alloc] initWithStoryboardName:@"RegisterAndLogin"];
+        [self.navigationController pushViewController:loginVC  animated:YES];
+        return;
+    }
+    //消息
+    NewsViewController *newsVC = [[NewsViewController alloc] initWithStoryboardName:@"News"];
+    [self.navigationController pushViewController:newsVC animated:YES];
+}
+
+#pragma mark - 网络
+-(void)requestTypeList{
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:@"5" key:@"type"];
+    [[JMRequestManager sharedManager] POST:kUrlTypeList parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            NSArray *dataList = response.responseObject[@"data"];
+            NSMutableArray *array = [[NSMutableArray alloc] init];
+            for(NSDictionary *dic in dataList){
+                TagModel *model = [[TagModel alloc] initWithDictionary:dic];
+                [array addObject:model];
+            }
+            self.typesArray = array;
+            TagModel *firstItem = self.typesArray.firstObject;
+            firstItem.isSelect = YES;
+            self.collectionHeader.typesArray = self.typesArray;
+            [self requestRoomListWithTypeId:firstItem.tagId];
+        }
+    }];
+}
+
+-(void)requestRoomListWithTypeId:(NSString *)typeId{
+    if(self.refreshTool == nil){
+        JMWeak(self);
+        self.refreshTool = [[JMRefreshTool alloc] initWithScrollView:self.collectionView dataAnalysisBlock:^NSArray *(NSDictionary *responseData) {
+            NSMutableArray *array = [[NSMutableArray alloc] init];
+            NSArray *listArray = responseData[@"data"][@"list"];
+            for(NSDictionary *dic in listArray){
+                LiveRoomModel *model = [[LiveRoomModel alloc] initWithDictionary:dic];
+                [array addObject:model];
+            }
+            if([weakself.refreshTool isAddData]){
+                [weakself.collectionData addObjectsFromArray:array];
+            }else{
+                weakself.collectionData = array;
+            }
+            [weakself.collectionView reloadData];
+            return array;
+        }];
+        self.refreshTool.requestUrl = kUrlLiveList;
+        //        self.refreshTool.isRefreshHeader = NO;
+    }
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:typeId key:@"labelId"];
+    [params setJsonValue:@"1" key:@"isRecommend"];
+    self.refreshTool.requestParams = params;
+    [self.refreshTool loadMore:NO];
+}
+
+/**
+ 获取系统消息未读数
+ */
+- (void)requsetUnReadCount {
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [[JMRequestManager sharedManager] POST:kUrlUnReadCount parameters:params completion:^(JMBaseResponse *response) {
+        if (response.error) {
+            
+        }else {
+            NSString *num = [response.responseObject getJsonValue:@"data"];
+            if (num.integerValue == 0) {
+                self.unreadNumView.hidden = YES;
+            }else {
+                self.unreadNumView.hidden = NO;
+                self.unreadNumLabel.text = num;
+            }
+        }
+    }];
+}
+
+@end

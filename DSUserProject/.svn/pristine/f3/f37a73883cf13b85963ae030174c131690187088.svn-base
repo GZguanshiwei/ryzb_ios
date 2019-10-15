@@ -1,0 +1,213 @@
+//
+//  MarketLiveViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/15.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "MarketLiveViewController.h"
+#import "MarketLiveCell.h"
+#import "LiveAttentionCell.h"
+#import "LivePlayViewController.h"
+#import "AttentionLiveViewController.h"
+#import "HomeTypeViewController.h"
+#import "TagModel.h"
+#import "BannerModel.h"
+#import "GoodDetailViewController.h"
+#import "LiveSmallListCell.h"
+#import "MarkListhHeadCell.h"
+
+@interface MarketLiveViewController ()<UICollectionViewDelegate,UICollectionViewDataSource,UICollectionViewDelegateFlowLayout>
+@property (strong, nonatomic) NSMutableArray *dataArray;
+@property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
+@property (strong, nonatomic) NSMutableArray *typesArray;
+@property (strong, nonatomic) UIButton *typeSelectButton;
+@property (strong, nonatomic) JMRefreshTool *refreshTool;
+@property (assign, nonatomic) BOOL isTourists;
+@property (assign, nonatomic) BOOL isBigiImage;
+@property (assign, nonatomic) MarkListhHeadCell *headCell;
+@property (weak, nonatomic) IBOutlet UILabel *changeLable;
+@end
+
+#define TagOffset   5
+
+@implementation MarketLiveViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    self.collectionView.dataSource = self;
+    self.collectionView.delegate = self;
+}
+
+-(void)initData{
+
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(requestAttentionList) name:kNotificationLiveAttentionChange object:nil];
+    JMLoginUserModel *user =  [JMProjectManager sharedJMProjectManager].loginUser;
+    if ([user.sessionId isEqualToString:@"sessionId"]) {
+        self.isTourists = YES;
+    }else
+    {
+        self.isTourists = NO;
+    }
+}
+
+-(void)requestAttentionList
+{
+    [self.headCell reloadAttionList];
+}
+
+
+
+#pragma mark - UICollectionView
+- (NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView
+{
+    return 2;
+}
+-(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
+    if (section == 0) {
+        return 1;
+    }
+    return self.dataArray.count;
+}
+
+- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
+    if (indexPath.section == 0) {
+        MarkListhHeadCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:markListhHeadCellID forIndexPath:indexPath];
+        self.headCell = cell;
+        cell.showAllAttentionBlock = ^{
+            [self goAttentionLiveVC];
+        };
+        JMWeak(self);
+        cell.selectTypeBlock = ^(NSString * _Nonnull flagID) {
+            [weakself requestRoomListWithTypeId:flagID];
+        };
+       
+        cell.showMyAttenionBlock = ^(LiveRoomModel * _Nonnull model) {
+            [weakself enterLiveRoom:model.roomId];
+        };
+        return cell;
+    
+    }
+    if (self.isBigiImage) {
+        MarketLiveCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:marketLiveCellID forIndexPath:indexPath];
+        if (self.dataArray.count) {
+            cell.cellData = self.dataArray[indexPath.item];
+        }
+        return cell;
+    }
+    
+    LiveSmallListCell * cell = [collectionView dequeueReusableCellWithReuseIdentifier:liveSmallListCellID forIndexPath:indexPath];
+    if (self.dataArray.count) {
+        cell.roomModel = self.dataArray[indexPath.item];
+    }
+  
+    return cell;
+}
+
+-(CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath{
+    CGSize rtn = CGSizeZero;
+    if (indexPath.section == 0) {
+        rtn.width = kScreenWidth;
+        rtn.height = 470;
+    }else
+    {
+        if (self.isBigiImage) {
+            rtn.width = kScreenWidth - 30;
+            rtn.height =  259;
+        }else
+        {
+            rtn.width = (kScreenWidth - 37) * 0.5;
+            rtn.height =  270;
+        }
+  
+    }
+
+    return rtn;
+}
+
+-(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
+    LiveRoomModel *model = self.dataArray[indexPath.row];
+    [self enterLiveRoom:model.roomId];
+}
+
+
+#pragma mark - 跳转
+-(void)enterLiveRoom:(NSString *)roomId{
+    
+    [[JMProjectManager sharedJMProjectManager] enterRoom:roomId];
+    /*
+    JMLoginUserModel *user =  [JMProjectManager sharedJMProjectManager].loginUser;
+    if ([user.sessionId isEqualToString:@"sessionId"]) {
+        LoginViewController *loginVC = [[LoginViewController alloc] initWithStoryboardName:@"RegisterAndLogin"];
+        loginVC.isMine = YES;
+        [self.navigationController pushViewController:loginVC  animated:NO];
+        return;
+    }
+    LivePlayViewController *livePlayVC = [[LivePlayViewController alloc] initWithStoryboardName:@"LivePlay"];
+    livePlayVC.roomId = roomId;
+    JMNavigationController *nav = [[JMNavigationController alloc] initWithRootViewController:livePlayVC];
+    [self presentViewController:nav animated:YES completion:nil];
+     */
+}
+
+-(void)goAttentionLiveVC{
+    if (self.isTourists) {
+        LoginViewController *loginVC = [[LoginViewController alloc] initWithStoryboardName:@"RegisterAndLogin"];
+        [self.navigationController pushViewController:loginVC  animated:YES];
+        return;
+    }
+    AttentionLiveViewController *attentionVC = [[AttentionLiveViewController alloc] initWithStoryboardName:@"Market"];
+    [self.navigationController pushViewController:attentionVC animated:YES];
+}
+
+#pragma mark - 网络
+
+-(void)requestRoomListWithTypeId:(NSString *)typeId{
+    if(self.refreshTool == nil){
+        JMWeak(self);
+        self.refreshTool = [[JMRefreshTool alloc] initWithScrollView:self.collectionView dataAnalysisBlock:^NSArray *(NSDictionary *responseData) {
+            NSMutableArray *array = [[NSMutableArray alloc] init];
+            NSArray *listArray = responseData[@"data"][@"list"];
+            for(NSDictionary *dic in listArray){
+                LiveRoomModel *model = [[LiveRoomModel alloc] initWithDictionary:dic];
+                [array addObject:model];
+            }
+            if([weakself.refreshTool isAddData]){
+                [weakself.dataArray addObjectsFromArray:array];
+            }else{
+                weakself.dataArray = array;
+            }
+            [weakself.collectionView reloadData];
+            
+            //刷新我的关注
+            if (self.refreshTool.isRefreshHeader) {
+//                [self requestAttentionList];
+            }
+            return array;
+        }];
+        self.refreshTool.requestUrl = kUrlLiveList;
+//        self.refreshTool.isRefreshHeader = NO;
+    }
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    [params setJsonValue:typeId key:@"labelId"];
+    self.refreshTool.requestParams = params;
+    [self.refreshTool loadMore:NO];
+}
+
+
+#pragma mark - 切换大图
+
+- (IBAction)changeBigImageAction:(id)sender {
+    self.isBigiImage = !self.isBigiImage;
+    self.changeLable.text = self.isBigiImage?@"切换小图":@"切换大图";
+    [self.collectionView reloadData];
+    
+}
+
+
+@end

@@ -1,0 +1,167 @@
+//
+//  UCChangePasswordViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/25.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "UCChangePasswordViewController.h"
+
+@interface UCChangePasswordViewController ()
+@property (weak, nonatomic) IBOutlet UITextField *phoneCodeTextField;
+@property (weak, nonatomic) IBOutlet UIButton *phoneCodeButton;
+@property (weak, nonatomic) IBOutlet UITextField *passwordTextField;
+@property (weak, nonatomic) IBOutlet UITextField *confirmPasswordTextField;
+@property (weak, nonatomic) IBOutlet UIButton *commitButton;
+@property (strong, nonatomic) JMPhoneCodeTool *phoneCodeTool;
+@property (weak, nonatomic) IBOutlet UILabel *showPhoneLabel;
+@property (weak, nonatomic) IBOutlet UILabel *typeLable;
+@end
+
+@implementation UCChangePasswordViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    [super viewWillDisappear:animated];
+    [self.phoneCodeTool stopTimer];
+}
+
+-(void)initControl{
+    self.view.backgroundColor = [UIColor whiteColor];
+    if (self.type == UCChangePasswordViewControllerTypePay) {
+        JMLoginUserModel *loginUser = [JMProjectManager sharedJMProjectManager].loginUser;
+        if (JMIsEmpty(loginUser.payPassword)) {
+            self.typeLable.text = @"设置支付密码";
+            [self.commitButton setTitle:@"确认" forState:UIControlStateNormal];
+        }else {
+            self.typeLable.text = @"修改支付密码";
+            [self.commitButton setTitle:@"重置" forState:UIControlStateNormal];
+        }
+    }
+}
+
+-(void)initData{
+    JMLoginUserModel *loginUser = [JMProjectManager sharedJMProjectManager].loginUser;
+    self.showPhoneLabel.text = loginUser.mobile;
+}
+
+-(JMPhoneCodeTool *)phoneCodeTool{
+    if(_phoneCodeTool == nil){
+        //此处的字典用于标识验证法发送的类型
+        NSDictionary *params = [[NSDictionary alloc] init];
+        if (self.type == UCChangePasswordViewControllerTypePay) {
+            params = @{@"type":@"PayPwd"};
+        }else {
+            params = @{@"type":@"ForgetPwd"};
+        }
+        _phoneCodeTool = [[JMPhoneCodeTool alloc] initWithPhoneCodeButton:self.phoneCodeButton requestParams:params];
+    }
+    return _phoneCodeTool;
+}
+
+#pragma mark - Navigation
+-(UIImage *)jmNavigationBarLeftButtonImage:(UIButton *)leftButton navigationBar:(JMNavigationBar *)navigationBar{
+    return [UIImage imageNamed:@"NavigationBack_Gray"];
+}
+
+-(UIColor *)jmNavigationBackgroundColor:(JMNavigationBar *)navigationBar{
+    return [UIColor whiteColor];
+}
+
+- (NSArray <UIButton *> *)textViewControllerRelationButtons:(JMTextViewController *)textViewController{
+    return @[self.commitButton];
+}
+
+-(UIStatusBarStyle)preferredStatusBarStyle{
+    return UIStatusBarStyleDefault;
+}
+
+#pragma mark - Actions
+- (IBAction)sendPhoneCodeAction:(id)sender {
+    //发送验证码
+    [self.view endEditing:YES];
+    JMLoginUserModel *loginUser = [JMProjectManager sharedJMProjectManager].loginUser;
+    self.phoneCodeTool.phoneNum = loginUser.mobile;
+    //如果是国际号码，需要设置区号
+    //    self.phoneCodeTool.areaId = @""
+    [self.phoneCodeTool sendPhoneCode];
+    
+}
+
+- (IBAction)resetAction:(id)sender {
+    //修改密码
+    NSString *code = self.phoneCodeTextField.text;
+    if(code.length == 0){
+        [JMProgressHelper toastInWindowWithMessage:self.phoneCodeTextField.placeholder];
+        return;
+    }
+    NSString *password = self.passwordTextField.text;
+    if(password.length == 0){
+        [JMProgressHelper toastInWindowWithMessage:self.passwordTextField.placeholder];
+        return;
+    }
+    NSString *confirmPassword = self.confirmPasswordTextField.text;
+    if(![password isEqualToString:confirmPassword]){
+        [JMProgressHelper toastInWindowWithMessage:@"两次输入的密码不相同"];
+        return;
+    }
+    
+    if (self.type == UCChangePasswordViewControllerTypePay) {
+        //修改支付密码
+        [self requestUpdatePayPassword];
+    }else {
+        //修改登录密码
+        [self requestForgetPassword];
+    }
+}
+
+#pragma mark - 网络
+/**
+ 修改登录密码
+ */
+-(void)requestForgetPassword{
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    JMLoginUserModel *loginUser = [JMProjectManager sharedJMProjectManager].loginUser;
+    [params setJsonValue:loginUser.mobile key:@"mobile"];
+    [params setJsonValue:self.phoneCodeTextField.text key:@"code"];
+    [params setJsonValue:self.passwordTextField.text key:@"password"];
+    [params setJsonValue:@"0" key:@"registerType"];
+    
+    [[JMRequestManager sharedManager] POST:kUrlFindPassword parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            [JMProgressHelper toastInWindowWithMessage:@"修改密码成功"];
+            [self.navigationController popViewControllerAnimated:YES];
+        }
+    }];
+}
+
+/**
+ 修改支付密码
+ */
+-(void)requestUpdatePayPassword{
+    NSMutableDictionary *params = [JMCommonMethod baseRequestParams];
+    JMLoginUserModel *loginUser = [JMProjectManager sharedJMProjectManager].loginUser;
+    [params setJsonValue:loginUser.mobile key:@"mobile"];
+    [params setJsonValue:self.phoneCodeTextField.text key:@"code"];
+    [params setJsonValue:self.passwordTextField.text key:@"password"];
+    [params setJsonValue:@"0" key:@"registerType"];
+    
+    [[JMRequestManager sharedManager] POST:kUrlUpdatePayPwd parameters:params completion:^(JMBaseResponse *response) {
+        if(response.error){
+            [JMProgressHelper toastInWindowWithMessage:response.errorMsg];
+        }else{
+            [[JMProjectManager sharedJMProjectManager] updateLoginUserInfoSuccessBlock:^{
+                [JMProgressHelper toastInWindowWithMessage:@"修改密码成功"];
+                [self.navigationController popViewControllerAnimated:YES];
+            } failBlock:nil];
+        }
+    }];
+}
+@end

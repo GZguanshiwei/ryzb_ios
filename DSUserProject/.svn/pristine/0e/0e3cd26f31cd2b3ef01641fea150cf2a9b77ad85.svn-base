@@ -1,0 +1,33 @@
+//
+//  LiveRoomModel.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/7/5.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "LiveRoomModel.h"
+
+@implementation LiveRoomModel
+
+-(instancetype)initWithDictionary:(NSDictionary *)dict{
+    self = [super init];
+    if(self){
+        self.roomId = [dict getJsonValue:@"id"];
+        self.roomNo = [dict getJsonValue:@"id"];
+        self.city = [dict getJsonValue:@"address"];
+        self.coverImage = [dict getJsonValue:@"image"];
+        self.notice = [dict getJsonValue:@"announcement"];
+        self.desc = [dict getJsonValue:@"desc"];
+        self.name = [dict getJsonValue:@"name"];
+        self.state = [dict getJsonValue:@"state"];
+        self.onlinePeople = [dict getJsonValue:@"watchNumber"];
+         
+        self.anchorId = [dict getJsonValue:@"accountId"];
+        self.anchorDesc = [dict getJsonValue:@"anchorIntroduction"];
+        self.anchorName = [dict getJsonValue:@"nick"];
+        self.anchorHead = [dict getJsonValue:@"head"];
+    }
+    return self;
+}
+@end

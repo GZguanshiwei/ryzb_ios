@@ -1,0 +1,132 @@
+//
+//  OrderCell.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/26.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "OrderCell.h"
+
+@interface OrderCell ()
+@property (weak, nonatomic) IBOutlet UILabel *orderNoLabel;
+@property (weak, nonatomic) IBOutlet UILabel *statusLabel;
+@property (weak, nonatomic) IBOutlet UIImageView *coverImageView;
+@property (weak, nonatomic) IBOutlet UILabel *titleLabel;
+@property (weak, nonatomic) IBOutlet UIView *tagView;
+@property (weak, nonatomic) IBOutlet UILabel *priceLabel;
+@property (weak, nonatomic) IBOutlet UILabel *totalPayLabel;
+
+@property (weak, nonatomic) IBOutlet UIButton *rightButton;
+@property (weak, nonatomic) IBOutlet UIButton *leftButton;
+@end
+
+@implementation OrderCell
+
+- (void)awakeFromNib {
+    [super awakeFromNib];
+    [self initControl];
+}
+
+- (void)setSelected:(BOOL)selected animated:(BOOL)animated {
+    [super setSelected:selected animated:animated];
+
+    // Configure the view for the selected state
+}
+
+-(void)initControl{
+    self.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.coverImageView.layer.cornerRadius = 4.0;
+    self.coverImageView.layer.masksToBounds = YES;
+    self.tagView.layer.cornerRadius = 2.0;
+    self.tagView.layer.borderColor = [UIColor colorWithHexString:@"#DC2C2C"].CGColor;
+    self.tagView.layer.borderWidth = 0.8;
+}
+
+-(void)setCellData:(OrderModel *)cellData{
+    _cellData = cellData;
+    [self.coverImageView sd_setImageWithURL:[JMCommonMethod imageUrlWithPath:self.cellData.good.coverImage]];
+    self.titleLabel.text = self.cellData.good.title;
+    self.priceLabel.text = [NSString stringWithFormat:@"￥%@",self.cellData.good.price];
+    self.totalPayLabel.text = [NSString stringWithFormat:@"￥%@",self.cellData.totalPay];
+    self.orderNoLabel.text = [NSString stringWithFormat:@"订单号：%@",self.cellData.orderNo];
+    if(self.cellData.afterSaleState == JMOrderAfterSale_InAudit){
+        self.tagView.hidden = NO;
+    }else{
+        self.tagView.hidden = YES;
+    }
+    [self updateStateTipAndOperationButton];
+}
+
+-(void)updateStateTipAndOperationButton{
+    NSString *stateTip = @"";
+    NSMutableArray *buttonTitles = [[NSMutableArray alloc] init];
+    switch (self.cellData.state) {
+        case JMOrderState_Close:
+            stateTip = @"交易关闭";
+            [buttonTitles addObject:@"删除订单"];
+            break;
+        case JMOrderState_WaitPay:
+            stateTip = @"待付款";
+            [buttonTitles addObject:@"付款"];
+            break;
+        case JMOrderState_Complete:
+            stateTip = @"交易成功";
+            [buttonTitles addObject:@"删除订单"];
+            [buttonTitles addObject:@"查看评价"];
+            break;
+        case JMOrderState_WaitFaHuo:
+            stateTip = @"待发货";
+            if(self.cellData.afterSaleState == JMOrderAfterSale_InAudit){
+                
+            }else{
+                [buttonTitles addObject:@"申请退款"];
+            }
+            break;
+        case JMOrderState_WaitShouHuo:
+            stateTip = @"待收货";
+            if(self.cellData.afterSaleState == JMOrderAfterSale_InAudit){
+                [buttonTitles addObject:@"查看物流"];
+            }else{
+                [buttonTitles addObject:@"确认收货"];
+                [buttonTitles addObject:@"查看物流"];
+            }
+            break;
+        case JMOrderState_WaitEvaluate:
+            stateTip = @"待评价";
+            [buttonTitles addObject:@"评价"];
+            break;
+        default:
+            break;
+    }
+    self.statusLabel.text = stateTip;
+    switch (buttonTitles.count) {
+        case 0:
+            self.leftButton.hidden = YES;
+            self.rightButton.hidden = YES;
+            break;
+        case 1:
+            self.leftButton.hidden = YES;
+            self.rightButton.hidden = NO;
+            [self.rightButton setTitle:buttonTitles.firstObject forState:UIControlStateNormal];
+            break;
+        case 2:
+            self.leftButton.hidden = NO;
+            self.rightButton.hidden = NO;
+            [self.rightButton setTitle:buttonTitles.firstObject forState:UIControlStateNormal];
+            [self.leftButton setTitle:buttonTitles.lastObject forState:UIControlStateNormal];
+            break;
+        default:
+            break;
+    }
+}
+
+
+- (IBAction)buttonAction:(id)sender {
+    if(self.delegate && [self.delegate respondsToSelector:@selector(clickOperationButton:title:)]){
+        UIButton *button = (UIButton *)sender;
+        [self.delegate clickOperationButton:self.index title:[button currentTitle]];
+    }
+}
+
+@end

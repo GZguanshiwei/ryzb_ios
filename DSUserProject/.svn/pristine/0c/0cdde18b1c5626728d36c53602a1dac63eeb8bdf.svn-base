@@ -1,0 +1,26 @@
+//
+//  UCBindPhoneViewController.m
+//  JMBaseProject
+//
+//  Created by Liuny on 2019/6/25.
+//  Copyright © 2019 liuny. All rights reserved.
+//
+
+#import "UCBindPhoneViewController.h"
+
+@interface UCBindPhoneViewController ()
+
+@end
+
+@implementation UCBindPhoneViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+-(void)initControl{
+    
+}
+
+@end
